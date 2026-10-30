@@ -10,6 +10,11 @@ const TITULO_DO_PAPEL: Record<Perfil['papel'], string> = {
   membro: 'Membro',
 };
 
+/** "Gerência", "Diretoria", "Membro"…: o papel por extenso, para listas de pessoas. */
+export function tituloDoPapel(papel: Perfil['papel']): string {
+  return TITULO_DO_PAPEL[papel];
+}
+
 /** Ex.: "Diretoria Comercial · cobre a Diretoria de Projetos", "Vice-Presidência · Diretoria Financeira" ou "Gerência · Marketing". */
 export function descreverCargo(perfil: Perfil, tituloDaArea: (id: string) => string): string {
   if (perfil.papel === 'presidente') return 'Presidência';
