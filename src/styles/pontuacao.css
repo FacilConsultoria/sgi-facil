@@ -1,0 +1,101 @@
+/* Tela de Pontuação e ranking: pessoas, detalhe com linha do tempo, ajuste e tabela do ranking. */
+input[type='number'], input[type='search'] {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+.eyebrow { text-transform: uppercase; letter-spacing: 0.08em; font-size: 0.68rem; font-weight: 600; color: var(--ink-3); }
+.busca { margin-top: 12px; max-width: 320px; }
+
+/* pessoas */
+.membros { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; margin-top: 14px; }
+.membro {
+  appearance: none;
+  text-align: left;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 12px 14px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.membro:hover { border-color: var(--accent); }
+.membro[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); }
+.membro strong { overflow-wrap: anywhere; }
+.membro .pts { font-size: 1.15rem; font-weight: 600; color: var(--accent-text); font-variant-numeric: tabular-nums; }
+.membros > .vazio { grid-column: 1 / -1; }
+
+/* detalhe */
+.detalhe {
+  margin-top: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 18px;
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) minmax(0, 1.6fr) minmax(220px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.detalhe h2 { margin: 4px 0 10px; }
+.resumo-membro, .coluna-tempo, .ajuste { min-width: 0; }
+.resumo-membro .dl { grid-template-columns: 120px minmax(0, 1fr); }
+.grande { font-size: 1.8rem; font-weight: 600; color: var(--accent-text); line-height: 1.1; font-variant-numeric: tabular-nums; }
+.ajuste .dica { margin: -4px 0 12px; }
+.ajuste .somente-leitura { margin-top: 8px; }
+
+/* linha do tempo */
+.pilulas { display: flex; flex-wrap: wrap; gap: 6px; }
+.pilula {
+  appearance: none;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  cursor: pointer;
+}
+.pilula:hover { border-color: var(--ink-3); }
+.pilula[aria-pressed='true'] { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.linha-do-tempo > label.check { margin-top: 8px; }
+.tempo { list-style: none; margin: 12px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.lanc { border: 1px solid var(--line); border-left-width: 4px; border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 2px; }
+.lanc.neg { border-left-color: var(--danger); }
+.lanc.desc { opacity: 0.65; }
+.lanc.desc p { text-decoration: line-through; }
+.lanc-cab { display: flex; justify-content: space-between; gap: 8px; }
+.lanc .pts { font-weight: 600; font-variant-numeric: tabular-nums; }
+.lanc .pts.pos { color: var(--ok); }
+.lanc .pts.neg { color: var(--danger); }
+.lanc p { overflow-wrap: anywhere; }
+.desconsiderar { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.desconsiderar .linha { flex-wrap: nowrap; }
+.desconsiderar input { flex: 1; min-width: 0; }
+.desconsiderar .mensagem-form:empty { display: none; }
+
+/* ranking */
+.tab-wrap { margin-top: 14px; overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r); background: var(--surface); }
+.tabela { width: 100%; border-collapse: collapse; }
+.tabela th, .tabela td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); }
+.tabela th { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 600; white-space: nowrap; }
+.tabela tbody tr:last-child td { border-bottom: 0; }
+.tabela .num { text-align: right; font-variant-numeric: tabular-nums; }
+.tabela .pts { font-weight: 600; color: var(--accent-text); }
+.tabela tr.eu td { background: var(--accent-soft); }
+.tabela .col-posicao { width: 56px; }
+.posicao { display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-2); font-size: 0.82rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.posicao.top { background: var(--accent); color: var(--accent-ink); }
+
+@media (max-width: 1180px) {
+  .detalhe { grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); }
+  .ajuste { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
+  .detalhe { grid-template-columns: minmax(0, 1fr); padding: 14px; gap: 18px; }
+  .membros { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+}
