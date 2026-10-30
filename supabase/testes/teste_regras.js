@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05, 06, 07, 08 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL07 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL09 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -49,6 +49,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL06);
     await db.exec(window.SQL07);
     await db.exec(window.SQL08);
+    await db.exec(window.SQL09);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -431,6 +432,70 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await permite('Presidente aprova o aval de negar o pedido', MEL, `select decidir_aval($1,true,'Ok')`, [avalPedido3]);
     confere('Pedido fica negado pelo aval', await valor(MEL, `select status from solicitacoes where id = $1`, [pedido3]), 'negada');
     confere('Visões e função de acesso fechadas ao visitante', [(await tenta(null, `select * from beneficiarios_de_acesso`)).startsWith('permission denied'), (await tenta(null, `select * from projetos_solicitaveis($1)`, [iPedro])).startsWith('permission denied')], [true, true]);
+
+    // pontuação e ranking (09)
+    confere('Pontuação detalhada: quem aparece para cada perfil', {
+      ana: await nomesDe(ANA, `select nome from pontuacao_pessoas order by nome`),
+      camila: await nomesDe(CAMILA, `select nome from pontuacao_pessoas order by nome`),
+      pedro: await nomesDe(PEDRO, `select nome from pontuacao_pessoas order by nome`),
+      mel: (await como(MEL, `select 1 from pontuacao_pessoas`)).length,
+      maju: (await como(MAJU, `select 1 from pontuacao_pessoas`)).length,
+    }, { ana: ['Ana'], camila: ['Camila'], pedro: ['Pedro'], mel: 11, maju: 11 });
+    const mesmaListaDaRegra = {};
+    for (const email of [MEL, JOAO, DUDA, VICTOR, ANA, MAJU]) {
+      mesmaListaDaRegra[email] = await valor(email, `select (select array_agg(id order by id) from pontuacao_pessoas) is not distinct from
+        (select array_agg(id order by id) from pessoas where ativo and privado.pode_ver_pontuacao(privado.eu(), id))`);
+    }
+    confere('A lista da tela segue a regra do banco (pode_ver_pontuacao)', Object.values(mesmaListaDaRegra).every(Boolean), true);
+    confere('Saldo, entregas e faltas da tela batem com o ranking',
+      await como(MEL, `select nome, pontos, entregas, faltas from pontuacao_pessoas order by nome`),
+      await como(MEL, `select nome, pontos, entregas, faltas from ranking() order by nome`));
+    const indicadores = (email, nome) => como(email, `select pode_ajustar, pode_pedir_aval from pontuacao_pessoas where nome = $1`, [nome]);
+    confere('Quem pode ajustar a pontuação de quem, e quem pode pedir aval', {
+      melAna: await indicadores(MEL, 'Ana'), melMel: await indicadores(MEL, 'Mel'), luisMel: await indicadores(LUIS, 'Mel'),
+      majuAna: await indicadores(MAJU, 'Ana'), majuMaju: await indicadores(MAJU, 'Maju'),
+      joaoAna: await indicadores(JOAO, 'Ana'), anaAna: await indicadores(ANA, 'Ana'),
+    }, {
+      melAna: [{ pode_ajustar: true, pode_pedir_aval: false }], melMel: [{ pode_ajustar: false, pode_pedir_aval: false }],
+      luisMel: [{ pode_ajustar: true, pode_pedir_aval: false }],
+      majuAna: [{ pode_ajustar: true, pode_pedir_aval: false }], majuMaju: [{ pode_ajustar: false, pode_pedir_aval: true }],
+      joaoAna: [{ pode_ajustar: false, pode_pedir_aval: false }], anaAna: [{ pode_ajustar: false, pode_pedir_aval: false }],
+    });
+    // Ana passa a atuar também no marketing: Victor (gerência de Projetos) vê o nome só do projeto que enxerga
+    await permite('Diretoria cria demanda com executores de duas áreas', JOAO, `select criar_demanda($1,'Calendário compartilhado','',privado.hoje() + 7,'media',array[$2,$3]::uuid[])`, [pMkt, iAna, iCamila]);
+    const projetosDaAna = email => como(email, `select projetos_ativos, projetos_ocultos from pontuacao_pessoas where nome = 'Ana'`);
+    confere('Projetos ativos: só os nomes que quem consulta pode ver, e quantos ficam ocultos', {
+      joao: await projetosDaAna(JOAO), victor: await projetosDaAna(VICTOR), ana: await projetosDaAna(ANA),
+    }, {
+      joao: [{ projetos_ativos: ['Instagram Comercial', 'Mapeamento de processos'], projetos_ocultos: 0 }],
+      victor: [{ projetos_ativos: ['Mapeamento de processos'], projetos_ocultos: 1 }],
+      ana: [{ projetos_ativos: ['Instagram Comercial', 'Mapeamento de processos'], projetos_ocultos: 0 }],
+    });
+    const eventoDesconsiderado = await como(MEL, `select desconsiderado_em is not null as desconsiderado, pode_desconsiderar from lancamentos_visiveis where id = $1`, [lancamento]);
+    confere('Lançamento já desconsiderado não oferece desconsiderar', eventoDesconsiderado, [{ desconsiderado: true, pode_desconsiderar: false }]);
+    const doMel = (await como(MEL, `select count(*) filter (where desconsiderado_em is null and pessoa_id <> $1 and not pode_desconsiderar)::int as sem, count(*) filter (where pode_desconsiderar)::int as com from lancamentos_visiveis`, [iMel]))[0];
+    confere('Linha do tempo: Presidência desconsidera o dos outros; diretoria e membro não', {
+      mel: [doMel.sem, doMel.com > 0],
+      joao: await valor(JOAO, `select count(*) filter (where pode_desconsiderar)::int from lancamentos_visiveis`),
+      ana: await valor(ANA, `select count(*) filter (where pode_desconsiderar or pessoa_id <> $1)::int from lancamentos_visiveis`, [iAna]),
+    }, { mel: [0, true], joao: 0, ana: 0 });
+    confere('Linha do tempo: o nome da demanda só aparece para quem pode ver a demanda', {
+      lucas: await como('lucas@facil.test',`select demanda_id is not null as tem_demanda, demanda_codigo from lancamentos_visiveis where demanda_id = $1 and pessoa_id = $2 limit 1`, [dCli, iLucas]),
+      joao: await como(JOAO, `select demanda_codigo from lancamentos_visiveis where demanda_id = $1 and pessoa_id = $2 limit 1`, [dCli, iLucas]),
+    }, { lucas: [{ tem_demanda: true, demanda_codigo: null }], joao: [{ demanda_codigo: 'PRJ-001' }] });
+    confere('Ajuste aprovado por aval aparece na linha do tempo da Assessoria', await valor(MAJU, `select count(*)::int from lancamentos_visiveis where pessoa_id = $1 and tipo = 'ajuste'`, [iMaju]) >= 1, true);
+    confere('Visões de pontuação fechadas ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from pontuacao_pessoas`)).startsWith('permission denied'),
+      (await tenta(null, `select * from lancamentos_visiveis`)).startsWith('permission denied'),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from pontuacao_pessoas`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from lancamentos_visiveis`),
+    ], [true, true, 0, 0]);
+    // as duas visões têm agregação ou junção, então o Postgres já recusa por não serem atualizáveis; sem permissão também seria recusado
+    const recusada = /^(permission denied|cannot (update|delete from) view)/;
+    confere('Visões de pontuação não aceitam gravação direta', [
+      recusada.test(await tenta(MEL, `update pontuacao_pessoas set pontos = 99`)),
+      recusada.test(await tenta(MEL, `delete from lancamentos_visiveis`)),
+    ], [true, true]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
