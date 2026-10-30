@@ -21,7 +21,21 @@ Aplicação web interna da Fácil Consultoria (empresa júnior) para organizar d
 - Logo: símbolo redesenhado em SVG no menu lateral (círculo + quatro paralelogramos). Fonte Poppins.
 - Tema claro e escuro.
 
-## Estrutura Fácil 27 (fonte: "Funções e Responsabilidades — Fácil 27")
+## Estrutura real (confirmada pelo usuário em 29/10/2026; substitui a tabela do documento abaixo)
+
+| Pessoa | Papel no banco | Área / núcleo |
+|---|---|---|
+| Mel | `presidente` | Presidência (titular). Cobre a Diretoria Administrativa, vaga. Única que aprova pedidos de itens restritos e revoga qualquer acesso. |
+| Luis | `vice` | Vice-Presidência, acesso irrestrito (Presex). Titular da Diretoria Financeira. |
+| João | `diretor` | Diretoria Comercial (titular); cobre a Diretoria de Projetos, vaga. |
+| Victor | `gerente` | Entregas aos clientes (`proj-cli`, área Projetos). |
+| Emilli | `gerente` | Captação e clientes (`com-cap`, área Comercial). |
+| Duda | `gerente` | Marketing (`com-mkt`). |
+| Maju | `assessor` | Assessoria de Presidência (`pres-ass`). |
+
+Gente e Gestão e Diretoria Administrativa vagas: ajustes de pontos e regras ficam com a Presex (Mel e Luis). E-mails reais ficam só no banco do Supabase, nunca no repositório nem no artefato (público por link).
+
+## Estrutura Fácil 27 (fonte: "Funções e Responsabilidades — Fácil 27"; histórico)
 
 | Área | Titular | Observação |
 |---|---|---|
@@ -87,7 +101,7 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
 
 **Arquitetura do site: ver `projeto/adr/0001-arquitetura-versao-online.md`.** Resumo das decisões do usuário (29/10/2026): GitHub (repositório privado), Vite + TypeScript sem framework, dependências autorizadas `@supabase/supabase-js` (produção) e `vite`, `typescript`, `vitest`, `eslint` (desenvolvimento), build e testes só no GitHub Actions (computador sem Node.js nem Git), hospedagem na Vercel. Permissões de interface vêm de visões do banco com indicadores (`pode_gerir` etc.), nunca recalculadas no TypeScript.
 
-**Repositório (29/10/2026):** o código do site vive no GitHub (`sgi-facil`, privado), enviado pelo site do GitHub (upload manual; sem Git nesta máquina). O repositório inclui `docs/` (estas notas, diretrizes, ADR), `supabase/` (01, 02, 03, função, testes) e `prototipo/`. O artefato continua espelhando protótipo e documentos.
+**Repositório (29/10/2026):** https://github.com/FacilConsultoria/sgi-facil (privado, dono: conta @FacilConsultoria; colaborador convidado: @joaojorte). Enviado pelo navegador (Claude in Chrome, upload por pasta), sem Git nesta máquina. Primeira verificação do GitHub Actions: verde (tipos ok, 18/18 testes, build ok). Pendência pequena: atualizar `actions/checkout` e `actions/setup-node` no `ci.yml` (v4 usa Node 20, descontinuado). O repositório inclui `docs/` (estas notas, diretrizes, ADR), `supabase/` (01, 02, 03, função, testes) e `prototipo/`. O artefato continua espelhando protótipo e documentos.
 - Esqueleto entregue: Vite + TypeScript, login por link mágico, layout com menu lateral, Dashboard, demais módulos "em breve". Verificação local: tipos ok (TypeScript 5.6.3 no Edge, dependências com declarações simplificadas) e 18/18 testes unitários; banco 84/84.
 - Migração 03 (`03_visoes_interface.sql`): `meu_perfil`, `demandas_visiveis` (`pode_gerir`, `pode_mudar_status`, `motivo_acesso`), `reunioes_visiveis`, `solicitacoes_visiveis` (`situacao`, `pode_aprovar`, `pode_revogar`), todas `security_invoker`.
 - Pendente de autorização: `typescript-eslint` e `@eslint/js` (para o ESLint entender TypeScript) e `@electric-sql/pglite` (testes do banco no CI).
