@@ -1,5 +1,5 @@
 // Liga cada rota à sua tela. Módulos ainda não migrados mostram a tela "em migração".
-import { paginaAvais } from '../features/avais/pagina';
+import { paginaAutorizacoes } from '../features/autorizacoes/pagina';
 import { paginaDashboard } from '../features/dashboard/pagina';
 import { paginaDemandas } from '../features/demandas/pagina';
 import { paginaEmMigracao } from '../features/em-migracao/pagina';
@@ -18,8 +18,8 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
     case 'reunioes':
       paginaReunioes(destino);
       return;
-    case 'avais':
-      paginaAvais(destino);
+    case 'autorizacoes':
+      paginaAutorizacoes(destino);
       return;
     default:
       paginaEmMigracao(destino, rota);

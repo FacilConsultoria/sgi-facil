@@ -7,7 +7,7 @@ export interface Rota {
 }
 
 export const ROTAS: readonly Rota[] = [
-  { id: 'dashboard', titulo: 'Dashboard', disponivel: true },
+  { id: 'dashboard', titulo: 'Tela Inicial', disponivel: true },
   { id: 'demandas', titulo: 'Demandas', disponivel: true },
   { id: 'projetos', titulo: 'Projetos', disponivel: false },
   { id: 'reunioes', titulo: 'Reuniões e atas', disponivel: true },
@@ -15,16 +15,19 @@ export const ROTAS: readonly Rota[] = [
   { id: 'pontuacoes', titulo: 'Pontuações', disponivel: false },
   { id: 'ranking', titulo: 'Ranking', disponivel: false },
   { id: 'estrutura', titulo: 'Estrutura e equipe', disponivel: false },
-  { id: 'acessos', titulo: 'Acessos', disponivel: false },
-  { id: 'avais', titulo: 'Avais', disponivel: true },
+  { id: 'autorizacoes', titulo: 'Autorizações', disponivel: true },
   { id: 'historico', titulo: 'Histórico completo', disponivel: false },
   { id: 'regras', titulo: 'Regras', disponivel: false },
 ];
 
-const ROTA_INICIAL: Rota = { id: 'dashboard', titulo: 'Dashboard', disponivel: true };
+const ROTA_INICIAL: Rota = { id: 'dashboard', titulo: 'Tela Inicial', disponivel: true };
 
-/** Converte "#demandas" ou "#/demandas" na rota; hash vazio ou desconhecido leva ao Dashboard. */
+// endereços antigos que passaram a ser abas de Autorizações
+const ENDERECOS_ANTIGOS: Readonly<Record<string, string>> = { acessos: 'autorizacoes', avais: 'autorizacoes' };
+
+/** Converte "#demandas" ou "#/demandas" na rota; hash vazio ou desconhecido leva à Tela Inicial. */
 export function rotaDoHash(hash: string): Rota {
-  const id = hash.replace(/^#\/?/, '').trim();
+  const texto = hash.replace(/^#\/?/, '').trim();
+  const id = ENDERECOS_ANTIGOS[texto] ?? texto;
   return ROTAS.find((rota) => rota.id === id) ?? ROTA_INICIAL;
 }

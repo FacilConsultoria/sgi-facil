@@ -7,9 +7,19 @@ describe('rotaDoHash', () => {
     expect(rotaDoHash('#/reunioes').id).toBe('reunioes');
   });
 
-  it('leva hash vazio ou desconhecido ao Dashboard', () => {
+  it('leva hash vazio ou desconhecido à Tela Inicial', () => {
     expect(rotaDoHash('').id).toBe('dashboard');
     expect(rotaDoHash('#nao-existe').id).toBe('dashboard');
+  });
+
+  it('leva os endereços antigos de Acessos e Avais para Autorizações', () => {
+    expect(rotaDoHash('#acessos').id).toBe('autorizacoes');
+    expect(rotaDoHash('#/avais').id).toBe('autorizacoes');
+    expect(rotaDoHash('#autorizacoes').titulo).toBe('Autorizações');
+  });
+
+  it('chama a primeira tela de Tela Inicial', () => {
+    expect(rotaDoHash('').titulo).toBe('Tela Inicial');
   });
 
   it('não tem rotas repetidas', () => {
