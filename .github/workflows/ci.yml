@@ -1,0 +1,36 @@
+# Verificação automática a cada envio: tipos, testes e build.
+# Uma entrega só é considerada pronta com esta verificação verde (docs/adr/0001).
+name: Verificação
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  site:
+    name: Tipos, testes e build do site
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      # Sem package-lock.json ainda (o repositório foi criado sem Node local).
+      # Quando houver um computador com Node, rode "npm install" e envie o package-lock.json gerado.
+      - name: Instalar dependências
+        run: npm install --no-audit --no-fund
+
+      - name: Checar tipos
+        run: npm run typecheck
+
+      - name: Testes unitários
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: https://exemplo.supabase.co
+          VITE_SUPABASE_ANON_KEY: chave-de-exemplo-para-build
