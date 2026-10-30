@@ -9,6 +9,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 | `01_estrutura_e_regras.sql` | Cria as tabelas, as regras de acesso (quem vê o quê, direto no banco), as operações do sistema (criar demanda, validar, lançar pontos, encerrar reunião, pedir acesso etc.) e o espaço para arquivos das reuniões. |
 | `02_dados_iniciais.sql` | Cadastra a estrutura 2027 (Presidência, Vice, diretorias, núcleos, vagas e coberturas) e as sete lideranças: Mel, Luis, João, Victor, Emilli, Duda e Maju. |
 | `03_visoes_interface.sql` | Visões que o site lê: perfil de quem está logado e, para demandas, reuniões e pedidos, os indicadores do que cada pessoa pode fazer. |
+| `04_modulo_demandas.sql` | Para a tela de Demandas: projetos, núcleos e pessoas que cada um pode usar nos cadastros, e a regra de que só a liderança reabre uma demanda concluída. |
 | `functions/receber-transcricao/index.ts` | Endereço que vai receber as transcrições do Meet quando a automação estiver pronta. Pode ficar para depois. |
 
 ## 1. Criar o projeto
@@ -28,6 +29,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 3. Abra outra query. Cole `02_dados_iniciais.sql` e, **antes de rodar**, troque no topo os sete `PREENCHER` pelos e-mails Google reais. Não salve o arquivo com os e-mails preenchidos no repositório.
 4. Clique em **Run**. Se esquecer algum e-mail, o script avisa e não grava nada.
 5. Abra mais uma query, cole `03_visoes_interface.sql` e clique em **Run**.
+6. Repita com `04_modulo_demandas.sql`.
 
 Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `areas` deve ter 5.
 
@@ -64,7 +66,7 @@ A função recebe `titulo`, `inicio` (data e hora com fuso) e `texto`, e vincula
 
 ## Como as regras foram testadas
 
-Os três scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 90 verificações por perfil: quem vê quais demandas, quem valida, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões e bloqueio de escrita direta. Todas passaram (29/10/2026).
+Os quatro scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 104 verificações por perfil: quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e bloqueio de escrita direta. Todas passaram (30/10/2026).
 
 Para repetir os testes em qualquer computador Windows com Edge e internet, a partir da pasta do projeto:
 
