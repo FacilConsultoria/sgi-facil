@@ -134,11 +134,16 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - **Pendente:** os botões para a Assessoria pedir aval de ajuste da própria pontuação e de aprovação de acesso por exceção chegam junto com os módulos Pontuações e Acessos (o banco e a página Avais já tratam esses dois tipos).
   - Banco 179/179; site: tipos ok, 74/74 testes e simulação das telas no Edge.
 
+- **Autorizações (30/10/2026):** pedido do usuário: "Dashboard" virou **Tela Inicial**; o aviso do Google Meet saiu de Reuniões e atas; as abas **Avais** e **Acessos** viraram uma só, **Autorizações**, com duas abas (Acessos e Avais). Endereços antigos `#acessos` e `#avais` levam a ela.
+  - **Acessos por exceção** (módulo novo no site; o banco já existia): pedir acesso (para quem pode pedir, a projeto ou demanda, validade de até 90 dias), decidir (aprovar/negar), revogar. Migração `08_modulo_acessos.sql`: `privado.pode_pedir_acesso_para` (a regra de quem pede para quem, agora única, usada também por `solicitar_acesso`), visão `beneficiarios_de_acesso`, função `projetos_solicitaveis(pessoa)` (não restritos, fora do escopo, sem pedido ou acesso vigente), `solicitacoes_visiveis` com `alvo_nome` e `pode_pedir_aval`. Banco 192/192.
+  - **Assessoria** vê Aprovar/Negar substituídos por **"Pedir aval para aprovar/negar"** (aval do tipo `decidir_solicitacao`). Revogar continua só da Presidente (ou de quem aprovou); a Assessoria não revoga (decisão conservadora, fácil de mudar).
+  - Site: tipos ok, 84/84 testes, simulação das telas no Edge. Ainda falta o botão da Assessoria para pedir aval de ajuste da própria pontuação (chega com Pontuações).
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; próximo: Pontuação e ranking (depois presenças, estrutura e cadastro de pessoas, acessos, histórico, regras).
+4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) também feito; próximo: Pontuação e ranking (depois presenças, estrutura e cadastro de pessoas, histórico, regras).
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
