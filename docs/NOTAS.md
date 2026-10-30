@@ -110,12 +110,16 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
 - Esqueleto entregue: Vite + TypeScript, login por link mágico, layout com menu lateral, Dashboard, demais módulos "em breve". Verificação local: tipos ok (TypeScript 5.6.3 no Edge, dependências com declarações simplificadas) e 18/18 testes unitários; banco 84/84.
 - Migração 03 (`03_visoes_interface.sql`): `meu_perfil`, `demandas_visiveis` (`pode_gerir`, `pode_mudar_status`, `motivo_acesso`), `reunioes_visiveis`, `solicitacoes_visiveis` (`situacao`, `pode_aprovar`, `pode_revogar`), todas `security_invoker`.
 - Pendente de autorização: `typescript-eslint` e `@eslint/js` (para o ESLint entender TypeScript) e `@electric-sql/pglite` (testes do banco no CI).
+- **Módulo Demandas (30/10/2026):** primeiro módulo migrado. Login testado pelo usuário com o João antes disso.
+  - Banco: migração `04_modulo_demandas.sql` com as visões `projetos_visiveis` (`pode_criar_demanda`), `nucleos_visiveis` (`pode_criar_projeto`), `pessoas_atribuiveis` (mesma regra de `privado.pode_atribuir`) e `demandas_visiveis` refeita (colunas novas no fim: `nucleo_nome`, `excecao_ate`; `pode_mudar_status` falso para executor em demanda concluída). Regra nova em `privado.aplicar_status`: só quem gere reabre demanda concluída (antes o executor podia reabrir e anular os próprios pontos). Banco 104/104.
+  - Site: `src/features/demandas/` (regras puras + testes, dados, componentes, painel, formulários, página), `src/ui/camada.ts` (painel/modal com foco, Esc e véu), `src/styles/componentes.css` e `demandas.css`. Quadro por etapa com busca, filtros e resumo; painel com motivo do acesso, edição completa (quem gere), só status (executor) ou consulta; histórico pela `auditoria`; "Nova demanda" e "Novo projeto" só aparecem se as visões permitirem. Tipos ok e 34/34 testes no Edge; visual conferido com dados fictícios em 1366 e 500 px, claro e escuro.
+  - Verificação local reaproveitável: `%TEMP%\sgi-ts\verificar.ps1 -Projeto <pasta>` (tipos + testes) e `visual.ps1` (telas com Supabase simulado). Pasta temporária: pode sumir.
 
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR, começando por Demandas.
+4. Migrar os módulos na ordem do ADR: Demandas feito (rodar a 04 no Supabase antes de publicar); próximo: Reuniões e atas.
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
