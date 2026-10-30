@@ -13,6 +13,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 | `05_modulo_reunioes.sql` | Para a tela de Reuniões e atas: os públicos em que cada pessoa pode agendar (com quantos seriam convocados) e, em cada reunião, convocados, faltas e se já dá para encerrar. |
 | `06_reuniao_por_pessoas.sql` | Um comando só: cria o público "pessoas escolhidas". **Rode sozinho**, antes do 07. |
 | `08_modulo_acessos.sql` | Para a tela de Autorizações: para quem cada pessoa pode pedir acesso por exceção, quais projetos podem ser pedidos, o nome do que foi pedido e o pedido de aval da Assessoria. |
+| `09_modulo_pontuacao.sql` | Para a tela de Pontuação e ranking: as pessoas cuja pontuação cada um pode ver (com saldo, entregas, faltas e projetos ativos), a linha do tempo de lançamentos e quem pode ajustar ou pedir aval. |
 | `07_assessoria_aval_publico_exclusao.sql` | Assessoria de Presidência com acesso de Presidência, avais (pedidos que a Presidente ou a Vice aprovam), reunião para pessoas escolhidas, diretorias agendando para todos e exclusão de reuniões. |
 | `functions/receber-transcricao/index.ts` | Endereço que vai receber as transcrições do Meet quando a automação estiver pronta. Pode ficar para depois. |
 
@@ -34,7 +35,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 4. Clique em **Run**. Se esquecer algum e-mail, o script avisa e não grava nada.
 5. Abra mais uma query, cole `03_visoes_interface.sql` e clique em **Run**.
 6. Repita com `04_modulo_demandas.sql` e depois com `05_modulo_reunioes.sql`.
-7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql` e, depois, o `08_modulo_acessos.sql`. O Supabase pode avisar de "operações destrutivas" no 07 (ele troca funções e políticas antigas, sem apagar dados).
+7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql` e, depois, o `08_modulo_acessos.sql` e o `09_modulo_pontuacao.sql`. O Supabase pode avisar de "operações destrutivas" no 07 (ele troca funções e políticas antigas, sem apagar dados).
 
 Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `areas` deve ter 5.
 
@@ -75,7 +76,7 @@ A função recebe `titulo`, `inicio` (data e hora com fuso) e `texto`, e vincula
 
 ## Como as regras foram testadas
 
-Os oito scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 192 verificações por perfil (inclui Assessoria, avais, público por pessoas, exclusão de reuniões e arquivos órfãos): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
+Os nove scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 204 verificações por perfil (inclui Assessoria, avais, público por pessoas, exclusão de reuniões, arquivos órfãos e as visões de pontuação): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
 
 Para repetir os testes em qualquer computador Windows com Edge e internet, a partir da pasta do projeto:
 
