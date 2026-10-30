@@ -1,0 +1,1640 @@
+<title>SGI Fácil Consultoria</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: menu lateral fixo (como o modelo de referência) + área de conteúdo clara com cartões; no celular o menu vira gaveta */
+:root{
+  /* paleta oficial Fácil: branco + azul #1479E1; azul-escuro #0B3B73 para textos menores */
+  --bg:#F3F7FC; --surface:#FFFFFF; --surface-2:#EDF3FB; --line:#D5E2F2;
+  --ink:#0B3B73; --ink-2:#34577F; --ink-3:#557292;
+  --accent:#1479E1; --accent-ink:#FFFFFF; --accent-soft:#E2EFFC; --accent-text:#0B3B73;
+  --side-1:#0B3B73; --side-2:#1479E1; --side-ink:#FFFFFF; --side-ink-2:#D3E4F9; --side-hover:rgba(255,255,255,.10); --side-active:rgba(255,255,255,.18); --side-line:rgba(255,255,255,.24);
+  --presex:#6E3B82; --direx:#0B3B73; --gerencia:#86610C; --executor:#2F6B4A; --excecao:#B04D16;
+  --danger:#C02525; --warn:#975A06; --ok:#18794A;
+  --shadow:0 1px 2px rgba(11,59,115,.05),0 8px 24px rgba(11,59,115,.08);
+  --scrim:rgba(6,20,40,.42);
+  --f-body:"Poppins","Segoe UI",system-ui,sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --r:12px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#061428; --surface:#0B1F3A; --surface-2:#10284A; --line:#1C3A63;
+  --ink:#EAF2FD; --ink-2:#B6CAE5; --ink-3:#8BA5C7;
+  --accent:#1479E1; --accent-ink:#FFFFFF; --accent-soft:#11335E; --accent-text:#8CC0F7;
+  --side-1:#061D3B; --side-2:#0B3B73;
+  --presex:#C79BDB; --direx:#8CC0F7; --gerencia:#D9B160; --executor:#7FC49C; --excecao:#F0955E;
+  --danger:#F38A8A; --warn:#E3AE5C; --ok:#6CCB93;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --scrim:rgba(0,0,0,.58);
+  color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#061428; --surface:#0B1F3A; --surface-2:#10284A; --line:#1C3A63;
+  --ink:#EAF2FD; --ink-2:#B6CAE5; --ink-3:#8BA5C7;
+  --accent:#1479E1; --accent-ink:#FFFFFF; --accent-soft:#11335E; --accent-text:#8CC0F7;
+  --side-1:#061D3B; --side-2:#0B3B73;
+  --presex:#C79BDB; --direx:#8CC0F7; --gerencia:#D9B160; --executor:#7FC49C; --excecao:#F0955E;
+  --danger:#F38A8A; --warn:#E3AE5C; --ok:#6CCB93;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  --scrim:rgba(0,0,0,.58);
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.5}
+h1,h2,h3{font-weight:600;letter-spacing:-.01em;text-wrap:balance;margin:0}
+h1{font-size:1.5rem}
+h2{font-size:1.1rem}
+h3{font-size:.95rem}
+p{margin:0}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.mono{font-family:var(--f-mono);font-size:.76rem}
+.eyebrow{font-size:.68rem;text-transform:uppercase;letter-spacing:.09em;font-weight:600;color:var(--accent-text)}
+
+/* ---- estrutura ---- */
+.app{display:grid;grid-template-columns:260px minmax(0,1fr);min-height:100%}
+.lateral{position:sticky;top:0;height:100vh;height:100dvh;overflow-y:auto;background:linear-gradient(180deg,var(--side-2) 0%,var(--side-1) 52%);color:var(--side-ink);display:flex;flex-direction:column;gap:18px;
+  padding:20px 16px 20px max(16px,env(safe-area-inset-left,0px));scrollbar-width:none;-ms-overflow-style:none}
+.lateral::-webkit-scrollbar{display:none}
+html{scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+@media (max-height:760px) and (min-width:901px){.rapidas{display:none}.lateral{gap:12px}.nav button{padding:7px 12px}}
+.marca{display:flex;align-items:center;gap:12px;padding:4px 6px}
+.logo{width:52px;height:auto;fill:currentColor;flex:none}
+.marca strong{display:block;font-weight:400;font-size:1.45rem;letter-spacing:.07em;line-height:1}
+.marca .consult{display:block;font-size:.56rem;letter-spacing:.38em;margin-top:3px}
+.marca small{display:block;color:var(--side-ink);font-size:.72rem;line-height:1.2;margin-top:6px;opacity:.92}
+.quem{padding:12px;border-radius:10px;background:var(--side-hover);display:flex;flex-direction:column;gap:6px}
+.quem strong{font-size:.92rem;line-height:1.3}
+.quem span{color:var(--side-ink-2);font-size:.78rem}
+.quem label{font-size:.66rem;text-transform:uppercase;letter-spacing:.08em;color:var(--side-ink-2);margin-top:4px}
+.quem select{width:100%;background:rgba(255,255,255,.1);border:1px solid var(--side-line);color:var(--side-ink);border-radius:8px;padding:6px 8px;font-size:.8rem}
+.quem select option,.quem select optgroup{color:var(--ink);background:var(--surface)}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{appearance:none;border:0;background:none;color:var(--side-ink-2);text-align:left;padding:9px 12px;border-radius:8px;cursor:pointer;font-weight:500;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.nav button:hover{background:var(--side-hover);color:var(--side-ink)}
+.nav button[aria-current="page"]{background:var(--side-active);color:var(--side-ink)}
+.contador{background:var(--excecao);color:#fff;border-radius:999px;font-size:.68rem;font-weight:600;padding:0 7px;min-width:20px;text-align:center}
+.rapidas{margin-top:auto;border:1px solid var(--side-line);border-radius:10px;padding:12px;font-size:.78rem;color:var(--side-ink-2);display:flex;flex-direction:column;gap:3px}
+.rapidas strong{color:var(--side-ink);font-size:.8rem;margin-bottom:2px}
+.rapidas span b{color:var(--side-ink);font-weight:600;font-variant-numeric:tabular-nums}
+.conteudo{min-width:0;display:flex;flex-direction:column}
+.barra-mob{display:none}
+main{padding:28px max(16px,env(safe-area-inset-right,0px)) 64px 28px;max-width:1320px;width:100%}
+.cab{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;flex-wrap:wrap;margin-bottom:18px}
+.cab .sub{color:var(--ink-3);margin-top:2px;max-width:72ch}
+
+/* ---- controles ---- */
+select,input[type=text],input[type=search],input[type=date],input[type=time],input[type=number],textarea{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 10px;min-width:0;max-width:100%}
+textarea{resize:vertical;min-height:84px;width:100%}
+.btn{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:500;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--ink-3)}
+.btn.prim{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:600}
+.btn.prim:hover{background:var(--side-1);border-color:var(--side-1)}
+.btn.perigo{color:var(--danger);border-color:color-mix(in srgb,var(--danger) 45%,transparent)}
+.btn.peq{padding:5px 10px;font-size:.82rem}
+.btn.largo{width:100%}
+.check{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink-2)}
+.filtros{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.filtros .busca{flex:1 1 220px;min-width:0}
+.filtros .busca input{width:100%}
+.filtros select{flex:0 1 220px}
+.pilulas{display:flex;gap:6px;flex-wrap:wrap}
+.pilula{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:3px 12px;font-size:.78rem;font-weight:500;cursor:pointer;color:var(--ink-2)}
+.pilula[aria-pressed="true"]{background:var(--side-1);border-color:var(--side-1);color:#fff}
+
+/* ---- chips ---- */
+.chip{--c:var(--ink-3);display:inline-flex;align-items:center;gap:4px;font-size:.7rem;font-weight:600;padding:1px 8px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 12%,transparent);border:1px solid color-mix(in srgb,var(--c) 28%,transparent);white-space:nowrap;line-height:1.5}
+.chip.presex{--c:var(--presex)} .chip.diretoria{--c:var(--direx)} .chip.gerencia{--c:var(--gerencia)} .chip.executor{--c:var(--executor)} .chip.excecao{--c:var(--excecao)}
+.chip.p-alta{--c:var(--danger)} .chip.p-media{--c:var(--warn)} .chip.p-baixa{--c:var(--ink-3)}
+.chip.s-pendente{--c:var(--warn)} .chip.s-aprovada,.chip.ok{--c:var(--ok)} .chip.s-negada,.chip.ruim{--c:var(--danger)} .chip.s-revogada,.chip.s-expirada{--c:var(--ink-3)}
+.chip.restrito{--c:var(--presex);border-style:dashed}
+.chip.vaga{--c:var(--warn);border-style:dashed}
+.chip.exemplo{--c:var(--ink-3);font-weight:500}
+
+/* ---- cartões e grades ---- */
+.bloco{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:18px;min-width:0}
+.bloco>h2{margin-bottom:12px}
+.grade{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px}
+.duas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.meta{color:var(--ink-3);font-size:.8rem}
+.linha{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vazio{color:var(--ink-3);padding:16px;border:1px dashed var(--line);border-radius:var(--r);text-align:center}
+.secao{margin-top:26px}
+.secao>h2{margin-bottom:10px}
+.secao>.sub{color:var(--ink-3);margin:-6px 0 12px}
+.barra{height:6px;border-radius:99px;background:var(--surface-2);overflow:hidden;margin:12px 0 6px}
+.barra i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.aviso{background:var(--accent-soft);border-radius:var(--r);padding:12px 16px;color:var(--ink-2);margin-bottom:16px;font-size:.88rem}
+.aviso strong{color:var(--ink)}
+
+/* números do painel */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:14px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:2px;min-width:0}
+.kpi span{color:var(--ink-3);font-size:.78rem}
+.kpi b{font-size:1.6rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.2;color:var(--accent)}
+.kpi small{color:var(--ink-3);font-size:.76rem}
+.kpi.alerta b{color:var(--danger)}
+.itens{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.itens li{border-bottom:1px solid var(--line)}
+.itens li:last-child{border-bottom:0}
+.item{appearance:none;background:none;border:0;width:100%;text-align:left;padding:10px 0;display:flex;gap:10px;align-items:flex-start;justify-content:space-between;cursor:pointer}
+.item:hover .item-tit{color:var(--accent-text);text-decoration:underline}
+.item-tit{font-weight:500;overflow-wrap:anywhere}
+.item div{min-width:0}
+.item .lado{text-align:right;flex:none;font-size:.8rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.item .lado.atrasada{color:var(--danger);font-weight:600}
+.pts{font-weight:600;font-variant-numeric:tabular-nums}
+.pts.pos{color:var(--ok)} .pts.neg{color:var(--danger)}
+
+/* quadro de demandas */
+.resumo{display:flex;flex-wrap:wrap;gap:6px 18px;color:var(--ink-2);margin-bottom:14px;font-variant-numeric:tabular-nums}
+.resumo b{color:var(--ink);font-weight:600}
+.resumo .alerta b{color:var(--danger)}
+.quadro{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.coluna{background:color-mix(in srgb,var(--surface-2) 70%,var(--bg));border:1px solid var(--line);border-radius:var(--r);padding:10px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.coluna-cab{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 4px;font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600;color:var(--ink-2)}
+.coluna-cab span:last-child{font-variant-numeric:tabular-nums;color:var(--ink-3)}
+.vazio-col{color:var(--ink-3);font-size:.82rem;padding:8px 4px}
+.card{appearance:none;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;cursor:pointer;display:flex;flex-direction:column;gap:5px;min-width:0}
+.card:hover{border-color:var(--accent)}
+.card.restrita{border-style:dashed;border-color:color-mix(in srgb,var(--presex) 55%,transparent)}
+.card-top{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.card-top .mono{color:var(--ink-3)}
+.card-tit{font-weight:600;line-height:1.3;overflow-wrap:anywhere}
+.card-proj{color:var(--ink-3);font-size:.78rem;overflow-wrap:anywhere}
+.card-pe{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.prazo{font-size:.76rem;color:var(--ink-2);font-variant-numeric:tabular-nums}
+.prazo.atrasada{color:var(--danger);font-weight:600}
+.avatares{display:flex;margin-left:auto}
+.av{width:24px;height:24px;border-radius:50%;background:var(--accent-soft);border:2px solid var(--surface);display:grid;place-items:center;font-size:.6rem;font-weight:600;color:var(--accent-text);margin-left:-6px;flex:none}
+.av:first-child{margin-left:0}
+
+/* pontuações (padrão do modelo: grade de membros + painel em 3 colunas) */
+.membros{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.membro{appearance:none;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;min-width:0}
+.membro:hover{border-color:var(--accent)}
+.membro[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent)}
+.membro strong{font-size:.86rem;line-height:1.3;overflow-wrap:anywhere}
+.membro .pts{font-size:.8rem;color:var(--ink-2);font-weight:500}
+.membro .meta{font-size:.74rem}
+.detalhe{margin-top:16px;background:var(--surface);border:1px solid var(--line);border-top:3px solid var(--accent);border-radius:var(--r);padding:20px;display:grid;grid-template-columns:minmax(180px,.8fr) minmax(0,1.6fr) minmax(220px,1fr);gap:24px}
+.resumo-membro dl{margin:8px 0 0;display:flex;flex-direction:column;gap:6px}
+.resumo-membro dt{color:var(--ink-3);font-size:.78rem}
+.resumo-membro dd{margin:0 0 4px;font-weight:600;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.resumo-membro dd.grande{font-size:1.5rem;line-height:1.1;color:var(--accent)}
+.tempo{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}
+.lanc{border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:4px}
+.lanc.neg{border-left-color:var(--danger)}
+.lanc.desc{opacity:.62;border-left-color:var(--ink-3)}
+.lanc-cab{display:flex;justify-content:space-between;gap:8px;align-items:baseline}
+.lanc-cab strong{font-size:.86rem}
+.lanc p{overflow-wrap:anywhere}
+.lanc .desconsiderar{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.lanc .desconsiderar input{flex:1 1 160px;font-size:.8rem;padding:6px 8px}
+
+/* reuniões */
+.reuniao{appearance:none;text-align:left;width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;cursor:pointer;display:grid;grid-template-columns:64px minmax(0,1fr) auto;gap:14px;align-items:center}
+.reuniao:hover{border-color:var(--accent)}
+.data-bloco{border-radius:10px;background:var(--accent-soft);color:var(--accent-text);text-align:center;padding:6px 0;line-height:1.15}
+.data-bloco b{display:block;font-size:1.3rem;font-weight:600}
+.data-bloco span{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.lista{display:flex;flex-direction:column;gap:10px}
+.presenca{display:grid;grid-template-columns:minmax(0,1fr) 170px;gap:8px;align-items:center;padding:6px 0;border-bottom:1px solid var(--line)}
+.presenca:last-child{border-bottom:0}
+.ata{white-space:pre-wrap;background:var(--surface-2);border-radius:8px;padding:12px;font-size:.88rem;color:var(--ink-2)}
+
+/* organograma */
+.av.g{width:34px;height:34px;font-size:.72rem;border:0;margin:0}
+.av.ex{background:transparent;border:1.5px dashed var(--ink-3);color:var(--ink-3)}
+.legenda{display:flex;gap:18px;flex-wrap:wrap;color:var(--ink-3);font-size:.8rem;margin-bottom:22px;align-items:center}
+.legenda>span{display:inline-flex;gap:8px;align-items:center}
+.orgchart{display:flex;flex-direction:column;align-items:center}
+.topo-org{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;width:100%}
+.topo-org>.no{grid-column:2}
+.staff{display:flex;align-items:center;justify-self:start}
+.staff::before{content:"";width:32px;border-top:1px dashed var(--ink-3)}
+.no{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px 16px;display:flex;align-items:center;gap:10px;min-width:0}
+.no.raiz{border-top:3px solid var(--accent);box-shadow:var(--shadow);padding:14px 22px}
+.no.vago{border-style:dashed;background:transparent}
+.no-txt{min-width:0}
+.no-txt b{display:block;font-weight:600;font-size:.9rem;line-height:1.3}
+.no-txt span{display:block;color:var(--ink-3);font-size:.78rem;overflow-wrap:anywhere}
+.tronco{width:1px;height:26px;background:var(--line)}
+.ramos{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;width:100%;position:relative;padding-top:26px}
+.ramos::before{content:"";position:absolute;top:0;left:12.5%;right:12.5%;border-top:1px solid var(--line)}
+.ramo{display:flex;flex-direction:column;gap:10px;position:relative;min-width:0}
+.ramo::before{content:"";position:absolute;top:-26px;left:50%;height:26px;border-left:1px solid var(--line)}
+.ramo>.no{border-top:3px solid var(--accent)}
+.ramo>.no.vago{border-top:3px dashed var(--accent)}
+.grupo-org{border-left:2px solid var(--line);padding:4px 0 4px 12px;margin-left:12px}
+.grupo-org h3{font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);font-weight:600;margin-bottom:6px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.gente{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.gente li{display:flex;align-items:center;gap:8px;font-size:.86rem;min-width:0}
+.gente li span{overflow-wrap:anywhere;min-width:0}
+.gente small{color:var(--ink-3);font-size:.74rem}
+@media (max-width:1100px){.ramos{grid-template-columns:repeat(2,minmax(0,1fr))}.ramos::before,.ramo::before{display:none}}
+@media (max-width:640px){.ramos{grid-template-columns:minmax(0,1fr)}.topo-org{grid-template-columns:minmax(0,1fr);gap:10px}.topo-org>.no{grid-column:1}.staff{justify-self:stretch}.staff::before{display:none}.staff .no{width:100%}}
+
+/* anexos e transcrição */
+.bloco-reu{display:flex;flex-direction:column;gap:8px}
+.bloco-reu>.linha{justify-content:space-between}
+.anexos{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.anexo{border:1px solid var(--line);border-radius:10px;padding:10px 12px;display:grid;grid-template-columns:42px minmax(0,1fr) auto;gap:10px;align-items:center}
+.ext{width:42px;height:42px;border-radius:8px;background:var(--accent-soft);color:var(--accent-text);display:grid;place-items:center;font-size:.66rem;font-weight:700;letter-spacing:.04em}
+.anexo b{display:block;font-weight:500;font-size:.88rem;overflow-wrap:anywhere}
+.anexo .acoes{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.previa{grid-column:1 / -1;border-top:1px dashed var(--line);padding-top:10px}
+.previa img{display:block;max-width:100%;max-height:320px;border-radius:8px}
+.previa pre{white-space:pre-wrap;font-size:.8rem;max-height:260px;overflow:auto;background:var(--surface-2);padding:10px;border-radius:8px;margin:0}
+.soltar{display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px dashed var(--line);border-radius:10px;padding:16px;text-align:center;cursor:pointer;color:var(--ink-2);font-size:.86rem}
+.soltar:hover,.soltar.sobre{border-color:var(--accent);background:var(--accent-soft)}
+.soltar u{color:var(--accent-text)}
+.soltar span{color:var(--ink-3);font-size:.76rem}
+details>summary{cursor:pointer;color:var(--accent-text);font-weight:500;font-size:.86rem}
+details[open]>summary{margin-bottom:8px}
+.integracao{display:flex;gap:12px;align-items:flex-start}
+.integracao .ponto{width:10px;height:10px;border-radius:50%;background:var(--warn);margin-top:6px;flex:none}
+
+/* acessos */
+.pedido{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.pedido.pendente{border-color:color-mix(in srgb,var(--warn) 50%,transparent)}
+.pedido-cab{display:flex;justify-content:space-between;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.pedido q{color:var(--ink-2);quotes:"“" "”"}
+.pedido .nota{font-size:.85rem;color:var(--ink-2);border-left:2px solid var(--line);padding-left:10px}
+.decidir{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:10px}
+.decidir textarea{min-height:56px}
+.auditoria{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
+.auditoria li{display:grid;grid-template-columns:110px minmax(0,1fr);gap:12px;padding:9px 0;border-bottom:1px solid var(--line)}
+.auditoria time{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:.8rem}
+
+/* tabelas */
+.tab-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:680px}
+th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.7rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);font-weight:600;background:var(--surface-2)}
+tr:last-child td{border-bottom:0}
+td.num,th.num{font-variant-numeric:tabular-nums;text-align:right}
+tr.eu td{background:var(--accent-soft)}
+.posicao{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--surface-2);font-weight:600;font-variant-numeric:tabular-nums}
+.posicao.top{background:var(--accent);color:#fff}
+.mini{display:inline-block;height:6px;border-radius:99px;background:var(--accent);vertical-align:middle;margin-left:8px}
+.regras{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px;max-width:72ch;color:var(--ink-2)}
+.regras strong{color:var(--ink)}
+.cfg{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+
+/* painel lateral e modal */
+.veu{position:fixed;inset:0;background:var(--scrim);z-index:40}
+.painel{position:fixed;top:0;right:0;bottom:0;width:min(540px,100%);background:var(--surface);z-index:41;box-shadow:var(--shadow);display:flex;flex-direction:column;
+  padding-top:env(safe-area-inset-top,0px);padding-right:env(safe-area-inset-right,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+.painel-cab{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 20px;border-bottom:1px solid var(--line)}
+.painel-corpo{overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:18px}
+.fechar{appearance:none;border:1px solid var(--line);background:var(--surface);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:1.1rem;line-height:1;flex:none}
+.porque{background:var(--surface-2);border-radius:8px;padding:10px 12px;color:var(--ink-2);font-size:.86rem}
+.porque strong{color:var(--ink)}
+.dl{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px 12px;margin:0}
+.dl dt{color:var(--ink-3);font-size:.8rem}
+.dl dd{margin:0;overflow-wrap:anywhere}
+.form{display:flex;flex-direction:column;gap:12px}
+.form label,.form legend{font-size:.76rem;font-weight:600;color:var(--ink-2);display:block;margin-bottom:4px}
+.form input[type=text],.form input[type=date],.form input[type=time],.form input[type=number],.form select{width:100%}
+.dois{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+fieldset{border:1px solid var(--line);border-radius:8px;padding:8px 12px 10px;margin:0;min-width:0}
+.picker{max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:2px}
+.picker .grupo{font-size:.68rem;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3);margin:8px 0 2px;font-weight:600}
+.picker .grupo:first-child{margin-top:0}
+.picker label{display:flex;align-items:center;gap:8px;font-size:.88rem;font-weight:400;color:var(--ink);margin:0;padding:3px 0;cursor:pointer}
+.picker label span{color:var(--ink-3);font-size:.76rem}
+.erro{color:var(--danger);font-size:.84rem}
+.dica{color:var(--ink-3);font-size:.8rem}
+.somente-leitura{border:1px dashed var(--line);border-radius:8px;padding:10px 12px;color:var(--ink-2);font-size:.86rem}
+.hist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.hist li{font-size:.84rem;color:var(--ink-2);display:flex;gap:10px}
+.hist time{color:var(--ink-3);font-variant-numeric:tabular-nums;flex:none;width:88px}
+.radios{display:flex;gap:16px;flex-wrap:wrap}
+.radios label{display:flex;align-items:center;gap:6px;font-weight:500;color:var(--ink);margin:0;font-size:.88rem}
+.modal{position:fixed;z-index:41;left:50%;top:50%;transform:translate(-50%,-50%);width:min(560px,calc(100% - 32px));max-height:calc(100% - 48px);background:var(--surface);border-radius:14px;box-shadow:var(--shadow);display:flex;flex-direction:column}
+.modal-pe{display:flex;justify-content:flex-end;gap:8px;padding:12px 20px;border-top:1px solid var(--line)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;z-index:60;font-weight:500;box-shadow:var(--shadow);max-width:calc(100% - 32px)}
+.toast.erro-t{background:var(--danger);color:#fff}
+
+@media (max-width:1180px){
+  .detalhe{grid-template-columns:minmax(0,1fr) minmax(0,1.5fr)}
+  .detalhe .ajuste{grid-column:1 / -1}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .quadro{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media (max-width:900px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .lateral{position:fixed;inset:0 auto 0 0;width:min(290px,86vw);height:auto;z-index:45;transform:translateX(-102%);transition:transform .2s ease;padding-top:calc(20px + env(safe-area-inset-top,0px));padding-bottom:calc(20px + env(safe-area-inset-bottom,0px))}
+  .app.menu-aberto .lateral{transform:none;box-shadow:var(--shadow)}
+  .veu-menu{position:fixed;inset:0;background:var(--scrim);z-index:44}
+  body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--side-1)}
+  .barra-mob{display:flex;align-items:center;gap:12px;position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--side-1);color:var(--side-ink);
+    padding:10px max(16px,env(safe-area-inset-right,0px)) 10px max(16px,env(safe-area-inset-left,0px))}
+  .barra-mob button{appearance:none;background:var(--side-hover);border:1px solid var(--side-line);color:var(--side-ink);border-radius:8px;padding:6px 12px;cursor:pointer;font-weight:500}
+  .barra-mob strong{font-weight:600}
+  main{padding:20px max(16px,env(safe-area-inset-right,0px)) 64px max(16px,env(safe-area-inset-left,0px))}
+  .detalhe{grid-template-columns:minmax(0,1fr)}
+  .duas{grid-template-columns:minmax(0,1fr)}
+}
+@media (max-width:560px){
+  .anexo{grid-template-columns:42px minmax(0,1fr)}
+  .anexo .acoes{grid-column:1 / -1;justify-content:flex-start}
+  .quadro{grid-template-columns:minmax(0,1fr)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dois{grid-template-columns:1fr}
+  .dl{grid-template-columns:1fr;gap:2px}
+  .dl dd{margin-bottom:8px}
+  .auditoria li{grid-template-columns:1fr;gap:2px}
+  .reuniao{grid-template-columns:54px minmax(0,1fr)}
+  .reuniao>.chip{grid-column:2;justify-self:start}
+  .presenca{grid-template-columns:1fr}
+  h1{font-size:1.3rem}
+}
+@media (prefers-reduced-motion:reduce){.lateral{transition:none}}
+</style>
+
+<div class="app" id="app">
+  <aside class="lateral" id="lateral" aria-label="Menu principal">
+    <div class="marca">
+      <svg class="logo" viewBox="330 205 420 290" aria-hidden="true"><circle cx="540" cy="256" r="43"/><path d="M452 279 536 319 536 391 452 351Z M543 319 627 279 627 351 543 391Z M338 320 536 413 536 486 338 392Z M543 413 741 320 741 392 543 486Z"/></svg>
+      <div><strong>FÁCIL</strong><span class="consult">CONSULTORIA</span><small>Sistema de Gestão Interna</small></div>
+    </div>
+    <div class="quem" id="quem"></div>
+    <nav class="nav" id="nav"></nav>
+    <div class="rapidas" id="rapidas"></div>
+  </aside>
+  <div class="conteudo">
+    <div class="barra-mob"><button type="button" data-acao="menu" aria-controls="lateral">Menu</button><strong id="titulo-mob">SGI</strong></div>
+    <main id="main"></main>
+  </div>
+</div>
+<div id="camada"></div>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+
+<script>
+/* ---------- datas e utilidades ---------- */
+const pad = n => String(n).padStart(2,'0');
+const isoLocal = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+const HOJE = (()=>{ const d = new Date(); d.setHours(0,0,0,0); return d; })();
+const hojeISO = isoLocal(HOJE);
+const dia = n => { const d = new Date(HOJE); d.setDate(d.getDate()+n); return isoLocal(d); };
+const ha = (dias,h) => { const d = new Date(HOJE); d.setDate(d.getDate()-dias); d.setHours(h, (dias*7)%60); return d.toISOString(); };
+const fmtData = s => { const [y,m,d] = s.split('-'); return `${d}/${m}/${y}`; };
+const fmtCurta = s => { const [,m,d] = s.split('-'); return `${d}/${m}`; };
+const fmtHora = s => { const d = new Date(s); return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}); };
+const MESES = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const iniciais = nome => nome.split(' ').filter(Boolean).map(p=>p[0]).slice(0,2).join('').toUpperCase();
+const novoId = p => p + Math.random().toString(36).slice(2,8);
+const sinal = v => v>0 ? '+'+v : String(v).replace('-','−');
+
+const PAPEIS = {presidente:'Presidência', diretor:'Diretoria', gerente:'Gerência', assessor:'Assessoria', membro:'Membro'};
+const STATUS = [['afazer','A fazer'],['andamento','Em andamento'],['revisao','Em revisão'],['concluida','Concluída']];
+const STATUS_NOME = Object.fromEntries(STATUS);
+const PRIORIDADE = {alta:'Alta', media:'Média', baixa:'Baixa'};
+const ACESSO_NOME = {presex:'Presidência', diretoria:'Diretoria', gerencia:'Núcleo', executor:'Executor', excecao:'Exceção'};
+const TIPO_LANC = {demanda:'Demanda', evento:'Evento', falta:'Falta', ajuste:'Ajuste'};
+const PRESENCA = {presente:'Presente', justificada:'Falta justificada', falta:'Falta'};
+const CHAVE = 'sgi-facil-prototipo-v4';
+const LIMITE_ANEXO = 1024*1024; // protótipo guarda no navegador; a versão online usa armazenamento de arquivos
+const fmtTam = b => b<1024 ? b+' B' : b<1048576 ? Math.round(b/1024)+' KB' : (b/1048576).toFixed(1).replace('.',',')+' MB';
+const extArq = (nome,tipo) => { const e = (nome.split('.').pop()||'').toUpperCase(); return e.length<=4 && e!==nome.toUpperCase() ? e : (tipo.split('/')[1]||'ARQ').slice(0,4).toUpperCase(); };
+const ORIGEM = {manual:'Envio manual', meet:'Google Meet'};
+
+/* ---------- dados: estrutura Fácil 27 (documento "Funções e Responsabilidades") ---------- */
+function semente(){
+  const config = {pontosIniciais:10, entregaNoPrazo:2, entregaAtrasada:1, falta:-2, faltaJustificada:0, rankingPublico:true};
+  // exemplo:true = pessoa fictícia, até o processo seletivo preencher a vaga ou o time
+  const u = (id,nome,papel,diretoria,gerencia,curso,extra={}) => ({id,nome,papel,diretoria:diretoria||null,gerencia:gerencia||null,curso:curso||null,...extra});
+  const usuarios = [
+    u('u1','Presidente','presidente','pres',null,null),
+    u('u2','Victor','diretor','com',null,null,{diretorias:['com','proj']}),
+    u('u3','Emilli','diretor','adm',null,null,{diretorias:['adm']}),
+    u('u4','Duda','gerente','com','com-mkt',null),
+    u('u5','Heitor Lacerda','assessor','pres','pres-ass','Administração',{exemplo:true}),
+    u('u6','Ana Ferraz','membro','proj','proj-cli','Administração',{exemplo:true}),
+    u('u7','Lucas Pires','membro','proj','proj-cli','Administração',{exemplo:true}),
+    u('u8','Diego Martins','membro','proj','proj-cli','Economia',{exemplo:true}),
+    u('u9','Paula Gomes','membro','proj','proj-cli','Ciências Contábeis',{exemplo:true}),
+    u('u10','Camila Rocha','membro','com','com-mkt','Administração',{exemplo:true}),
+    u('u11','Bruno Teixeira','membro','com','com-mkt','Economia',{exemplo:true}),
+    u('u12','Pedro Alves','membro','adm','adm-gg','Administração',{exemplo:true}),
+    u('u13','Marina Souza','membro','adm','adm-gg','Ciências Contábeis',{exemplo:true}),
+  ];
+  const diretorias = [
+    {id:'pres', titulo:'Presidência', sigla:'PRE', titular:'u1', nota:'Representa a Fácil, define estratégia e metas, coordena as diretorias Comercial e Administrativa e lidera ENEJ e EDL.'},
+    {id:'com', titulo:'Diretoria Comercial', sigla:'COM', titular:'u2', nota:'Prospecção, relacionamento com clientes, Instagram Comercial e portfólio de serviços.'},
+    {id:'proj', titulo:'Diretoria de Projetos', sigla:'PRJ', titular:null, cobertura:'u2', nota:'Vaga. A Diretoria Comercial assume entregas, cronograma e qualidade dos serviços.'},
+    {id:'adm', titulo:'Diretoria Administrativa', sigla:'ADM', titular:'u3', nota:'Processos internos, documentação, conformidade com o MEJ e liderança de Gente e Gestão. Escopo ainda em definição.'},
+    {id:'fin', titulo:'Diretoria Financeira', sigla:'FIN', titular:null, cobertura:'u1', nota:'Vaga. A Presidência assume fluxo de caixa, gastos, prestação de contas e orçamento, com apoio da Administrativa.'},
+  ];
+  const gerencias = [
+    {id:'pres-ass', nome:'Assessoria de Presidência', diretoria:'pres', vaga:true, nota:'Agenda, atas e comunicação institucional. PS em andamento.'},
+    {id:'pres-gab', nome:'Gabinete da Presidência', diretoria:'pres'},
+    {id:'com-cap', nome:'Captação e clientes', diretoria:'com'},
+    {id:'com-mkt', nome:'Marketing', diretoria:'com', nota:'Calendário do Instagram Comercial, peças visuais e métricas. Time de Marketing depende do PS.'},
+    {id:'proj-cli', nome:'Entregas aos clientes', diretoria:'proj'},
+    {id:'adm-proc', nome:'Processos internos', diretoria:'adm'},
+    {id:'adm-gg', nome:'Gente e Gestão', diretoria:'adm', vaga:true, nota:'Liderança em aberto: PS, integração, desempenho e capacitações.'},
+    {id:'fin-cx', nome:'Caixa e prestação de contas', diretoria:'fin'},
+  ];
+  const projetos = [
+    {id:'p1', nome:'Representação e movimento EJ', cliente:'ENEJ e EDL', gerencia:'pres-gab', restrito:false},
+    {id:'p2', nome:'Planejamento estratégico 2027', cliente:'Interno · Presidência', gerencia:'pres-gab', restrito:true},
+    {id:'p3', nome:'Captação de clientes', cliente:'Comércio local', gerencia:'com-cap', restrito:false},
+    {id:'p4', nome:'Instagram Comercial', cliente:'Calendário de conteúdo', gerencia:'com-mkt', restrito:false},
+    {id:'p5', nome:'Mapeamento de processos', cliente:'Padaria Trigo Bom', gerencia:'proj-cli', restrito:false},
+    {id:'p6', nome:'Planejamento tributário', cliente:'Ateliê Lume', gerencia:'proj-cli', restrito:false},
+    {id:'p7', nome:'Estudo de viabilidade', cliente:'Coworking Centro', gerencia:'proj-cli', restrito:false},
+    {id:'p8', nome:'Documentação e conformidade', cliente:'Interno', gerencia:'adm-proc', restrito:false},
+    {id:'p9', nome:'Processo seletivo 2027', cliente:'Interno', gerencia:'adm-gg', restrito:false},
+    {id:'p10', nome:'Caixa e orçamento', cliente:'Interno', gerencia:'fin-cx', restrito:false},
+  ];
+  // [código, projeto, título, executores, status, prioridade, prazo (dias), descrição, criada por, restrita, dias de atraso na conclusão]
+  const T = [
+    ['PRE-001','p1','Inscrever a delegação no ENEJ',['u1','u5'],'andamento','alta',10,'Lista de participantes, lotes e orçamento da viagem.','u1'],
+    ['PRE-002','p1','Calendário institucional de novembro',['u5'],'revisao','media',-1,'Reuniões gerais, eventos do MEJ e prazos da Presidência.','u1'],
+    ['PRE-003','p2','Definir metas gerais de 2027',['u1'],'andamento','alta',13,'Metas e indicadores por diretoria.','u1'],
+    ['PRE-004','p2','Avaliar quem cobre a Presidência na ausência do titular',['u1'],'afazer','alta',20,'Não há Vice-Presidência na estrutura 2027.','u1'],
+    ['COM-101','p3','Prospectar 20 empresas do comércio local',['u2'],'andamento','alta',4,'Lista com porte, segmento e contato do responsável.','u2'],
+    ['COM-102','p3','Definir pacotes e preços do portfólio',['u2'],'afazer','media',12,'Escopo dos pacotes e precificação, com a Presidência.','u2'],
+    ['COM-103','p3','Diagnóstico inicial com a Padaria Trigo Bom',['u2'],'concluida','alta',-16,'Primeiro contato e levantamento de necessidades.','u2'],
+    ['COM-201','p4','Calendário de conteúdo de novembro',['u4'],'revisao','alta',-1,'Meta de 2 a 3 posts por semana no Instagram Comercial.','u2'],
+    ['COM-202','p4','Carrossel: o que faz uma empresa júnior',['u10'],'andamento','media',3,'Peça com a identidade visual: azul, pantera negra, tom profissional.','u4'],
+    ['COM-203','p4','Relatório de engajamento de outubro',['u11'],'afazer','baixa',6,'Alcance, salvamentos e contatos vindos das redes.','u4'],
+    ['COM-204','p4','Modelos de post com a identidade visual',['u10','u11'],'concluida','media',-8,'Templates de feed e stories.','u4'],
+    ['PRJ-101','p5','Entrevistar equipe de produção',['u6'],'concluida','alta',-14,'Roteiro semiestruturado com os dois turnos.','u2'],
+    ['PRJ-102','p5','Desenhar fluxo AS-IS em BPMN',['u6','u7'],'andamento','alta',2,'Fluxo da produção ao balcão, com tempos por etapa.','u2'],
+    ['PRJ-103','p6','Comparar Simples Nacional e Lucro Presumido',['u9'],'andamento','alta',5,'Simulação com faturamento projetado para 2027.','u2'],
+    ['PRJ-104','p6','Revisar enquadramento de CNAE',['u9'],'revisao','baixa',-3,'Atividade principal e secundárias.','u2'],
+    ['PRJ-105','p7','Projeção de receitas (cenário base)',['u8'],'andamento','alta',8,'Ocupação média de 65% no primeiro ano.','u2'],
+    ['PRJ-106','p7','Calcular VPL e TIR',['u8','u7'],'afazer','alta',17,'Taxa mínima de atratividade definida com o cliente.','u2'],
+    ['PRJ-107','p7','Levantar custos de reforma',['u8'],'concluida','media',-10,'Três orçamentos de obra e mobiliário.','u2',false,2],
+    ['PRJ-108','p5','Cronograma de entregas dos três clientes',['u2'],'afazer','media',7,'Controle de prazos e qualidade herdado da Diretoria de Projetos.','u2'],
+    ['ADM-101','p8','Padronizar modelos de documentos',['u3'],'andamento','media',9,'Atas, contratos e relatórios com o mesmo padrão.','u3'],
+    ['ADM-102','p8','Checklist de conformidade com o MEJ',['u3'],'afazer','media',20,'Requisitos de federação e certificações.','u3'],
+    ['ADM-201','p9','Publicar edital do PS de Marketing',['u12'],'concluida','alta',-18,'Edital aprovado pela Presidência.','u3'],
+    ['ADM-202','p9','Organizar dinâmicas do PS',['u13'],'afazer','media',21,'Duas turmas, sala do campus reservada.','u3'],
+    ['ADM-203','p9','Entrevistas finais do PS',['u1','u12'],'afazer','alta',12,'Conduzidas pela Presidência com Gente e Gestão.','u3'],
+    ['ADM-204','p9','Trilha de integração dos aprovados',['u13'],'andamento','media',9,'Cultura, rotinas e ferramentas da empresa.','u3'],
+    ['FIN-101','p10','Conciliar caixa de outubro',['u1'],'andamento','alta',3,'Entradas de honorários e saídas operacionais.','u1'],
+    ['FIN-102','p10','Orçamento de 2027',['u1','u3'],'afazer','alta',15,'A Administrativa apoia, sem ser a responsável principal.','u1'],
+    ['FIN-103','p10','Prestação de contas do 3º trimestre',['u1'],'revisao','media',0,'Resultado, caixa e inadimplência.','u1'],
+  ];
+  const tarefas = T.map(([codigo,projeto,titulo,executores,status,prioridade,prazo,descricao,criadoPor,restrito,atraso]) => {
+    const t = {id:'t-'+codigo, codigo, projeto, titulo, executores, status, prioridade, prazo:dia(prazo), descricao, criadoPor, restrito:!!restrito};
+    if (status==='concluida') t.concluidaEm = dia(prazo + (atraso||0));
+    return t;
+  });
+  const lancamentos = [];
+  const L = (membro,tipo,descricao,data,valor,criadoPor,extra={}) => lancamentos.push({id:novoId('l'), membro, tipo, descricao, data, valor, criadoPor, criadoEm:new Date(data+'T12:00:00').toISOString(), desc:null, ...extra});
+  tarefas.filter(t => t.status==='concluida').forEach(t => {
+    const ok = t.concluidaEm <= t.prazo;
+    t.executores.forEach(m => L(m,'demanda', ok?'Entrega no prazo':'Entrega com atraso', t.concluidaEm, ok?config.entregaNoPrazo:config.entregaAtrasada, t.criadoPor, {tarefa:t.id}));
+  });
+  const todos = usuarios.map(x => x.id);
+  const presencaGeral = Object.fromEntries(todos.map(id => [id,'presente']));
+  Object.assign(presencaGeral, {u7:'falta', u11:'falta', u9:'justificada'});
+  const doProj = usuarios.filter(x => x.diretoria==='proj' || (x.diretorias||[]).includes('proj')).map(x => x.id);
+  const reunioes = [
+    {id:'m1', titulo:'Reunião geral de outubro', data:dia(-6), hora:'19:00', escopo:{tipo:'geral'}, pauta:'Estrutura 2027, processo seletivo e calendário do MEJ.', convocados:todos, presencas:presencaGeral, encerrada:true, criadoPor:'u5',
+      ata:'1. Apresentada a estrutura 2027: sem Vice-Presidência; Comercial cobre Projetos e Presidência cobre Financeiro.\n2. PS de Marketing com edital publicado.\n3. Delegação do ENEJ em montagem.\nEncaminhamento: Administrativa envia proposta de escopo até a reunião de novembro.', ataPor:'u5',
+      transcricao:{origem:'meet', em:ha(6,21), exemplo:true, texto:'[00:00] Presidência: Boa noite. Vamos começar pela estrutura de 2027.\n[00:02] Presidência: Não teremos Vice-Presidência. A Diretoria Comercial assume Projetos e a Presidência fica com o Financeiro.\n[00:06] Diretoria Comercial: Para os clientes nada muda; o cronograma de entregas passa a ser acompanhado pela Comercial.\n[00:10] Diretoria Administrativa: O edital do PS de Marketing está publicado. Inscrições até o fim do mês.\n[00:15] Marketing: Precisamos de pelo menos duas pessoas no time para manter três posts por semana.\n[00:19] Presidência: Encaminhamento: a Administrativa traz a proposta de escopo na reunião de novembro.'},
+      anexos:[
+        {id:'f1', nome:'Estrutura 2027 - apresentação.pdf', tipo:'application/pdf', tamanho:842000, dataUrl:null, origem:'manual', por:'u5', em:ha(6,18)},
+        {id:'f2', nome:'Encaminhamentos.txt', tipo:'text/plain', tamanho:214, origem:'manual', por:'u5', em:ha(6,22),
+          dataUrl:'data:text/plain;charset=utf-8,'+encodeURIComponent('Encaminhamentos da reunião geral de outubro\n\n- Administrativa: proposta de escopo até a reunião de novembro.\n- Comercial: cronograma único dos três clientes.\n- Presidência: lista da delegação do ENEJ.')},
+      ]},
+    {id:'m2', titulo:'Status das entregas aos clientes', data:dia(-2), hora:'18:30', escopo:{tipo:'diretoria', id:'proj'}, pauta:'Andamento dos três clientes e gargalos de prazo.', convocados:doProj, presencas:Object.fromEntries(doProj.map(id => [id, id==='u8'?'falta':'presente'])), encerrada:true, criadoPor:'u2',
+      ata:'Padaria Trigo Bom e Ateliê Lume dentro do prazo. CNAE do Ateliê com atraso; Paula entrega até sexta.', ataPor:'u2'},
+    {id:'m3', titulo:'Pauta de conteúdo de novembro', data:dia(2), hora:'17:00', escopo:{tipo:'gerencia', id:'com-mkt'}, pauta:'Temas dos posts e divisão de peças.', convocados:usuarios.filter(x => x.gerencia==='com-mkt').map(x => x.id), presencas:{}, encerrada:false, criadoPor:'u4', ata:''},
+    {id:'m4', titulo:'Reunião da Presidência: planejamento 2027', data:dia(4), hora:'20:00', escopo:{tipo:'presex'}, pauta:'Metas gerais e cobertura da Presidência na ausência do titular.', convocados:['u1','u5'], presencas:{}, encerrada:false, criadoPor:'u1', ata:''},
+    {id:'m5', titulo:'Reunião geral de novembro', data:dia(9), hora:'19:00', escopo:{tipo:'geral'}, pauta:'Metas de 2027 e escopo da Diretoria Administrativa.', convocados:todos, presencas:{}, encerrada:false, criadoPor:'u5', ata:''},
+  ];
+  reunioes.filter(r => r.encerrada).forEach(r => Object.entries(r.presencas).forEach(([m,p]) => {
+    if (p==='falta') L(m,'falta','Falta em: '+r.titulo, r.data, config.falta, r.criadoPor, {reuniao:r.id});
+    if (p==='justificada') L(m,'falta','Falta justificada em: '+r.titulo, r.data, config.faltaJustificada, r.criadoPor, {reuniao:r.id});
+  }));
+  L('u7','falta','Falta em: Reunião geral de outubro', dia(-6), config.falta, 'u5', {reuniao:'m1', desc:{por:'u3', em:ha(4,10), motivo:'Lançamento em duplicidade da reunião geral.'}});
+  ['u2','u6','u10'].forEach(m => L(m,'evento','Participação no EDL regional', dia(-9), 2, 'u3'));
+  L('u12','evento','Apoio na feira de profissões do campus', dia(-15), 3, 'u3');
+  L('u11','ajuste','Não entregou duas peças do calendário de setembro.', dia(-20), -3, 'u3');
+  L('u13','ajuste','Organizou a recepção dos candidatos do PS fora da escala.', dia(-11), 2, 'u3');
+
+  const solicitacoes = [
+    {id:'r1', solicitante:'u3', beneficiario:'u12', alvo:{tipo:'projeto', id:'p7'}, justificativa:'Pedro vai apoiar a estimativa de custos de pessoal do estudo de viabilidade do Coworking Centro.', validoAte:dia(33), status:'aprovada', criadoEm:ha(5,9), decididoPor:'u2', decididoEm:ha(3,10), nota:'Acesso para consulta até a entrega do estudo.'},
+    {id:'r2', solicitante:'u4', beneficiario:'u4', alvo:{tipo:'projeto', id:'p6'}, justificativa:'Usar o caso do Ateliê Lume como conteúdo de captação no Instagram Comercial.', validoAte:dia(30), status:'pendente', criadoEm:ha(1,15)},
+    {id:'r3', solicitante:'u11', beneficiario:'u11', alvo:{tipo:'tarefa', id:'t-PRJ-108'}, justificativa:'Quero acompanhar o cronograma dos clientes para planejar posts de resultados.', validoAte:dia(15), status:'negada', criadoEm:ha(6,11), decididoPor:'u2', decididoEm:ha(5,16), nota:'O cronograma tem dados de clientes. A Duda repassa as datas públicas.'},
+    {id:'r4', solicitante:'u3', beneficiario:'u13', alvo:{tipo:'tarefa', id:'t-COM-204'}, justificativa:'Marina vai usar os modelos de post na divulgação do PS.', validoAte:dia(-2), status:'aprovada', criadoEm:ha(20,10), decididoPor:'u2', decididoEm:ha(19,9), nota:''},
+  ];
+  const A = (dias,h,ator,acao,detalhe,extra={}) => ({id:novoId('a'), em:ha(dias,h), ator, acao, detalhe, ...extra});
+  const auditoria = [
+    A(20,10,'u3','Lançou ajuste','−3 para Bruno Teixeira',{membro:'u11'}),
+    A(20,11,'u3','Solicitou acesso','COM-204 para Marina Souza',{area:'com',envolvidos:['u13']}),
+    A(19,9,'u2','Aprovou acesso','COM-204 para Marina Souza, até '+fmtData(dia(-2)),{area:'com',envolvidos:['u3','u13']}),
+    A(11,15,'u3','Lançou ajuste','+2 para Marina Souza',{membro:'u13'}),
+    A(9,18,'u3','Lançou evento','EDL regional para 3 pessoas',{area:'adm'}),
+    A(6,21,'u5','Encerrou reunião','Reunião geral de outubro: 2 faltas, 1 justificada',{reuniao:'m1'}),
+    A(6,11,'u11','Solicitou acesso','PRJ-108 para Bruno Teixeira',{area:'proj'}),
+    A(5,16,'u2','Negou acesso','PRJ-108 para Bruno Teixeira',{area:'proj',envolvidos:['u11']}),
+    A(5,9,'u3','Solicitou acesso','Estudo de viabilidade (Coworking Centro) para Pedro Alves',{area:'proj',envolvidos:['u12']}),
+    A(4,10,'u3','Desconsiderou lançamento','Falta duplicada de Lucas Pires: lançamento em duplicidade da reunião geral',{membro:'u7'}),
+    A(3,10,'u2','Aprovou acesso','Estudo de viabilidade (Coworking Centro) para Pedro Alves, até '+fmtData(dia(33)),{area:'proj',envolvidos:['u3','u12']}),
+    A(2,20,'u2','Encerrou reunião','Status das entregas aos clientes: 1 falta',{reuniao:'m2'}),
+    A(1,15,'u4','Solicitou acesso','Planejamento tributário (Ateliê Lume) para Duda',{area:'proj'}),
+    A(0,9,'u8','Mudou status','PRJ-105 para Em andamento',{tarefa:'t-PRJ-105'}),
+  ];
+  reunioes.forEach(r => { r.anexos = r.anexos || []; r.transcricao = r.transcricao || null; });
+  return {config, usuarios, diretorias, gerencias, projetos, tarefas, lancamentos, reunioes, solicitacoes, auditoria, atual:'u1'};
+}
+
+function carregar(){ try { const j = localStorage.getItem(CHAVE); return j ? JSON.parse(j) : null; } catch(e){ return null; } }
+function salvar(){ try { localStorage.setItem(CHAVE, JSON.stringify(S)); return true; } catch(e){ return false; } }
+const PERSISTE = (()=>{ try { localStorage.setItem('sgi-teste','1'); localStorage.removeItem('sgi-teste'); return true; } catch(e){ return false; } })();
+let S = carregar() || semente();
+
+const usr = id => S.usuarios.find(x=>x.id===id);
+const prj = id => S.projetos.find(x=>x.id===id);
+const ger = id => S.gerencias.find(x=>x.id===id);
+const dir = id => S.diretorias.find(x=>x.id===id);
+const trf = id => S.tarefas.find(x=>x.id===id);
+const reu = id => S.reunioes.find(x=>x.id===id);
+const eu = () => usr(S.atual);
+const lider = gid => S.usuarios.find(x => (x.papel==='gerente' || x.papel==='assessor') && x.gerencia===gid);
+
+/* ---------- camada de dados: toda leitura e escrita passa por aqui ---------- */
+const Dados = {
+  ehPresex: u => u.papel==='presidente',
+  /* diretor titular ou que cobre a vacância da diretoria */
+  dirige: (u,d) => u.papel==='diretor' && (u.diretorias||[u.diretoria]).includes(d),
+  lidera: (u,g) => (u.papel==='gerente' || u.papel==='assessor') && u.gerencia===g,
+  ehGestorPessoas(u){ return this.dirige(u,'adm') || this.lidera(u,'adm-gg'); },
+  areaTarefa(t){ const p = prj(t.projeto); const g = ger(p.gerencia); return {gerencia:g.id, diretoria:g.diretoria, restrito:!!(t.restrito || p.restrito)}; },
+  areaProjeto(p){ const g = ger(p.gerencia); return {gerencia:g.id, diretoria:g.diretoria, restrito:!!p.restrito}; },
+
+  /* --- demandas --- */
+  concessaoPara(u,t){
+    return S.solicitacoes.find(s => s.beneficiario===u.id && this.situacao(s)==='aprovada' &&
+      ((s.alvo.tipo==='tarefa' && s.alvo.id===t.id) || (s.alvo.tipo==='projeto' && s.alvo.id===t.projeto)));
+  },
+  acesso(u,t){
+    const a = this.areaTarefa(t);
+    if (this.ehPresex(u)) return {tipo:'presex'};
+    if (!a.restrito && this.dirige(u,a.diretoria)) return {tipo:'diretoria'};
+    if (!a.restrito && this.lidera(u,a.gerencia)) return {tipo:'gerencia'};
+    if (t.executores.includes(u.id)) return {tipo:'executor'};
+    const c = this.concessaoPara(u,t);
+    if (c) return {tipo:'excecao', concessao:c};
+    return null;
+  },
+  tarefasVisiveis(u){ return S.tarefas.map(t => ({t, a:this.acesso(u,t)})).filter(x => x.a); },
+  escopoHierarquicoProjeto(u,p){
+    const a = this.areaProjeto(p);
+    if (this.ehPresex(u)) return true;
+    if (a.restrito) return false;
+    return this.dirige(u,a.diretoria) || this.lidera(u,a.gerencia);
+  },
+  projetosVisiveis(u){
+    const comTarefa = new Set(this.tarefasVisiveis(u).map(x => x.t.projeto));
+    return S.projetos.filter(p => this.escopoHierarquicoProjeto(u,p) || comTarefa.has(p.id) ||
+      S.solicitacoes.some(s => s.beneficiario===u.id && s.alvo.tipo==='projeto' && s.alvo.id===p.id && this.situacao(s)==='aprovada'));
+  },
+  podeGerir(u,t){ return this.escopoHierarquicoProjeto(u, prj(t.projeto)) && (this.ehPresex(u) || !t.restrito); },
+  podeMudarStatus(u,t){ return this.podeGerir(u,t) || t.executores.includes(u.id); },
+  statusPermitidos(u,t){ return STATUS.filter(([s]) => s!=='concluida' || this.podeGerir(u,t) || t.status==='concluida'); },
+  projetosCriaveis(u){ return S.projetos.filter(p => this.escopoHierarquicoProjeto(u,p) && u.papel!=='membro'); },
+  atribuiveis(u,p){
+    if (this.ehPresex(u) || p.restrito) return S.usuarios.slice();
+    if (u.papel==='diretor') return S.usuarios.filter(x => this.dirige(u,x.diretoria) || x.id===u.id);
+    return S.usuarios.filter(x => x.gerencia===u.gerencia);
+  },
+
+  /* --- membros e pontuação --- */
+  podeVerMembro(u,m){
+    if (this.ehPresex(u) || u.id===m.id || this.ehGestorPessoas(u)) return true;
+    if (u.papel==='diretor') return this.dirige(u,m.diretoria) && !this.ehPresex(m);
+    if (u.papel==='gerente' || u.papel==='assessor') return m.gerencia===u.gerencia;
+    return false;
+  },
+  membrosVisiveis(u){ return S.usuarios.filter(m => this.podeVerMembro(u,m)); },
+  pessoasVisiveis(u){
+    if (u.papel!=='membro') return this.membrosVisiveis(u);
+    const ids = new Set([u.id]);
+    const l = lider(u.gerencia) || S.usuarios.find(x => this.dirige(x,u.diretoria)); if (l) ids.add(l.id);
+    this.tarefasVisiveis(u).forEach(x => x.t.executores.forEach(id => ids.add(id)));
+    return S.usuarios.filter(x => ids.has(x.id));
+  },
+  lancamentosDe(mid, incluirDesc){ return S.lancamentos.filter(l => l.membro===mid && (incluirDesc || !l.desc)).sort((a,b) => b.data.localeCompare(a.data) || b.criadoEm.localeCompare(a.criadoEm)); },
+  pontos(mid){ return S.config.pontosIniciais + this.lancamentosDe(mid).reduce((s,l) => s+l.valor, 0); },
+  estatisticas(mid){
+    const ls = this.lancamentosDe(mid);
+    return {
+      entregas: ls.filter(l => l.tipo==='demanda' && l.valor>0).length,
+      faltas: ls.filter(l => l.tipo==='falta' && l.valor<0).length,
+      justificadas: ls.filter(l => l.tipo==='falta' && l.valor>=0).length,
+      projetos: [...new Set(S.tarefas.filter(t => t.executores.includes(mid) && t.status!=='concluida').map(t => t.projeto))],
+    };
+  },
+  ranking(u){
+    const base = S.config.rankingPublico || this.ehPresex(u) || this.ehGestorPessoas(u) ? S.usuarios : this.membrosVisiveis(u);
+    return base.map(m => ({m, pts:this.pontos(m.id)})).sort((a,b) => b.pts-a.pts || a.m.nome.localeCompare(b.m.nome));
+  },
+  podeAjustar(u,m){ return (this.ehPresex(u) || this.ehGestorPessoas(u)) && u.id!==m.id; },
+  podeEditarRegras(u){ return this.ehPresex(u) || this.dirige(u,'adm'); },
+
+  /* --- reuniões e presenças --- */
+  convocadosDoEscopo(e){
+    if (e.tipo==='geral') return S.usuarios.map(x => x.id);
+    if (e.tipo==='presex') return S.usuarios.filter(x => x.diretoria==='pres').map(x => x.id);
+    if (e.tipo==='diretoria') return S.usuarios.filter(x => x.diretoria===e.id || this.dirige(x,e.id)).map(x => x.id);
+    return S.usuarios.filter(x => x.gerencia===e.id || this.dirige(x,ger(e.id).diretoria)).map(x => x.id);
+  },
+  escoposReuniao(u){
+    const nucleos = d => S.gerencias.filter(g => g.diretoria===d).map(g => ({tipo:'gerencia', id:g.id}));
+    if (this.ehPresex(u)) return [{tipo:'geral'},{tipo:'presex'}, ...S.diretorias.filter(d => d.id!=='pres').map(d => ({tipo:'diretoria', id:d.id})), ...S.gerencias.map(g => ({tipo:'gerencia', id:g.id}))];
+    if (u.papel==='assessor') return [{tipo:'geral'},{tipo:'presex'}];
+    if (u.papel==='diretor') return u.diretorias.flatMap(d => [{tipo:'diretoria', id:d}, ...nucleos(d)]);
+    if (u.papel==='gerente') return [{tipo:'gerencia', id:u.gerencia}];
+    return [];
+  },
+  nomeEscopo(e){
+    return e.tipo==='geral' ? 'Geral' : e.tipo==='presex' ? 'Presidência' : e.tipo==='diretoria' ? dir(e.id).titulo : ger(e.id).nome;
+  },
+  podeGerirReuniao(u,r){
+    const e = r.escopo;
+    if (this.ehPresex(u) || r.criadoPor===u.id) return true;
+    if (u.papel==='assessor') return e.tipo==='geral' || e.tipo==='presex';
+    if (e.tipo==='diretoria') return this.dirige(u,e.id);
+    if (e.tipo==='gerencia') return this.dirige(u,ger(e.id).diretoria) || this.lidera(u,e.id);
+    return false;
+  },
+  reunioesVisiveis(u){ return S.reunioes.filter(r => r.convocados.includes(u.id) || this.podeGerirReuniao(u,r)); },
+
+  /* --- exceções --- */
+  alvo(s){
+    if (s.alvo.tipo==='projeto'){ const p = prj(s.alvo.id); return {nome:`${p.nome} (${p.cliente})`, curto:p.nome, ...this.areaProjeto(p)}; }
+    const t = trf(s.alvo.id); return {nome:`${t.codigo} · ${t.titulo}`, curto:t.codigo, ...this.areaTarefa(t)};
+  },
+  situacao(s){ return s.status==='aprovada' && s.validoAte < hojeISO ? 'expirada' : s.status; },
+  podeAprovar(u,s){
+    if (s.status!=='pendente' || u.id===s.beneficiario || u.id===s.solicitante) return false;
+    if (this.ehPresex(u)) return true;
+    const a = this.alvo(s);
+    return !a.restrito && this.dirige(u,a.diretoria);
+  },
+  aprovadoresDe(alvo){
+    const ds = alvo.restrito ? [] : S.usuarios.filter(x => this.dirige(x, alvo.diretoria));
+    return ['Presidência', ...ds.map(x => `${x.nome} (${dir(alvo.diretoria).titular===x.id ? dir(alvo.diretoria).titulo : 'cobrindo a '+dir(alvo.diretoria).titulo})`)].join(' ou ');
+  },
+  podeRevogar(u,s){ return this.situacao(s)==='aprovada' && (this.ehPresex(u) || u.id===s.decididoPor); },
+  solicitacoesVisiveis(u){
+    return S.solicitacoes.filter(s => {
+      if (this.ehPresex(u) || s.solicitante===u.id || s.beneficiario===u.id) return true;
+      const b = usr(s.beneficiario), a = this.alvo(s);
+      if (u.papel==='diretor') return (!a.restrito && this.dirige(u,a.diretoria)) || this.dirige(u,b.diretoria);
+      if (u.papel==='gerente' || u.papel==='assessor') return b.gerencia===u.gerencia;
+      return false;
+    });
+  },
+  beneficiariosPossiveis(u){
+    if (this.ehPresex(u)) return [];
+    if (u.papel==='diretor') return S.usuarios.filter(x => x.id===u.id || (this.dirige(u,x.diretoria) && !this.ehPresex(x)));
+    if (u.papel==='gerente' || u.papel==='assessor') return S.usuarios.filter(x => x.gerencia===u.gerencia);
+    return [u];
+  },
+  projetosSolicitaveis(b){
+    return S.projetos.filter(p => !p.restrito && !this.escopoHierarquicoProjeto(b,p) &&
+      !S.solicitacoes.some(s => s.beneficiario===b.id && s.alvo.tipo==='projeto' && s.alvo.id===p.id && ['pendente','aprovada'].includes(this.situacao(s))));
+  },
+  auditoriaVisivel(u){
+    return S.auditoria.filter(e => {
+      if (this.ehPresex(u) || e.ator===u.id || (e.envolvidos||[]).includes(u.id)) return true;
+      if (e.tarefa){ const t = trf(e.tarefa); return !!(t && this.acesso(u,t)); }
+      if (e.reuniao){ const r = reu(e.reuniao); return !!(r && this.reunioesVisiveis(u).includes(r)); }
+      if (e.membro) return this.podeVerMembro(u, usr(e.membro));
+      return !!e.area && this.dirige(u,e.area);
+    }).sort((a,b) => b.em.localeCompare(a.em));
+  },
+
+  /* ---------- escrita ---------- */
+  registrar(ator, acao, detalhe, extra={}){ S.auditoria.push({id:novoId('a'), em:new Date().toISOString(), ator, acao, detalhe, ...extra}); },
+  lancar(membro, tipo, descricao, data, valor, por, extra={}){
+    const l = {id:novoId('l'), membro, tipo, descricao, data, valor, criadoPor:por, criadoEm:new Date().toISOString(), desc:null, ...extra};
+    S.lancamentos.push(l); return l;
+  },
+  /* concluir gera pontos para cada executor; reabrir desconsidera os pontos gerados */
+  aplicarStatus(u, t, novo){
+    if (novo===t.status) return;
+    if (novo==='concluida' && !this.podeGerir(u,t)) throw new Error('Só a liderança do núcleo, a diretoria ou a Presidência validam a conclusão.');
+    if (t.status==='concluida'){
+      S.lancamentos.filter(l => l.tarefa===t.id && !l.desc).forEach(l => l.desc = {por:u.id, em:new Date().toISOString(), motivo:'Demanda reaberta.'});
+      delete t.concluidaEm;
+    }
+    t.status = novo;
+    if (novo==='concluida'){
+      t.concluidaEm = hojeISO;
+      const ok = hojeISO <= t.prazo, c = S.config;
+      t.executores.forEach(m => this.lancar(m, 'demanda', ok?'Entrega no prazo':'Entrega com atraso', hojeISO, ok?c.entregaNoPrazo:c.entregaAtrasada, u.id, {tarefa:t.id}));
+    }
+  },
+  criarTarefa(u, d){
+    const p = prj(d.projeto);
+    if (!p || !this.projetosCriaveis(u).some(x => x.id===p.id)) throw new Error('Você não pode criar demandas neste projeto.');
+    const permitidos = new Set(this.atribuiveis(u,p).map(x => x.id));
+    if (d.executores.some(id => !permitidos.has(id))) throw new Error('Há executores fora do seu escopo.');
+    const prefixo = dir(this.areaProjeto(p).diretoria).sigla;
+    const n = Math.max(0, ...S.tarefas.filter(t => t.codigo.startsWith(prefixo+'-')).map(t => +t.codigo.split('-')[1]));
+    const codigo = `${prefixo}-${String(n+1).padStart(3,'0')}`;
+    const t = {id:'t-'+codigo, codigo, projeto:p.id, titulo:d.titulo, descricao:d.descricao, executores:d.executores, status:'afazer', prioridade:d.prioridade, prazo:d.prazo, criadoPor:u.id, restrito:!!(d.restrito && this.ehPresex(u))};
+    S.tarefas.push(t);
+    this.registrar(u.id, 'Criou demanda', `${codigo} · ${t.titulo}`, {tarefa:t.id, envolvidos:t.executores});
+    return t;
+  },
+  editarTarefa(u, id, d){
+    const t = trf(id);
+    if (!t || !this.podeGerir(u,t)) throw new Error('Você não pode editar esta demanda.');
+    const permitidos = new Set([...this.atribuiveis(u,prj(t.projeto)).map(x => x.id), ...t.executores]);
+    if (d.executores.some(x => !permitidos.has(x))) throw new Error('Há executores fora do seu escopo.');
+    const mudou = [];
+    if (d.status!==t.status) mudou.push('status para '+STATUS_NOME[d.status]);
+    if (d.prazo!==t.prazo) mudou.push('prazo para '+fmtData(d.prazo));
+    if (d.executores.join()!==t.executores.join()) mudou.push('executores');
+    if (d.titulo!==t.titulo || d.descricao!==t.descricao) mudou.push('descrição');
+    if (d.prioridade!==t.prioridade) mudou.push('prioridade para '+PRIORIDADE[d.prioridade]);
+    Object.assign(t, {titulo:d.titulo, descricao:d.descricao, prioridade:d.prioridade, prazo:d.prazo, executores:d.executores});
+    this.aplicarStatus(u, t, d.status);
+    if (this.ehPresex(u)) t.restrito = !!d.restrito;
+    if (mudou.length) this.registrar(u.id, 'Editou demanda', `${t.codigo}: ${mudou.join(', ')}`, {tarefa:t.id, envolvidos:t.executores});
+  },
+  mudarStatus(u, id, status){
+    const t = trf(id);
+    if (!t || !this.podeMudarStatus(u,t)) throw new Error('Você não pode alterar o status desta demanda.');
+    if (t.status===status) return;
+    this.aplicarStatus(u, t, status);
+    this.registrar(u.id, 'Mudou status', `${t.codigo} para ${STATUS_NOME[status]}`, {tarefa:t.id});
+  },
+  ajustar(u, d){
+    const m = usr(d.membro);
+    if (!m || !this.podeAjustar(u,m)) throw new Error(m && m.id===u.id ? 'Ninguém ajusta a própria pontuação.' : 'Só a Presidência e a Administrativa (Gente e Gestão) lançam ajustes.');
+    const v = Number(d.valor);
+    if (!Number.isInteger(v) || v===0 || Math.abs(v)>20) throw new Error('Informe um valor inteiro entre −20 e 20, diferente de zero.');
+    if (!d.data) throw new Error('Informe a data de referência.');
+    if (d.justificativa.trim().length < 15) throw new Error('Explique o ajuste em pelo menos 15 caracteres.');
+    this.lancar(m.id, d.tipo, d.justificativa.trim(), d.data, v, u.id);
+    this.registrar(u.id, d.tipo==='evento'?'Lançou evento':'Lançou ajuste', `${sinal(v)} para ${m.nome}`, {membro:m.id});
+  },
+  desconsiderar(u, id, motivo){
+    const l = S.lancamentos.find(x => x.id===id);
+    if (!l || l.desc || !this.podeAjustar(u, usr(l.membro))) throw new Error('Você não pode desconsiderar este lançamento.');
+    if (motivo.trim().length < 10) throw new Error('Escreva o motivo para tirar o lançamento da conta (mínimo 10 caracteres).');
+    l.desc = {por:u.id, em:new Date().toISOString(), motivo:motivo.trim()};
+    this.registrar(u.id, 'Desconsiderou lançamento', `${TIPO_LANC[l.tipo]} ${sinal(l.valor)} de ${usr(l.membro).nome}: ${motivo.trim()}`, {membro:l.membro});
+  },
+  criarReuniao(u, d){
+    const e = this.escoposReuniao(u).find(x => x.tipo+':'+(x.id||'')===d.escopo);
+    if (!e) throw new Error('Escolha um público da lista.');
+    if (!d.titulo.trim()) throw new Error('Dê um título à reunião.');
+    if (!d.data || !d.hora) throw new Error('Informe data e horário.');
+    const r = {id:novoId('m'), titulo:d.titulo.trim(), data:d.data, hora:d.hora, escopo:e, pauta:d.pauta.trim(), convocados:this.convocadosDoEscopo(e), presencas:{}, encerrada:false, criadoPor:u.id, ata:'', anexos:[], transcricao:null};
+    S.reunioes.push(r);
+    this.registrar(u.id, 'Agendou reunião', `${r.titulo} em ${fmtData(r.data)}`, {reuniao:r.id});
+    return r;
+  },
+  salvarPresencas(u, id, mapa){
+    const r = reu(id);
+    if (!r || !this.podeGerirReuniao(u,r)) throw new Error('Você não pode registrar presença nesta reunião.');
+    if (r.encerrada) throw new Error('A reunião já foi encerrada. Corrija pelo módulo de pontuações.');
+    r.presencas = Object.fromEntries(Object.entries(mapa).filter(([k]) => r.convocados.includes(k)));
+  },
+  encerrarReuniao(u, id){
+    const r = reu(id);
+    if (!r || !this.podeGerirReuniao(u,r) || r.encerrada) throw new Error('Você não pode encerrar esta reunião.');
+    if (r.data > hojeISO) throw new Error('A reunião ainda não aconteceu.');
+    const faltando = r.convocados.filter(m => !r.presencas[m]);
+    if (faltando.length) throw new Error(`Marque a presença de todos (${faltando.length} sem registro).`);
+    r.encerrada = true;
+    const c = S.config; let f = 0, j = 0;
+    Object.entries(r.presencas).forEach(([m,p]) => {
+      if (p==='falta'){ f++; this.lancar(m,'falta','Falta em: '+r.titulo, r.data, c.falta, u.id, {reuniao:r.id}); }
+      if (p==='justificada'){ j++; this.lancar(m,'falta','Falta justificada em: '+r.titulo, r.data, c.faltaJustificada, u.id, {reuniao:r.id}); }
+    });
+    this.registrar(u.id, 'Encerrou reunião', `${r.titulo}: ${f} ${f===1?'falta':'faltas'}, ${j} ${j===1?'justificada':'justificadas'}`, {reuniao:r.id});
+  },
+  salvarAta(u, id, texto){
+    const r = reu(id);
+    if (!r || !this.podeGerirReuniao(u,r)) throw new Error('Você não pode editar esta ata.');
+    r.ata = texto.trim(); r.ataPor = u.id;
+    this.registrar(u.id, 'Atualizou ata', r.titulo, {reuniao:r.id});
+  },
+  /* anexos: hoje por envio manual; a integração com o Google Meet vai gravar com origem 'meet' */
+  anexar(u, rid, a){
+    const r = reu(rid);
+    if (!r || !this.podeGerirReuniao(u,r)) throw new Error('Só quem organiza a reunião anexa arquivos.');
+    if (a.tamanho > LIMITE_ANEXO) throw new Error(`“${a.nome}” tem ${fmtTam(a.tamanho)}. No protótipo o limite é 1 MB por arquivo; a versão online aceita arquivos maiores.`);
+    const x = {id:novoId('f'), nome:a.nome, tipo:a.tipo||'application/octet-stream', tamanho:a.tamanho, dataUrl:a.dataUrl||null, origem:'manual', por:u.id, em:new Date().toISOString()};
+    r.anexos.push(x);
+    this.registrar(u.id, 'Anexou arquivo', `${x.nome} em ${r.titulo}`, {reuniao:r.id});
+    return x;
+  },
+  removerAnexo(u, rid, fid){
+    const r = reu(rid); const x = r && r.anexos.find(f => f.id===fid);
+    if (!x || !this.podeGerirReuniao(u,r)) throw new Error('Você não pode remover este anexo.');
+    r.anexos = r.anexos.filter(f => f!==x);
+    this.registrar(u.id, 'Removeu anexo', `${x.nome} de ${r.titulo}`, {reuniao:r.id});
+  },
+  salvarTranscricao(u, rid, texto){
+    const r = reu(rid);
+    if (!r || !this.podeGerirReuniao(u,r)) throw new Error('Você não pode registrar a transcrição desta reunião.');
+    if (texto.trim().length < 30) throw new Error('Cole a transcrição completa (mínimo 30 caracteres).');
+    r.transcricao = {texto:texto.trim(), origem:'manual', por:u.id, em:new Date().toISOString()};
+    this.registrar(u.id, 'Registrou transcrição', r.titulo, {reuniao:r.id});
+  },
+  salvarConfig(u, c){
+    if (!this.podeEditarRegras(u)) throw new Error('Só a Presidência e a Diretoria Administrativa alteram as regras.');
+    const n = k => { const v = Number(c[k]); if (!Number.isInteger(v) || Math.abs(v)>50) throw new Error('Use números inteiros entre −50 e 50.'); return v; };
+    Object.assign(S.config, {pontosIniciais:n('pontosIniciais'), entregaNoPrazo:n('entregaNoPrazo'), entregaAtrasada:n('entregaAtrasada'), falta:n('falta'), faltaJustificada:n('faltaJustificada'), rankingPublico:!!c.rankingPublico});
+    this.registrar(u.id, 'Alterou regras de pontuação', 'Valores válidos para novos lançamentos', {area:'adm'});
+  },
+  solicitar(u, d){
+    const b = usr(d.beneficiario);
+    if (!b || !this.beneficiariosPossiveis(u).some(x => x.id===b.id)) throw new Error('Você não pode pedir acesso para essa pessoa.');
+    if (d.justificativa.trim().length < 20) throw new Error('Escreva uma justificativa com pelo menos 20 caracteres.');
+    if (!d.validoAte || d.validoAte <= hojeISO || d.validoAte > dia(90)) throw new Error('Escolha uma validade entre amanhã e 90 dias.');
+    let alvo;
+    if (d.tipo==='projeto'){
+      if (!this.projetosSolicitaveis(b).some(p => p.id===d.projeto)) throw new Error('Escolha um projeto da lista.');
+      alvo = {tipo:'projeto', id:d.projeto};
+    } else {
+      const t = S.tarefas.find(x => x.codigo===d.codigo.trim().toUpperCase());
+      if (!t || this.acesso(b,t)) throw new Error('Não há demanda com esse código que precise de liberação para essa pessoa.');
+      alvo = {tipo:'tarefa', id:t.id};
+    }
+    const s = {id:novoId('r'), solicitante:u.id, beneficiario:b.id, alvo, justificativa:d.justificativa.trim(), validoAte:d.validoAte, status:'pendente', criadoEm:new Date().toISOString()};
+    S.solicitacoes.push(s);
+    const a = this.alvo(s);
+    this.registrar(u.id, 'Solicitou acesso', `${a.curto} para ${b.nome}`, {area:a.restrito?'pres':a.diretoria, envolvidos:[b.id]});
+    return s;
+  },
+  decidir(u, id, aprovar, nota){
+    const s = S.solicitacoes.find(x => x.id===id);
+    if (!s || !this.podeAprovar(u,s)) throw new Error('Você não pode decidir esta solicitação.');
+    Object.assign(s, {status:aprovar?'aprovada':'negada', decididoPor:u.id, decididoEm:new Date().toISOString(), nota:nota.trim()});
+    const a = this.alvo(s), b = usr(s.beneficiario);
+    this.registrar(u.id, aprovar?'Aprovou acesso':'Negou acesso', `${a.curto} para ${b.nome}${aprovar?', até '+fmtData(s.validoAte):''}`, {area:a.restrito?'pres':a.diretoria, envolvidos:[s.solicitante,b.id]});
+  },
+  revogar(u, id){
+    const s = S.solicitacoes.find(x => x.id===id);
+    if (!s || !this.podeRevogar(u,s)) throw new Error('Você não pode revogar este acesso.');
+    s.status = 'revogada'; s.revogadoPor = u.id; s.revogadoEm = new Date().toISOString();
+    const a = this.alvo(s), b = usr(s.beneficiario);
+    this.registrar(u.id, 'Revogou acesso', `${a.curto} de ${b.nome}`, {area:a.restrito?'pres':a.diretoria, envolvidos:[s.solicitante,b.id]});
+  },
+};
+
+/* ---------- estado da interface ---------- */
+const VIEWS = [['dashboard','Dashboard'],['demandas','Demandas'],['projetos','Projetos'],['reunioes','Reuniões e atas'],['presencas','Presenças'],['pontuacoes','Pontuações'],['ranking','Ranking'],['equipe','Estrutura e equipe'],['acessos','Acessos'],['historico','Histórico completo'],['regras','Regras']];
+const UI = {aba:'dashboard', busca:'', projeto:'', pessoa:'', minhas:false, tarefa:null, reuniao:null, modal:null, revogar:null, restaurar:false, encerrar:false, sel:null, filtroLanc:'tudo', verDesc:false, menu:false, buscaHist:''};
+try { const h = location.hash.slice(1); if (VIEWS.some(a => a[0]===h)) UI.aba = h; } catch(e){}
+
+function toast(msg, erro){
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast'+(erro?' erro-t':''); el.hidden = false;
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.hidden = true, 3400);
+}
+function tentar(fn, ok){
+  try { fn(); salvar(); if (ok) toast(ok); return true; }
+  catch(e){ toast(e.message, true); return false; }
+}
+function cargo(x){
+  if (x.papel==='presidente') return 'Presidência';
+  if (x.papel==='diretor') return x.diretorias.map((d,i) => i ? 'cobre a '+dir(d).titulo : dir(d).titulo).join(' · ');
+  if (x.papel==='assessor') return ger(x.gerencia).nome;
+  return (x.papel==='gerente' ? 'Gerência de ' : 'Membro · ')+ger(x.gerencia).nome;
+}
+function setor(x){ return x.papel==='presidente' ? 'Presidência' : x.papel==='diretor' ? dir(x.diretoria).titulo : ger(x.gerencia).nome; }
+const chipExemplo = x => x.exemplo ? ' <span class="chip exemplo" title="Pessoa fictícia até o processo seletivo">Exemplo</span>' : '';
+function escopoTexto(u){
+  const n = Dados.tarefasVisiveis(u).filter(x => x.a.tipo==='excecao').length;
+  const exc = n ? ` Mais ${n} ${n>1?'demandas liberadas':'demanda liberada'} por exceção.` : '';
+  if (Dados.ehPresex(u)) return 'Acesso irrestrito a todas as diretorias, projetos e relatórios.';
+  if (u.papel==='diretor') return `Vê todos os núcleos de: ${u.diretorias.map(d => dir(d).titulo).join(' e ')}.`+exc;
+  if (u.papel==='assessor') return 'Organiza agenda e atas das reuniões gerais e da Presidência, e vê as demandas da Assessoria.'+exc;
+  if (u.papel==='gerente') return `Vê as demandas e os membros de ${ger(u.gerencia).nome}.`+exc;
+  return 'Vê apenas as demandas em que consta como executor.'+exc;
+}
+const chipAcesso = a => a.tipo==='excecao'
+  ? `<span class="chip excecao" title="Liberação por exceção">Exceção · até ${fmtCurta(a.concessao.validoAte)}</span>`
+  : `<span class="chip ${a.tipo}">${ACESSO_NOME[a.tipo]}</span>`;
+const avatares = ids => `<span class="avatares">${ids.map(id => { const p = usr(id); return `<span class="av" title="${esc(p.nome)}">${iniciais(p.nome)}</span>`; }).join('')}</span>`;
+const atrasada = t => t.status!=='concluida' && t.prazo < hojeISO;
+const opcoes = (pares, atual) => pares.map(([v,n]) => `<option value="${v}" ${v===atual?'selected':''}>${n}</option>`).join('');
+const plural = (n, um, varios) => `${n} ${n===1?um:varios}`;
+const cab = (titulo, sub, botao='') => `<section class="cab"><div><h1>${titulo}</h1>${sub?`<p class="sub">${sub}</p>`:''}</div>${botao}</section>`;
+
+/* ---------- menu lateral ---------- */
+function renderLateral(){
+  const u = eu();
+  const grupos = S.diretorias.map(d => [d.titulo, S.usuarios.filter(x => x.diretoria===d.id)]).filter(g => g[1].length);
+  document.getElementById('quem').innerHTML = `<strong>${esc(u.nome)}</strong><span>${esc(cargo(u))}</span>
+    <label for="ver-como">Ver como (protótipo)</label>
+    <select id="ver-como">${grupos.map(([g,us]) => `<optgroup label="${esc(g)}">${us.map(x => `<option value="${x.id}" ${x.id===u.id?'selected':''}>${esc(x.nome)} · ${esc(PAPEIS[x.papel])}${x.exemplo?' (exemplo)':''}</option>`).join('')}</optgroup>`).join('')}</select>`;
+  const pend = S.solicitacoes.filter(s => Dados.podeAprovar(u,s)).length;
+  document.getElementById('nav').innerHTML = VIEWS.map(([id,nome]) =>
+    `<button type="button" data-aba="${id}" ${UI.aba===id?'aria-current="page"':''}><span>${nome}</span>${id==='acessos'&&pend?`<span class="contador" aria-label="${pend} aguardando decisão">${pend}</span>`:''}</button>`).join('');
+  const c = S.config;
+  document.getElementById('rapidas').innerHTML = `<strong>Regras rápidas</strong>
+    <span>Pontos iniciais: <b>${c.pontosIniciais}</b></span><span>Entrega no prazo: <b>${sinal(c.entregaNoPrazo)}</b></span>
+    <span>Entrega com atraso: <b>${sinal(c.entregaAtrasada)}</b></span><span>Falta em reunião: <b>${sinal(c.falta)}</b></span>`;
+  document.getElementById('titulo-mob').textContent = VIEWS.find(v => v[0]===UI.aba)[1];
+  document.getElementById('app').classList.toggle('menu-aberto', UI.menu);
+}
+
+/* ---------- dashboard ---------- */
+function vDashboard(){
+  const u = eu();
+  const vis = Dados.tarefasVisiveis(u);
+  const minhas = vis.filter(x => x.t.executores.includes(u.id) && x.t.status!=='concluida').sort((a,b) => a.t.prazo.localeCompare(b.t.prazo));
+  const atr = minhas.filter(x => atrasada(x.t)).length;
+  const rk = Dados.ranking(u); const pos = rk.findIndex(x => x.m.id===u.id)+1;
+  const prox = Dados.reunioesVisiveis(u).filter(r => !r.encerrada && r.data>=hojeISO).sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora));
+  const validar = vis.filter(x => x.t.status==='revisao' && Dados.podeGerir(u,x.t));
+  const pend = S.solicitacoes.filter(s => Dados.podeAprovar(u,s));
+  const ultimos = Dados.lancamentosDe(u.id).slice(0,5);
+  const itemTarefa = ({t}) => `<li><button class="item" data-tarefa="${t.id}"><div><div class="item-tit">${esc(t.titulo)}</div><div class="meta"><span class="mono">${t.codigo}</span> · ${esc(prj(t.projeto).nome)}</div></div><span class="lado ${atrasada(t)?'atrasada':''}">${atrasada(t)?'Atrasada · ':''}${fmtCurta(t.prazo)}</span></button></li>`;
+  const itemReuniao = r => `<li><button class="item" data-reuniao="${r.id}"><div><div class="item-tit">${esc(r.titulo)}</div><div class="meta">${esc(Dados.nomeEscopo(r.escopo))}</div></div><span class="lado">${fmtCurta(r.data)} · ${r.hora}</span></button></li>`;
+  return cab(`Olá, ${esc(u.nome.split(' ')[0])}`, esc(escopoTexto(u))) + `
+  <div class="kpis">
+    <div class="kpi"><span>Seus pontos</span><b>${Dados.pontos(u.id)}</b><small>${pos?pos+'º no ranking':'Fora do ranking visível'}</small></div>
+    <div class="kpi"><span>Suas demandas abertas</span><b>${minhas.length}</b><small>${minhas.filter(x => x.t.status==='revisao').length} em revisão</small></div>
+    <div class="kpi ${atr?'alerta':''}"><span>Atrasadas</span><b>${atr}</b><small>Prazo vencido sem conclusão</small></div>
+    <div class="kpi"><span>Próxima reunião</span><b>${prox[0]?fmtCurta(prox[0].data):'–'}</b><small>${prox[0]?esc(prox[0].titulo):'Nenhuma agendada'}</small></div>
+  </div>
+  <div class="duas">
+    <section class="bloco"><h2>Suas próximas entregas</h2>${minhas.length?`<ul class="itens">${minhas.slice(0,6).map(itemTarefa).join('')}</ul>`:'<p class="vazio">Nenhuma demanda aberta com você.</p>'}</section>
+    ${u.papel!=='membro'?`<section class="bloco"><h2>Aguardando sua validação</h2>${validar.length?`<ul class="itens">${validar.slice(0,6).map(itemTarefa).join('')}</ul><p class="dica" style="margin-top:8px">Concluir uma demanda gera os pontos de entrega para os executores.</p>`:'<p class="vazio">Nada em revisão no seu escopo.</p>'}</section>`:''}
+    <section class="bloco"><h2>Próximas reuniões</h2>${prox.length?`<ul class="itens">${prox.slice(0,5).map(itemReuniao).join('')}</ul>`:'<p class="vazio">Nenhuma reunião agendada para você.</p>'}</section>
+    <section class="bloco"><h2>Seus últimos lançamentos</h2>${ultimos.length?`<ul class="itens">${ultimos.map(l => `<li><div class="item" style="cursor:default"><div><div class="item-tit">${TIPO_LANC[l.tipo]}</div><div class="meta">${esc(descLanc(u,l))}</div></div><span class="lado pts ${l.valor>0?'pos':l.valor<0?'neg':''}">${sinal(l.valor)}</span></div></li>`).join('')}</ul>`:'<p class="vazio">Sem lançamentos ainda.</p>'}</section>
+    ${pend.length?`<section class="bloco"><h2>Pedidos de acesso para decidir</h2><ul class="itens">${pend.map(s => `<li><button class="item" data-aba="acessos"><div><div class="item-tit">${esc(Dados.alvo(s).nome)}</div><div class="meta">Para ${esc(usr(s.beneficiario).nome)}</div></div><span class="lado">até ${fmtCurta(s.validoAte)}</span></button></li>`).join('')}</ul></section>`:''}
+  </div>`;
+}
+
+/* ---------- demandas ---------- */
+function vDemandas(){
+  const u = eu();
+  const vis = Dados.tarefasVisiveis(u);
+  const projs = Dados.projetosVisiveis(u).filter(p => vis.some(x => x.t.projeto===p.id));
+  const pessoas = [...new Set(vis.flatMap(x => x.t.executores))].map(usr).sort((a,b) => a.nome.localeCompare(b.nome));
+  return cab('Demandas','Atividades no seu escopo, por etapa. A conclusão é validada pela liderança e gera pontos.', Dados.projetosCriaveis(u).length ? `<button class="btn prim" data-acao="nova-tarefa">Nova demanda</button>` : '') + `
+  <div class="filtros">
+    <div class="busca"><label for="f-busca" class="sr">Buscar demandas</label><input id="f-busca" type="search" placeholder="Buscar por título ou código" value="${esc(UI.busca)}"></div>
+    <label for="f-projeto" class="sr">Projeto</label>
+    <select id="f-projeto"><option value="">Todos os projetos</option>${projs.map(p => `<option value="${p.id}" ${UI.projeto===p.id?'selected':''}>${esc(p.nome)} · ${esc(p.cliente)}</option>`).join('')}</select>
+    <label for="f-pessoa" class="sr">Executor</label>
+    <select id="f-pessoa"><option value="">Todos os executores</option>${pessoas.map(p => `<option value="${p.id}" ${UI.pessoa===p.id?'selected':''}>${esc(p.nome)}</option>`).join('')}</select>
+    <label class="check" for="f-minhas"><input type="checkbox" id="f-minhas" ${UI.minhas?'checked':''}> Só as minhas</label>
+  </div>
+  <div id="resumo" class="resumo"></div>
+  <div id="quadro" class="quadro"></div>`;
+}
+function renderQuadro(){
+  const u = eu();
+  const q = UI.busca.trim().toLowerCase();
+  const lista = Dados.tarefasVisiveis(u).filter(({t}) =>
+    (!UI.projeto || t.projeto===UI.projeto) && (!UI.pessoa || t.executores.includes(UI.pessoa)) &&
+    (!UI.minhas || t.executores.includes(u.id)) && (!q || t.titulo.toLowerCase().includes(q) || t.codigo.toLowerCase().includes(q)));
+  const cont = st => lista.filter(x => x.t.status===st).length;
+  const atr = lista.filter(x => atrasada(x.t)).length;
+  document.getElementById('resumo').innerHTML =
+    `<span><b>${lista.length}</b> ${lista.length===1?'demanda':'demandas'}</span><span><b>${cont('andamento')}</b> em andamento</span><span><b>${cont('revisao')}</b> em revisão</span><span class="${atr?'alerta':''}"><b>${atr}</b> ${atr===1?'atrasada':'atrasadas'}</span><span><b>${cont('concluida')}</b> ${cont('concluida')===1?'concluída':'concluídas'}</span>`;
+  const ordem = {alta:0, media:1, baixa:2};
+  document.getElementById('quadro').innerHTML = STATUS.map(([st,nome]) => {
+    const col = lista.filter(x => x.t.status===st).sort((a,b) => a.t.prazo.localeCompare(b.t.prazo) || ordem[a.t.prioridade]-ordem[b.t.prioridade]);
+    return `<section class="coluna" aria-label="${nome}"><div class="coluna-cab"><span>${nome}</span><span>${col.length}</span></div>
+      ${col.length ? col.map(({t,a}) => cardTarefa(t,a)).join('') : `<p class="vazio-col">Nenhuma demanda nesta etapa.</p>`}</section>`;
+  }).join('');
+}
+function cardTarefa(t,a){
+  const p = prj(t.projeto); const r = Dados.areaTarefa(t).restrito;
+  return `<button class="card${r?' restrita':''}" data-tarefa="${t.id}">
+    <div class="card-top"><span class="mono">${t.codigo}</span><span class="chip p-${t.prioridade}">${PRIORIDADE[t.prioridade]}</span></div>
+    <div class="card-tit">${esc(t.titulo)}</div>
+    <div class="card-proj">${esc(p.nome)} · ${esc(p.cliente)}</div>
+    <div class="card-pe"><span class="prazo${atrasada(t)?' atrasada':''}">${atrasada(t)?'Atrasada · ':''}${fmtCurta(t.prazo)}</span>${chipAcesso(a)}${avatares(t.executores)}</div>
+  </button>`;
+}
+
+/* ---------- projetos ---------- */
+function vProjetos(){
+  const u = eu();
+  const vis = Dados.tarefasVisiveis(u);
+  const projs = Dados.projetosVisiveis(u);
+  const card = p => {
+    const ts = vis.filter(x => x.t.projeto===p.id).map(x => x.t);
+    const feitas = ts.filter(t => t.status==='concluida').length;
+    const pct = ts.length ? Math.round(feitas/ts.length*100) : 0;
+    const a = Dados.areaProjeto(p);
+    const integral = Dados.escopoHierarquicoProjeto(u,p);
+    const exc = !integral && S.solicitacoes.some(s => s.beneficiario===u.id && s.alvo.tipo==='projeto' && s.alvo.id===p.id && Dados.situacao(s)==='aprovada');
+    const atr = ts.filter(atrasada).length;
+    return `<article class="bloco">
+      <div class="linha" style="justify-content:space-between;margin-bottom:6px"><span class="eyebrow">${esc(dir(a.diretoria).titulo)} · ${esc(ger(a.gerencia).nome)}</span>${a.restrito?'<span class="chip restrito">Restrito à Presidência</span>':exc?'<span class="chip excecao">Exceção</span>':!integral?'<span class="chip executor">Parcial</span>':''}</div>
+      <h3>${esc(p.nome)}</h3><p class="meta">${esc(p.cliente)}</p>
+      <div class="barra" role="img" aria-label="${pct}% concluído"><i style="width:${pct}%"></i></div>
+      <div class="linha meta" style="justify-content:space-between"><span>${feitas} de ${ts.length} ${integral?'demandas concluídas':'demandas visíveis concluídas'}</span>${atr?`<span style="color:var(--danger);font-weight:600">${atr} ${atr>1?'atrasadas':'atrasada'}</span>`:''}</div>
+      <div class="linha" style="margin-top:12px"><button class="btn peq" data-filtrar-projeto="${p.id}">Ver demandas</button></div>
+    </article>`;
+  };
+  return cab('Projetos', `${plural(projs.length,'projeto','projetos')} no seu escopo. “Parcial” indica que você vê só as demandas em que atua.`) +
+    (projs.length ? `<div class="grade">${projs.map(card).join('')}</div>` : `<p class="vazio">Nenhum projeto visível para o seu perfil.</p>`);
+}
+
+/* ---------- reuniões ---------- */
+function vReunioes(){
+  const u = eu();
+  const rs = Dados.reunioesVisiveis(u);
+  const prox = rs.filter(r => !r.encerrada).sort((a,b) => (a.data+a.hora).localeCompare(b.data+b.hora));
+  const feitas = rs.filter(r => r.encerrada).sort((a,b) => b.data.localeCompare(a.data));
+  const linha = r => { const [,m,d] = r.data.split('-'); const f = Object.values(r.presencas).filter(p => p==='falta').length;
+    return `<button class="reuniao" data-reuniao="${r.id}"><div class="data-bloco"><b>${d}</b><span>${MESES[+m-1]}</span></div>
+      <div style="min-width:0"><div class="item-tit">${esc(r.titulo)}</div><div class="meta">${r.hora} · ${esc(Dados.nomeEscopo(r.escopo))} · ${plural(r.convocados.length,'convocado','convocados')}${r.encerrada?` · ${plural(f,'falta','faltas')}`:''}${r.anexos.length?` · ${plural(r.anexos.length,'anexo','anexos')}`:''}${r.transcricao?' · transcrição':''}</div></div>
+      ${r.encerrada ? (r.ata?'<span class="chip ok">Ata registrada</span>':'<span class="chip s-pendente">Sem ata</span>') : (r.data<hojeISO?'<span class="chip s-pendente">Presença pendente</span>':'<span class="chip diretoria">Agendada</span>')}</button>`; };
+  return cab('Reuniões e atas','Pauta, presença, ata, transcrição e arquivos de cada reunião. Ao encerrar, as faltas viram lançamentos de pontuação.', Dados.escoposReuniao(u).length?'<button class="btn prim" data-acao="nova-reuniao">Agendar reunião</button>':'') + `
+  <div class="aviso integracao"><span class="ponto" aria-hidden="true"></span><p><strong>Integração com o Google Meet: planejada.</strong> Ao fim de cada reunião, a transcrição e os arquivos vão chegar aqui sozinhos, vinculados à reunião agendada. Até lá, quem organiza pode colar a transcrição e anexar arquivos manualmente.</p></div>
+  <section class="secao" style="margin-top:0"><h2>Próximas e pendentes</h2>${prox.length?`<div class="lista">${prox.map(linha).join('')}</div>`:'<p class="vazio">Nenhuma reunião agendada.</p>'}</section>
+  <section class="secao"><h2>Realizadas</h2>${feitas.length?`<div class="lista">${feitas.map(linha).join('')}</div>`:'<p class="vazio">Nenhuma reunião encerrada ainda.</p>'}</section>`;
+}
+
+/* ---------- presenças ---------- */
+function vPresencas(){
+  const u = eu();
+  const ms = Dados.membrosVisiveis(u);
+  const encerradas = S.reunioes.filter(r => r.encerrada);
+  const linhas = ms.map(m => {
+    const conv = encerradas.filter(r => r.convocados.includes(m.id));
+    const pres = conv.filter(r => r.presencas[m.id]==='presente').length;
+    const just = conv.filter(r => r.presencas[m.id]==='justificada').length;
+    const falt = conv.filter(r => r.presencas[m.id]==='falta').length;
+    const taxa = conv.length ? Math.round(pres/conv.length*100) : null;
+    return {m, conv:conv.length, pres, just, falt, taxa};
+  }).sort((a,b) => (a.taxa??101)-(b.taxa??101) || a.m.nome.localeCompare(b.m.nome));
+  return cab('Presenças', u.papel==='membro'?'Sua frequência nas reuniões encerradas.':'Frequência das pessoas que você acompanha, das menores taxas para as maiores.') + `
+  <div class="tab-wrap"><table><thead><tr><th>Pessoa</th><th>Setor</th><th class="num">Convocações</th><th class="num">Presenças</th><th class="num">Justificadas</th><th class="num">Faltas</th><th class="num">Frequência</th></tr></thead>
+  <tbody>${linhas.map(x => `<tr class="${x.m.id===u.id?'eu':''}"><td>${esc(x.m.nome)}</td><td>${esc(setor(x.m))}</td><td class="num">${x.conv}</td><td class="num">${x.pres}</td><td class="num">${x.just}</td><td class="num" style="${x.falt?'color:var(--danger);font-weight:600':''}">${x.falt}</td><td class="num">${x.taxa===null?'–':x.taxa+'%'}</td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ---------- pontuações (padrão do modelo) ---------- */
+function descLanc(u,l){
+  if (l.tarefa){ const t = trf(l.tarefa); return `${l.descricao}: ${t && Dados.acesso(u,t) ? t.codigo+' · '+t.titulo : 'demanda de outra área'}`; }
+  return l.descricao;
+}
+function vPontuacoes(){
+  const u = eu();
+  const ms = Dados.membrosVisiveis(u).map(m => ({m, pts:Dados.pontos(m.id)})).sort((a,b) => a.m.nome.localeCompare(b.m.nome));
+  if (!UI.sel || !ms.some(x => x.m.id===UI.sel)) UI.sel = ms.some(x => x.m.id===u.id) ? u.id : ms[0].m.id;
+  return cab('Pontuações', ms.length>1 ? 'Selecione uma pessoa para ver o histórico completo e, se tiver permissão, ajustar a pontuação.' : 'Seu saldo de pontos e o histórico que o compõe.') + `
+  <div class="membros">${ms.map(({m,pts}) => `<button class="membro" data-membro="${m.id}" aria-pressed="${UI.sel===m.id}"><strong>${esc(m.nome)}</strong><span class="pts">${pts} pts</span><span class="meta">${esc(setor(m))}</span></button>`).join('')}</div>
+  <div id="detalhe-membro"></div>`;
+}
+function renderDetalheMembro(){
+  const u = eu(), m = usr(UI.sel);
+  const alvo = document.getElementById('detalhe-membro');
+  if (!m || !Dados.podeVerMembro(u,m)){ alvo.innerHTML = ''; return; }
+  const e = Dados.estatisticas(m.id);
+  const rk = Dados.ranking(u); const pos = rk.findIndex(x => x.m.id===m.id)+1;
+  const ajusta = Dados.podeAjustar(u,m);
+  const todos = Dados.lancamentosDe(m.id, true);
+  const nDesc = todos.filter(l => l.desc).length;
+  const ls = todos.filter(l => (UI.verDesc || !l.desc) && (UI.filtroLanc==='tudo' || l.tipo===UI.filtroLanc));
+  const filtros = [['tudo','Tudo'],['demanda','Demandas'],['evento','Eventos'],['falta','Faltas'],['ajuste','Ajustes']];
+  alvo.innerHTML = `<section class="detalhe" aria-label="Detalhes de ${esc(m.nome)}">
+    <div class="resumo-membro"><p class="eyebrow">Pessoa selecionada</p><h2 style="margin-top:4px">${esc(m.nome)}${chipExemplo(m)}</h2>
+      <dl><dt>Pontos atuais</dt><dd class="grande">${Dados.pontos(m.id)}</dd>
+      <dt>Posição no ranking</dt><dd>${pos?pos+'º de '+rk.length:'–'}</dd>
+      <dt>Cargo</dt><dd>${esc(cargo(m))}</dd>${m.curso?`<dt>Curso</dt><dd>${esc(m.curso)}</dd>`:''}
+      <dt>Entregas positivas</dt><dd>${e.entregas}</dd><dt>Faltas</dt><dd>${e.faltas}${e.justificadas?` <span class="meta">(+${e.justificadas} justificada${e.justificadas>1?'s':''})</span>`:''}</dd>
+      <dt>Projetos ativos</dt><dd>${e.projetos.length ? e.projetos.map(pid => { const p = prj(pid); return Dados.projetosVisiveis(u).includes(p) ? esc(p.nome) : 'Projeto de outra área'; }).join(' | ') : 'Nenhum projeto ativo'}</dd></dl></div>
+    <div style="min-width:0"><p class="eyebrow">Histórico</p><h2 style="margin:4px 0 10px">Linha do tempo completa</h2>
+      <div class="pilulas" role="group" aria-label="Filtrar lançamentos">${filtros.map(([k,n]) => `<button class="pilula" data-filtro-lanc="${k}" aria-pressed="${UI.filtroLanc===k}">${n}</button>`).join('')}</div>
+      ${nDesc?`<label class="check" for="ver-desc" style="margin-top:8px;font-size:.8rem"><input type="checkbox" id="ver-desc" ${UI.verDesc?'checked':''}> Mostrar ${plural(nDesc,'desconsiderado','desconsiderados')}</label>`:''}
+      ${ls.length?`<ol class="tempo">${ls.map(l => `<li class="lanc ${l.desc?'desc':l.valor<0?'neg':''}">
+        <div class="lanc-cab"><strong>${TIPO_LANC[l.tipo]}</strong><span class="pts ${l.valor>0?'pos':l.valor<0?'neg':''}">${sinal(l.valor)} pts</span></div>
+        <p>${esc(descLanc(u,l))}</p><span class="meta">${fmtData(l.data)} · lançado por ${esc(usr(l.criadoPor).nome)}</span>
+        ${l.desc?`<span class="meta">Desconsiderado por ${esc(usr(l.desc.por).nome)} em ${fmtHora(l.desc.em)}: ${esc(l.desc.motivo)}</span>`:
+          ajusta?`<div class="desconsiderar"><label for="mot-${l.id}" class="sr">Motivo para tirar da conta</label><input type="text" id="mot-${l.id}" placeholder="Motivo. Ex.: lançamento em duplicidade"><button class="btn peq" data-desconsiderar="${l.id}">Desconsiderar</button></div>`:''}
+      </li>`).join('')}</ol>`:'<p class="vazio" style="margin-top:12px">Nenhum lançamento neste filtro.</p>'}
+      <p class="dica" style="margin-top:10px">Saldo = ${S.config.pontosIniciais} pontos iniciais + lançamentos válidos.</p>
+    </div>
+    <div class="ajuste">${ajusta ? `<h2>Ajuste manual</h2><p class="dica" style="margin:2px 0 12px">Presidência e Diretoria Administrativa (Gente e Gestão) corrigem pontuações com justificativa. Ninguém ajusta a própria.</p>
+      <form class="form" id="form-ajuste">
+        <div><label for="aj-tipo">Tipo</label><select id="aj-tipo"><option value="ajuste">Ajuste</option><option value="evento">Evento</option></select></div>
+        <div><label for="aj-valor">Valor de pontos</label><input type="number" id="aj-valor" step="1" min="-20" max="20" placeholder="Ex.: −2 ou 3"></div>
+        <div><label for="aj-data">Data de referência</label><input type="date" id="aj-data" value="${hojeISO}" max="${hojeISO}"></div>
+        <div><label for="aj-just">Justificativa</label><textarea id="aj-just" placeholder="Explique por que este ajuste está sendo feito"></textarea></div>
+        <p class="erro" id="aj-erro" hidden></p>
+        <button class="btn prim largo" type="submit">Lançar para ${esc(m.nome.split(' ')[0])}</button>
+      </form>` : `<h2>Ajuste manual</h2><p class="somente-leitura" style="margin-top:8px">${m.id===u.id && (Dados.ehPresex(u)||Dados.ehGestorPessoas(u)) ? 'Ninguém ajusta a própria pontuação. Peça à Presidência ou à Diretoria Administrativa.' : 'Só a Presidência e a Diretoria Administrativa (Gente e Gestão) lançam ajustes e desconsideram lançamentos. Se algo estiver errado, fale com a sua liderança.'}</p>`}</div>
+  </section>`;
+}
+
+/* ---------- ranking ---------- */
+function vRanking(){
+  const u = eu();
+  const rk = Dados.ranking(u);
+  const linhas = rk.map((x,i) => { const e = Dados.estatisticas(x.m.id);
+    return `<tr class="${x.m.id===u.id?'eu':''}"><td><span class="posicao ${i<3?'top':''}">${i+1}</span></td><td>${esc(x.m.nome)}${x.m.id===u.id?' <span class="meta">(você)</span>':''}</td><td>${esc(setor(x.m))}</td><td class="num">${e.entregas}</td><td class="num">${e.faltas}</td><td class="num pts">${x.pts}</td></tr>`; }).join('');
+  return cab('Ranking', S.config.rankingPublico ? 'Pontuação de todas as pessoas. Empates são ordenados por nome.' : 'O ranking está restrito: você vê apenas as pessoas do seu escopo.') + `
+  <div class="tab-wrap"><table><thead><tr><th style="width:56px">#</th><th>Pessoa</th><th>Setor</th><th class="num">Entregas</th><th class="num">Faltas</th><th class="num">Pontos</th></tr></thead><tbody>${linhas}</tbody></table></div>`;
+}
+
+/* ---------- estrutura e equipe ---------- */
+/* organograma: lideranças aparecem para todos; membros, conforme o escopo de quem vê */
+function vEquipe(){
+  const u = eu();
+  const vis = new Set(Dados.pessoasVisiveis(u).map(x => x.id));
+  const av = x => `<span class="av g${x.exemplo?' ex':''}" aria-hidden="true">${iniciais(x.nome)}</span>`;
+  const voce = x => x.id===u.id ? ' (você)' : '';
+  const no = (titulo, pessoa, vago, cls='') => pessoa
+    ? `<div class="no ${cls}">${av(pessoa)}<div class="no-txt"><b>${esc(titulo)}</b><span>${esc(pessoa.nome)}${voce(pessoa)}</span></div></div>`
+    : `<div class="no vago ${cls}"><div class="no-txt"><b>${esc(titulo)}</b><span>${vago}</span></div></div>`;
+  const nucleo = (g, d) => {
+    const l = lider(g.id);
+    const ms = S.usuarios.filter(x => x.gerencia===g.id && x.papel==='membro');
+    const vistos = ms.filter(x => vis.has(x.id)), ocultos = ms.length - vistos.length;
+    const gente = [...(l?[l]:[]), ...vistos].map(x => `<li>${av(x)}<span>${esc(x.nome)}${voce(x)}${x===l?' <small>· liderança</small>':''}</span></li>`).join('');
+    const resp = usr(d.titular || d.cobertura);
+    return `<section class="grupo-org"><h3>${esc(g.nome)}${g.vaga?' <span class="chip vaga">Vaga</span>':''}</h3>
+      ${gente?`<ul class="gente">${gente}</ul>`:''}
+      ${ocultos?`<p class="meta">${gente?'+ ':''}${plural(ocultos,'membro','membros')}</p>`:''}
+      ${!gente && !ocultos?`<p class="meta">Conduzido por ${esc(resp.nome)}</p>`:''}</section>`;
+  };
+  const pres = dir('pres');
+  const ass = ger('pres-ass'), assL = lider('pres-ass');
+  const ramos = S.diretorias.filter(d => d.id!=='pres').map(d => {
+    const c = d.cobertura && usr(d.cobertura);
+    return `<div class="ramo">${no(d.titulo, d.titular && usr(d.titular), `Vaga · coberta por ${esc(c ? c.nome : '')}`)}
+      ${S.gerencias.filter(g => g.diretoria===d.id).map(g => nucleo(g, d)).join('')}</div>`;
+  }).join('');
+  return cab('Estrutura e equipe', 'Organograma 2027. Lideranças aparecem para todos; membros, conforme o seu escopo.') + `
+  <div class="legenda"><span><span class="av ex" aria-hidden="true">EX</span> Pessoa de exemplo, até o processo seletivo</span><span><span class="chip vaga">Vaga</span> Liderança em aberto</span></div>
+  <div class="orgchart">
+    <div class="topo-org">${no('Presidência', usr(pres.titular), '', 'raiz')}<div class="staff">${no(ass.nome, assL, 'Vaga · PS em andamento')}</div></div>
+    <div class="tronco"></div>
+    <div class="ramos">${ramos}</div>
+  </div>`;
+}
+
+/* ---------- acessos ---------- */
+function vAcessos(){
+  const u = eu();
+  const todas = Dados.solicitacoesVisiveis(u).sort((a,b) => b.criadoEm.localeCompare(a.criadoEm));
+  const minhas = todas.filter(s => Dados.podeAprovar(u,s));
+  const outras = todas.filter(s => !Dados.podeAprovar(u,s));
+  const podePedir = Dados.beneficiariosPossiveis(u).length > 0;
+  return cab('Acessos por exceção','Liberações pontuais da barreira hierárquica, com justificativa, aprovação expressa e prazo de validade.', podePedir?`<button class="btn prim" data-acao="nova-solicitacao">Solicitar acesso</button>`:'') + `
+  ${minhas.length ? `<section class="secao" style="margin-top:0"><h2>Aguardando sua decisão</h2><div class="lista">${minhas.map(s => cartaoPedido(u,s)).join('')}</div></section>` : ''}
+  <section class="secao"><h2>${Dados.ehPresex(u)?'Todas as solicitações':'Solicitações no seu escopo'}</h2>
+    ${outras.length ? `<div class="lista">${outras.map(s => cartaoPedido(u,s)).join('')}</div>` : `<p class="vazio">Nenhuma solicitação por aqui.${podePedir?' Use “Solicitar acesso” para pedir uma liberação.':''}</p>`}</section>`;
+}
+function cartaoPedido(u,s){
+  const sit = Dados.situacao(s); const a = Dados.alvo(s);
+  const b = usr(s.beneficiario), sol = usr(s.solicitante);
+  const rot = {pendente:'Pendente', aprovada:'Aprovada', negada:'Negada', revogada:'Revogada', expirada:'Expirada'}[sit];
+  return `<article class="pedido ${sit}">
+    <div class="pedido-cab"><div><h3>${esc(a.nome)}</h3><p class="meta">${s.alvo.tipo==='projeto'?'Projeto inteiro':'Demanda específica'} · ${a.restrito?'Restrito à Presidência':esc(dir(a.diretoria).titulo)}</p></div><span class="chip s-${sit}">${rot}</span></div>
+    <p>Para <strong>${esc(b.nome)}</strong> (${esc(cargo(b))})${sol.id!==b.id?`, pedido por ${esc(sol.nome)}`:''} · válido até ${fmtData(s.validoAte)}</p>
+    <q>${esc(s.justificativa)}</q>
+    ${s.decididoPor?`<p class="nota">${sit==='negada'?'Negada':'Aprovada'} por ${esc(usr(s.decididoPor).nome)} em ${fmtHora(s.decididoEm)}${s.nota?`: ${esc(s.nota)}`:''}${s.revogadoPor?`. Revogada por ${esc(usr(s.revogadoPor).nome)} em ${fmtHora(s.revogadoEm)}.`:''}</p>`:`<p class="dica">Quem pode aprovar: ${esc(Dados.aprovadoresDe(a))}.</p>`}
+    ${Dados.podeAprovar(u,s)?`<div class="decidir"><label for="nota-${s.id}" class="dica">Observação para o solicitante (opcional)</label><textarea id="nota-${s.id}" placeholder="Ex.: acesso só para consulta até a entrega"></textarea>
+      <div class="linha"><button class="btn prim peq" data-aprovar="${s.id}">Aprovar até ${fmtCurta(s.validoAte)}</button><button class="btn perigo peq" data-negar="${s.id}">Negar</button></div></div>`:''}
+    ${Dados.podeRevogar(u,s)?`<div class="linha">${UI.revogar===s.id?`<span class="dica">A pessoa perde o acesso imediatamente.</span><button class="btn perigo peq" data-revogar-ok="${s.id}">Confirmar revogação</button><button class="btn peq" data-revogar-cancela>Cancelar</button>`:`<button class="btn peq" data-revogar="${s.id}">Revogar acesso</button>`}</div>`:''}
+  </article>`;
+}
+
+/* ---------- histórico ---------- */
+function vHistorico(){
+  return cab('Histórico completo','Toda criação, edição, lançamento de pontos, reunião e decisão de acesso fica registrada. Você vê os registros do seu escopo.') + `
+  <div class="filtros"><div class="busca"><label for="f-hist" class="sr">Buscar no histórico</label><input id="f-hist" type="search" placeholder="Buscar por pessoa, ação ou código" value="${esc(UI.buscaHist)}"></div></div>
+  <div class="bloco" id="lista-hist"></div>`;
+}
+function renderHistorico(){
+  const u = eu(), q = UI.buscaHist.trim().toLowerCase();
+  const es = Dados.auditoriaVisivel(u).filter(e => !q || (usr(e.ator).nome+' '+e.acao+' '+e.detalhe).toLowerCase().includes(q));
+  document.getElementById('lista-hist').innerHTML = es.length ? `<ul class="auditoria">${es.map(e => `<li><time datetime="${e.em}">${fmtHora(e.em)}</time><span><strong>${esc(usr(e.ator).nome)}</strong> · ${esc(e.acao)}: ${esc(e.detalhe)}</span></li>`).join('')}</ul>` : '<p class="vazio">Nada encontrado.</p>';
+}
+
+/* ---------- regras ---------- */
+function vRegras(){
+  const u = eu(), c = S.config, edita = Dados.podeEditarRegras(u);
+  const total = S.tarefas.length;
+  const linhas = S.usuarios.map(x => { const v = Dados.tarefasVisiveis(x); const exc = v.filter(y => y.a.tipo==='excecao').length;
+    return `<tr><td>${esc(x.nome)}${chipExemplo(x)}</td><td>${esc(cargo(x))}</td><td class="num">${v.length}<span class="mini" style="width:${Math.round(v.length/total*80)}px"></span></td><td class="num">${exc||'–'}</td><td class="num">${Dados.membrosVisiveis(x).length}</td></tr>`; }).join('');
+  const campo = (k, rot) => `<div><label for="cfg-${k}">${rot}</label><input type="number" id="cfg-${k}" value="${c[k]}" step="1" ${edita?'':'disabled'}></div>`;
+  return cab('Regras','Permissões aplicadas na camada de dados, ajustadas à estrutura Fácil 27, e regras de pontuação vigentes.') + `
+  <div class="tab-wrap"><table>
+    <thead><tr><th>Perfil</th><th>Demandas</th><th>Pontuação detalhada</th><th>Restritos da Presidência</th><th>Criar e validar</th><th>Ajustar pontos</th><th>Aprovar exceções</th></tr></thead>
+    <tbody>
+      <tr><td><span class="chip presex">Presidência</span></td><td>Todas</td><td>Todos</td><td>Sim</td><td>Qualquer projeto</td><td>Sim</td><td>Qualquer área, inclusive restritos</td></tr>
+      <tr><td><span class="chip diretoria">Diretoria</span></td><td>As das diretorias que conduz, inclusive as cobertas por vacância</td><td>Pessoas dessas diretorias</td><td>Não</td><td>Projetos dessas diretorias</td><td>Só a Administrativa</td><td>Projetos e demandas das diretorias que conduz</td></tr>
+      <tr><td><span class="chip gerencia">Gerência</span></td><td>As do núcleo</td><td>Pessoas do núcleo</td><td>Não</td><td>Projetos do núcleo</td><td>Só a liderança de Gente e Gestão</td><td>Não</td></tr>
+      <tr><td><span class="chip gerencia">Assessoria</span></td><td>As da Assessoria</td><td>Pessoas da Assessoria</td><td>Não</td><td>Reuniões gerais e da Presidência, com atas</td><td>Não</td><td>Não</td></tr>
+      <tr><td><span class="chip executor">Membro</span></td><td>Só aquelas em que é executor</td><td>Só a própria</td><td>Não</td><td>Move as próprias até “Em revisão”</td><td>Não</td><td>Não</td></tr>
+    </tbody></table></div>
+
+  <section class="secao"><h2>Vagas e coberturas</h2><p class="sub">Quem responde por cada área vaga, conforme o documento de funções.</p>
+    <ul class="regras">
+      <li><strong>Vice-Presidência:</strong> não existe na estrutura 2027. As permissões da antiga Presex ficam só com a Presidência.</li>
+      <li><strong>Diretoria de Projetos:</strong> vaga. Victor (Comercial) conduz entregas, cronograma e qualidade, e aprova exceções da área.</li>
+      <li><strong>Diretoria Financeira:</strong> vaga. A Presidência assume, e a Administrativa apoia quando atribuída a demandas.</li>
+      <li><strong>Gente e Gestão:</strong> liderança vaga. Emilli (Administrativa) responde por ajustes de pontos e regras.</li>
+      <li><strong>Assessoria de Presidência:</strong> vaga, com PS em andamento. No protótipo há uma pessoa de exemplo para testar o perfil.</li>
+    </ul></section>
+
+  <section class="secao"><h2>Pontos a confirmar com a diretoria</h2>
+    <ul class="regras">
+      <li>Quem cobre a Presidência na ausência do titular, já que não há Vice-Presidência.</li>
+      <li>Se há Conselho ou Assembleia Geral acima da Presidência e se terá acesso ao sistema.</li>
+      <li>Escopo completo da Diretoria Administrativa, além de processos internos e Gente e Gestão.</li>
+      <li>Responsabilidades exatas da Assessoria de Presidência e de Gente e Gestão.</li>
+    </ul></section>
+
+  <section class="secao"><h2>Regras de pontuação</h2><p class="sub">${edita?'Mudanças valem para os próximos lançamentos. Lançamentos já feitos mantêm o valor original; os pontos iniciais valem para todos.':'Só a Presidência e a Diretoria Administrativa alteram estes valores.'}</p>
+    <form class="bloco form" id="form-cfg"><div class="cfg">
+      ${campo('pontosIniciais','Pontos iniciais')}${campo('entregaNoPrazo','Entrega no prazo')}${campo('entregaAtrasada','Entrega com atraso')}${campo('falta','Falta em reunião')}${campo('faltaJustificada','Falta justificada')}
+    </div>
+    <label class="check" for="cfg-ranking" style="font-size:.88rem;font-weight:500;color:var(--ink)"><input type="checkbox" id="cfg-ranking" ${c.rankingPublico?'checked':''} ${edita?'':'disabled'}> Ranking visível para todas as pessoas</label>
+    ${edita?'<div class="linha"><button class="btn prim" type="submit">Salvar regras</button></div>':''}</form></section>
+
+  <section class="secao"><h2>Como funciona a exceção de acesso</h2>
+    <ul class="regras">
+      <li><strong>Solicitação formal prévia</strong>, feita pela pessoa ou pela sua liderança, com justificativa.</li>
+      <li><strong>Escopo pontual:</strong> um projeto inteiro ou uma única demanda, identificada pelo código.</li>
+      <li><strong>Aprovação expressa</strong> da Presidência ou da diretoria que conduz a área. Itens restritos só a Presidência libera. Ninguém aprova o próprio pedido.</li>
+      <li><strong>Prazo de até 90 dias</strong>, com expiração automática. A liberação é só para consulta e pode ser revogada a qualquer momento.</li>
+      <li><strong>Atribuição formal:</strong> ser executor de uma demanda sempre dá acesso a ela.</li>
+    </ul></section>
+
+  <section class="secao"><h2>Simulação de visibilidade</h2><p class="sub">Quantas das ${total} demandas e quantas pontuações cada pessoa enxerga com os dados atuais.</p>
+    <div class="tab-wrap"><table><thead><tr><th>Pessoa</th><th>Cargo</th><th class="num">Demandas visíveis</th><th class="num">Por exceção</th><th class="num">Pontuações visíveis</th></tr></thead><tbody>${linhas}</tbody></table></div></section>
+
+  <section class="secao"><h2>Dados do protótipo</h2><p class="sub">As alterações ficam salvas só neste navegador.</p>
+    <div class="linha">${UI.restaurar?`<span class="dica">Isso apaga tudo o que foi criado aqui.</span><button class="btn perigo" data-acao="restaurar-ok">Confirmar restauração</button><button class="btn" data-acao="restaurar-cancela">Cancelar</button>`:`<button class="btn" data-acao="restaurar">Restaurar dados de exemplo</button>`}</div></section>`;
+}
+
+/* ---------- painel: demanda ---------- */
+function explicacao(u,t,a){
+  const ar = Dados.areaTarefa(t);
+  if (a.tipo==='presex') return 'A Presidência tem acesso irrestrito.';
+  if (a.tipo==='diretoria') return `A demanda pertence à ${esc(dir(ar.diretoria).titulo)}, que você conduz${dir(ar.diretoria).titular===u.id?'':' cobrindo a vacância'}.`;
+  if (a.tipo==='gerencia') return `A demanda é do núcleo ${esc(ger(ar.gerencia).nome)}, que você lidera.`;
+  if (a.tipo==='executor') return 'Você consta como executor desta demanda.';
+  const c = a.concessao;
+  return `Liberação por exceção aprovada por <strong>${esc(usr(c.decididoPor).nome)}</strong>, válida até ${fmtData(c.validoAte)}. Acesso somente para consulta.`;
+}
+function pickerExecutores(pref, u, p, sel){
+  const disp = Dados.atribuiveis(u,p);
+  const ids = new Set(disp.map(x => x.id));
+  const fora = sel.filter(id => !ids.has(id)).map(usr);
+  const grupos = [];
+  const doNucleo = disp.filter(x => x.gerencia===p.gerencia);
+  const resto = disp.filter(x => x.gerencia!==p.gerencia);
+  if (doNucleo.length) grupos.push(['Núcleo do projeto', doNucleo]);
+  if (resto.length) grupos.push(['Outras pessoas no seu escopo', resto]);
+  if (fora.length) grupos.push(['Já atribuídos, fora do seu escopo', fora]);
+  return `<div class="picker">${grupos.map(([g,us]) => `<div class="grupo">${g}</div>${us.map(x =>
+    `<label for="${pref}-ex-${x.id}"><input type="checkbox" id="${pref}-ex-${x.id}" name="${pref}-ex" value="${x.id}" ${sel.includes(x.id)?'checked':''}> ${esc(x.nome)} <span>${esc(setor(x))}</span></label>`).join('')}`).join('')}</div>`;
+}
+function htmlPainelTarefa(){
+  const u = eu(); const t = trf(UI.tarefa);
+  const a = t && Dados.acesso(u,t);
+  if (!a){ UI.tarefa = null; return ''; }
+  const p = prj(t.projeto); const ar = Dados.areaTarefa(t);
+  const gerir = Dados.podeGerir(u,t), status = Dados.podeMudarStatus(u,t);
+  const hist = S.auditoria.filter(e => e.tarefa===t.id).sort((x,y) => y.em.localeCompare(x.em));
+  const pontos = S.lancamentos.filter(l => l.tarefa===t.id && !l.desc);
+  let acao;
+  if (gerir) acao = `<form class="form" id="form-tarefa">
+      <div><label for="ft-titulo">Título</label><input type="text" id="ft-titulo" value="${esc(t.titulo)}" maxlength="120"></div>
+      <div><label for="ft-desc">Descrição</label><textarea id="ft-desc">${esc(t.descricao)}</textarea></div>
+      <div class="dois"><div><label for="ft-status">Status</label><select id="ft-status">${opcoes(STATUS,t.status)}</select></div>
+        <div><label for="ft-pri">Prioridade</label><select id="ft-pri">${opcoes(Object.entries(PRIORIDADE),t.prioridade)}</select></div></div>
+      <div><label for="ft-prazo">Prazo</label><input type="date" id="ft-prazo" value="${t.prazo}"></div>
+      <fieldset><legend>Executores</legend>${pickerExecutores('ft',u,p,t.executores)}</fieldset>
+      ${Dados.ehPresex(u)&&!p.restrito?`<label class="check" for="ft-restrito"><input type="checkbox" id="ft-restrito" ${t.restrito?'checked':''}> Restringir à Presidência (oculta das diretorias e núcleos)</label>`:''}
+      <p class="dica">Marcar como concluída lança ${sinal(S.config.entregaNoPrazo)} por executor se estiver no prazo, ou ${sinal(S.config.entregaAtrasada)} se estiver atrasada. Reabrir desconsidera esses pontos.</p>
+      <p class="erro" id="ft-erro" hidden></p>
+      <div class="linha"><button class="btn prim" type="submit">Salvar alterações</button></div>
+    </form>`;
+  else if (status) acao = `<div class="form"><div><label for="ft-status-so">Atualizar status</label><select id="ft-status-so">${opcoes(Dados.statusPermitidos(u,t),t.status)}</select></div>
+      <div class="linha"><button class="btn prim" data-acao="salvar-status">Salvar status</button></div><p class="dica">Ao terminar, mova para “Em revisão”. A liderança valida a conclusão e lança os pontos.</p></div>`;
+  else acao = `<p class="somente-leitura">Somente consulta. Para alterar esta demanda, peça à liderança do núcleo para incluir você como executor.</p>`;
+  return `<div class="veu" data-acao="fechar"></div>
+  <aside class="painel" role="dialog" aria-modal="true" aria-labelledby="painel-tit">
+    <div class="painel-cab"><span class="mono">${t.codigo} · ${esc(ger(ar.gerencia).nome)}</span><button class="fechar" data-acao="fechar" aria-label="Fechar">×</button></div>
+    <div class="painel-corpo">
+      <div><h2 id="painel-tit">${esc(t.titulo)}</h2>
+        <div class="linha" style="margin-top:8px"><span class="chip">${STATUS_NOME[t.status]}</span><span class="chip p-${t.prioridade}">${PRIORIDADE[t.prioridade]}</span>${chipAcesso(a)}${ar.restrito?'<span class="chip restrito">Restrito à Presidência</span>':''}</div></div>
+      <p class="porque"><strong>Por que você vê esta demanda:</strong> ${explicacao(u,t,a)}</p>
+      <dl class="dl">
+        <dt>Projeto</dt><dd>${esc(p.nome)} · ${esc(p.cliente)}</dd>
+        <dt>Área</dt><dd>${esc(dir(ar.diretoria).titulo)}</dd>
+        <dt>Prazo</dt><dd class="${atrasada(t)?'prazo atrasada':''}">${fmtData(t.prazo)}${atrasada(t)?' · atrasada':''}</dd>
+        ${t.concluidaEm?`<dt>Concluída em</dt><dd>${fmtData(t.concluidaEm)}${pontos.length?` · ${sinal(pontos[0].valor)} pts por executor`:''}</dd>`:''}
+        <dt>Executores</dt><dd>${t.executores.map(id => esc(usr(id).nome)).join(', ')}</dd>
+        <dt>Criada por</dt><dd>${esc(usr(t.criadoPor).nome)}</dd>
+        ${gerir?'':`<dt>Descrição</dt><dd>${esc(t.descricao)||'<span class="meta">Sem descrição</span>'}</dd>`}
+      </dl>
+      ${acao}
+      <div><h3 style="margin-bottom:8px">Histórico</h3>${hist.length?`<ul class="hist">${hist.map(e => `<li><time datetime="${e.em}">${fmtHora(e.em)}</time><span><strong>${esc(usr(e.ator).nome)}</strong> · ${esc(e.acao)}: ${esc(e.detalhe)}</span></li>`).join('')}</ul>`:'<p class="dica">Sem alterações registradas.</p>'}</div>
+    </div>
+  </aside>`;
+}
+
+/* ---------- painel: reunião ---------- */
+function htmlPainelReuniao(){
+  const u = eu(); const r = reu(UI.reuniao);
+  if (!r || !Dados.reunioesVisiveis(u).includes(r)){ UI.reuniao = null; return ''; }
+  const gerir = Dados.podeGerirReuniao(u,r);
+  const conv = r.convocados.map(usr).sort((a,b) => a.nome.localeCompare(b.nome));
+  const cont = k => Object.values(r.presencas).filter(p => p===k).length;
+  let presenca;
+  if (r.encerrada) presenca = `<div><h3 style="margin-bottom:6px">Lista de presença</h3><p class="meta" style="margin-bottom:6px">${cont('presente')} presentes · ${cont('justificada')} justificadas · ${cont('falta')} faltas</p>
+    ${conv.map(m => { const p = r.presencas[m.id]; return `<div class="presenca"><span>${esc(m.nome)}</span><span class="chip ${p==='presente'?'ok':p==='falta'?'ruim':''}">${PRESENCA[p]||'Sem registro'}</span></div>`; }).join('')}</div>`;
+  else if (gerir) presenca = `<form id="form-presenca"><h3 style="margin-bottom:6px">Lista de presença</h3>
+    ${conv.map(m => `<div class="presenca"><label for="pr-${m.id}">${esc(m.nome)}</label><select id="pr-${m.id}" data-pr="${m.id}"><option value="">Sem registro</option>${opcoes(Object.entries(PRESENCA), r.presencas[m.id]||'')}</select></div>`).join('')}
+    <div class="linha" style="margin-top:12px"><button class="btn" type="button" data-acao="todos-presentes">Marcar todos presentes</button><button class="btn" type="submit">Salvar presença</button></div>
+    <div class="linha" style="margin-top:8px">${UI.encerrar?`<span class="dica">As faltas viram lançamentos de pontos e a lista fica travada.</span><button class="btn perigo" type="button" data-acao="encerrar-ok">Confirmar encerramento</button><button class="btn" type="button" data-acao="encerrar-cancela">Cancelar</button>`:`<button class="btn prim" type="button" data-acao="encerrar">Encerrar e lançar faltas</button>`}</div>
+    </form>`;
+  else presenca = `<p class="dica">${plural(conv.length,'pessoa convocada','pessoas convocadas')}. A presença é registrada por quem organiza.</p>`;
+  const ata = gerir
+    ? `<form class="form" id="form-ata"><div><label for="ata-texto">Ata</label><textarea id="ata-texto" style="min-height:140px" placeholder="Decisões, encaminhamentos e responsáveis">${esc(r.ata)}</textarea></div><div class="linha"><button class="btn" type="submit">Salvar ata</button>${r.ataPor?`<span class="dica">Última edição: ${esc(usr(r.ataPor).nome)}</span>`:''}</div></form>`
+    : `<div><h3 style="margin-bottom:6px">Ata</h3>${r.ata?`<p class="ata">${esc(r.ata)}</p>`:'<p class="dica">Ata ainda não registrada.</p>'}</div>`;
+  return `<div class="veu" data-acao="fechar"></div>
+  <aside class="painel" role="dialog" aria-modal="true" aria-labelledby="painel-tit">
+    <div class="painel-cab"><span class="mono">${fmtData(r.data)} · ${r.hora}</span><button class="fechar" data-acao="fechar" aria-label="Fechar">×</button></div>
+    <div class="painel-corpo">
+      <div><h2 id="painel-tit">${esc(r.titulo)}</h2><div class="linha" style="margin-top:8px"><span class="chip ${r.escopo.tipo==='presex'?'presex':r.escopo.tipo==='gerencia'?'gerencia':'diretoria'}">${esc(Dados.nomeEscopo(r.escopo))}</span>${r.encerrada?'<span class="chip ok">Encerrada</span>':''}</div></div>
+      <dl class="dl"><dt>Pauta</dt><dd>${esc(r.pauta)||'<span class="meta">Sem pauta</span>'}</dd><dt>Organização</dt><dd>${esc(usr(r.criadoPor).nome)}</dd></dl>
+      ${presenca}
+      ${ata}
+      ${htmlTranscricao(r, gerir)}
+      ${htmlAnexos(r, gerir)}
+    </div>
+  </aside>`;
+}
+function htmlTranscricao(r, gerir){
+  const t = r.transcricao;
+  if (t) return `<section class="bloco-reu"><div class="linha"><h3>Transcrição</h3><span class="chip ${t.origem==='meet'?'diretoria':''}">${ORIGEM[t.origem]}${t.exemplo?' · exemplo':''}</span></div>
+    <p class="meta">Recebida em ${fmtHora(t.em)}${t.por?' · registrada por '+esc(usr(t.por).nome):''} · ${t.texto.split(/\s+/).length} palavras</p>
+    <details><summary>Ler transcrição</summary><p class="ata">${esc(t.texto)}</p></details></section>`;
+  return `<section class="bloco-reu"><h3>Transcrição</h3>
+    <p class="dica">Com a integração ativa, a transcrição do Google Meet chega aqui ao fim da reunião.</p>
+    ${gerir?`<details><summary>Colar transcrição manualmente</summary><div class="form"><label for="tr-texto" class="sr">Transcrição</label><textarea id="tr-texto" style="min-height:120px" placeholder="Cole aqui o texto exportado do Meet ou de outra ferramenta"></textarea><div class="linha"><button class="btn" type="button" data-acao="salvar-transcricao">Salvar transcrição</button></div></div></details>`:''}</section>`;
+}
+function htmlAnexos(r, gerir){
+  const previa = f => {
+    if (!f.dataUrl) return '<p class="dica">Arquivo de exemplo, sem conteúdo. Na versão online ele abre ou é baixado direto daqui.</p>';
+    if (f.tipo.startsWith('image/')) return `<img src="${f.dataUrl}" alt="${esc(f.nome)}">`;
+    if (f.tipo.startsWith('text/')) {
+      const corpo = f.dataUrl.split(',')[1] || '';
+      let txt; try { txt = f.dataUrl.includes(';base64,') ? new TextDecoder().decode(Uint8Array.from(atob(corpo), c => c.charCodeAt(0))) : decodeURIComponent(corpo); } catch(e){ txt = ''; }
+      return `<pre>${esc(txt.slice(0,6000))}</pre>`;
+    }
+    return '<p class="dica">Pré-visualização deste tipo de arquivo fica para a versão online, onde ele também pode ser baixado.</p>';
+  };
+  const item = f => `<li class="anexo"><span class="ext" aria-hidden="true">${esc(extArq(f.nome,f.tipo))}</span>
+    <div style="min-width:0"><b>${esc(f.nome)}</b><span class="meta">${fmtTam(f.tamanho)} · ${esc(usr(f.por).nome)} · ${fmtHora(f.em)} · ${ORIGEM[f.origem]}</span></div>
+    <div class="acoes"><button class="btn peq" type="button" data-acao="ver-anexo" data-id="${f.id}" aria-expanded="${UI.verAnexo===f.id}">${UI.verAnexo===f.id?'Fechar':'Ver'}</button>
+      ${gerir?(UI.removerAnexo===f.id?`<button class="btn perigo peq" type="button" data-acao="remover-anexo-ok" data-id="${f.id}">Confirmar</button><button class="btn peq" type="button" data-acao="remover-anexo-cancela">Cancelar</button>`:`<button class="btn peq" type="button" data-acao="remover-anexo" data-id="${f.id}">Remover</button>`):''}</div>
+    ${UI.verAnexo===f.id?`<div class="previa">${previa(f)}</div>`:''}</li>`;
+  return `<section class="bloco-reu"><div class="linha"><h3>Anexos</h3><span class="meta">${plural(r.anexos.length,'arquivo','arquivos')}</span></div>
+    ${r.anexos.length?`<ul class="anexos">${r.anexos.map(item).join('')}</ul>`:'<p class="dica">Nenhum arquivo anexado.</p>'}
+    ${gerir?`<label class="soltar" for="anexo-input">Arraste arquivos aqui ou <u>escolha no computador</u><span>Apresentações, planilhas, PDFs, imagens. Até 1 MB por arquivo no protótipo.</span><input type="file" id="anexo-input" class="sr" multiple></label>`:''}</section>`;
+}
+function anexarArquivos(files){
+  const u = eu(), rid = UI.reuniao;
+  [...files].forEach(f => {
+    if (f.size > LIMITE_ANEXO){ tentar(() => Dados.anexar(u, rid, {nome:f.name, tipo:f.type, tamanho:f.size})); return; }
+    const rd = new FileReader();
+    rd.onload = () => {
+      try { Dados.anexar(u, rid, {nome:f.name, tipo:f.type, tamanho:f.size, dataUrl:rd.result}); }
+      catch(e){ toast(e.message, true); return; }
+      if (PERSISTE && !salvar()){ reu(rid).anexos.pop(); S.auditoria.pop(); toast('Não há espaço no navegador para guardar este arquivo no protótipo.', true); }
+      else toast('Arquivo anexado');
+      renderCamada();
+    };
+    rd.onerror = () => toast(`Não foi possível ler “${f.name}”.`, true);
+    rd.readAsDataURL(f);
+  });
+}
+
+/* ---------- modais ---------- */
+function htmlModal(){
+  const u = eu();
+  const moldura = (id, titulo, corpo, botao) => `<div class="veu" data-acao="fechar"></div>
+    <form class="modal" id="${id}" role="dialog" aria-modal="true" aria-labelledby="${id}-tit">
+      <div class="painel-cab"><h2 id="${id}-tit">${titulo}</h2><button type="button" class="fechar" data-acao="fechar" aria-label="Fechar">×</button></div>
+      <div class="painel-corpo form">${corpo}</div>
+      <div class="modal-pe"><button type="button" class="btn" data-acao="fechar">Cancelar</button><button type="submit" class="btn prim">${botao}</button></div>
+    </form>`;
+  if (UI.modal==='tarefa'){
+    const projs = Dados.projetosCriaveis(u);
+    const m = UI.mt || (UI.mt = {projeto:projs[0].id});
+    const p = prj(m.projeto);
+    return moldura('form-nova','Nova demanda',`
+      <div><label for="nt-projeto">Projeto</label><select id="nt-projeto">${projs.map(x => `<option value="${x.id}" ${x.id===m.projeto?'selected':''}>${esc(x.nome)} · ${esc(x.cliente)}</option>`).join('')}</select></div>
+      <div><label for="nt-titulo">Título</label><input type="text" id="nt-titulo" maxlength="120" placeholder="Ex.: Levantar notas fiscais de outubro" value="${esc(m.titulo||'')}"></div>
+      <div><label for="nt-desc">Descrição</label><textarea id="nt-desc" placeholder="Entregável, critério de pronto, referências">${esc(m.descricao||'')}</textarea></div>
+      <div class="dois"><div><label for="nt-prazo">Prazo</label><input type="date" id="nt-prazo" value="${m.prazo||dia(7)}" min="${hojeISO}"></div>
+        <div><label for="nt-pri">Prioridade</label><select id="nt-pri">${opcoes(Object.entries(PRIORIDADE),m.prioridade||'media')}</select></div></div>
+      <fieldset><legend>Executores</legend>${pickerExecutores('nt',u,p,m.executores||[])}</fieldset>
+      ${Dados.ehPresex(u)&&!p.restrito?`<label class="check" for="nt-restrito"><input type="checkbox" id="nt-restrito"> Restringir à Presidência (oculta das diretorias e núcleos)</label>`:''}
+      <p class="dica">Os executores passam a ver esta demanda, mesmo que sejam de outro núcleo.</p>
+      <p class="erro" id="nt-erro" hidden></p>`, 'Criar demanda');
+  }
+  if (UI.modal==='reuniao'){
+    const es = Dados.escoposReuniao(u);
+    const m = UI.mr || (UI.mr = {escopo:es[0].tipo+':'+(es[0].id||'')});
+    const e = es.find(x => x.tipo+':'+(x.id||'')===m.escopo);
+    return moldura('form-reuniao','Agendar reunião',`
+      <div><label for="nr-titulo">Título</label><input type="text" id="nr-titulo" maxlength="100" placeholder="Ex.: Alinhamento semanal" value="${esc(m.titulo||'')}"></div>
+      <div><label for="nr-escopo">Público</label><select id="nr-escopo">${es.map(x => { const k = x.tipo+':'+(x.id||''); return `<option value="${k}" ${k===m.escopo?'selected':''}>${esc(Dados.nomeEscopo(x))}</option>`; }).join('')}</select>
+        <p class="dica" style="margin-top:4px">${plural(Dados.convocadosDoEscopo(e).length,'pessoa será convocada','pessoas serão convocadas')}.</p></div>
+      <div class="dois"><div><label for="nr-data">Data</label><input type="date" id="nr-data" value="${m.data||dia(3)}"></div><div><label for="nr-hora">Horário</label><input type="time" id="nr-hora" value="${m.hora||'19:00'}"></div></div>
+      <div><label for="nr-pauta">Pauta</label><textarea id="nr-pauta" placeholder="Assuntos e decisões esperadas">${esc(m.pauta||'')}</textarea></div>
+      <p class="erro" id="nr-erro" hidden></p>`, 'Agendar');
+  }
+  if (UI.modal==='solicitacao'){
+    const bens = Dados.beneficiariosPossiveis(u);
+    const m = UI.ms || (UI.ms = {beneficiario:u.id, tipo:'projeto'});
+    const b = usr(m.beneficiario);
+    const projs = Dados.projetosSolicitaveis(b);
+    if (m.tipo==='projeto' && !projs.some(p => p.id===m.projeto)) m.projeto = projs[0] ? projs[0].id : '';
+    const alvoP = m.projeto && prj(m.projeto);
+    return moldura('form-solic','Solicitar acesso',`
+      ${bens.length>1?`<div><label for="ns-benef">Para quem</label><select id="ns-benef">${bens.map(x => `<option value="${x.id}" ${x.id===m.beneficiario?'selected':''}>${esc(x.nome)}${x.id===u.id?' (você)':''}</option>`).join('')}</select></div>`:''}
+      <fieldset><legend>O que liberar</legend><div class="radios">
+        <label for="ns-tipo-p"><input type="radio" name="ns-tipo" id="ns-tipo-p" value="projeto" ${m.tipo==='projeto'?'checked':''}> Um projeto</label>
+        <label for="ns-tipo-d"><input type="radio" name="ns-tipo" id="ns-tipo-d" value="tarefa" ${m.tipo==='tarefa'?'checked':''}> Uma demanda específica</label></div></fieldset>
+      ${m.tipo==='projeto'
+        ? (projs.length ? `<div><label for="ns-proj">Projeto</label><select id="ns-proj">${projs.map(p => `<option value="${p.id}" ${p.id===m.projeto?'selected':''}>${esc(p.nome)} · ${esc(p.cliente)} (${esc(ger(p.gerencia).nome)})</option>`).join('')}</select>
+            <p class="dica" style="margin-top:4px">Quem aprova: ${esc(Dados.aprovadoresDe(Dados.areaProjeto(alvoP)))}.</p></div>` : `<p class="vazio">Não há projetos fora do escopo desta pessoa para solicitar.</p>`)
+        : `<div><label for="ns-cod">Código da demanda</label><input type="text" id="ns-cod" placeholder="Ex.: PRJ-108" value="${esc(m.codigo||'')}" autocomplete="off"><p class="dica" style="margin-top:4px">Peça o código a quem demandou o trabalho.</p></div>`}
+      <div><label for="ns-just">Justificativa</label><textarea id="ns-just" placeholder="Para que o acesso é necessário e qual entrega depende dele">${esc(m.justificativa||'')}</textarea></div>
+      <div><label for="ns-ate">Válido até</label><input type="date" id="ns-ate" value="${m.validoAte||dia(30)}" min="${dia(1)}" max="${dia(90)}"></div>
+      <p class="erro" id="ns-erro" hidden></p>`, 'Enviar solicitação');
+  }
+  return '';
+}
+
+/* ---------- render ---------- */
+const VISOES = {dashboard:vDashboard, demandas:vDemandas, projetos:vProjetos, reunioes:vReunioes, presencas:vPresencas, pontuacoes:vPontuacoes, ranking:vRanking, equipe:vEquipe, acessos:vAcessos, historico:vHistorico, regras:vRegras};
+function render(){
+  renderLateral();
+  document.getElementById('main').innerHTML = VISOES[UI.aba]();
+  if (UI.aba==='demandas') renderQuadro();
+  if (UI.aba==='pontuacoes') renderDetalheMembro();
+  if (UI.aba==='historico') renderHistorico();
+  renderCamada();
+}
+function renderCamada(){
+  const c = document.getElementById('camada');
+  c.innerHTML = (UI.modal ? htmlModal() : UI.tarefa ? htmlPainelTarefa() : UI.reuniao ? htmlPainelReuniao() : '') + (UI.menu ? '<div class="veu-menu" data-acao="menu"></div>' : '');
+  document.body.style.overflow = c.innerHTML ? 'hidden' : '';
+}
+function fechar(){ Object.assign(UI, {tarefa:null, reuniao:null, modal:null, mt:null, ms:null, mr:null, encerrar:false, verAnexo:null, removerAnexo:null}); renderCamada(); }
+const marcados = pref => [...document.querySelectorAll(`input[name="${pref}-ex"]:checked`)].map(x => x.value);
+function erroForm(id, msg){ const el = document.getElementById(id); el.textContent = msg; el.hidden = false; }
+const g = id => document.getElementById(id);
+/* guarda o que já foi digitado no modal antes de redesenhá-lo */
+function lerModal(){
+  if (UI.modal==='tarefa') Object.assign(UI.mt, {titulo:g('nt-titulo').value, descricao:g('nt-desc').value, prazo:g('nt-prazo').value, prioridade:g('nt-pri').value, executores:marcados('nt')});
+  if (UI.modal==='reuniao') Object.assign(UI.mr, {titulo:g('nr-titulo').value, data:g('nr-data').value, hora:g('nr-hora').value, pauta:g('nr-pauta').value});
+  if (UI.modal==='solicitacao'){
+    Object.assign(UI.ms, {justificativa:g('ns-just').value, validoAte:g('ns-ate').value});
+    if (g('ns-cod')) UI.ms.codigo = g('ns-cod').value; if (g('ns-proj')) UI.ms.projeto = g('ns-proj').value;
+  }
+}
+const lerPresencas = () => Object.fromEntries([...document.querySelectorAll('[data-pr]')].filter(s => s.value).map(s => [s.dataset.pr, s.value]));
+
+/* ---------- eventos ---------- */
+document.addEventListener('change', e => {
+  const id = e.target.id;
+  if (id==='ver-como'){
+    S.atual = e.target.value; salvar();
+    Object.assign(UI, {busca:'', projeto:'', pessoa:'', minhas:false, tarefa:null, reuniao:null, modal:null, revogar:null, restaurar:false, encerrar:false, sel:null, filtroLanc:'tudo', verDesc:false, menu:false, buscaHist:''});
+    render(); return;
+  }
+  if (id==='f-projeto'){ UI.projeto = e.target.value; renderQuadro(); }
+  else if (id==='f-pessoa'){ UI.pessoa = e.target.value; renderQuadro(); }
+  else if (id==='f-minhas'){ UI.minhas = e.target.checked; renderQuadro(); }
+  else if (id==='ver-desc'){ UI.verDesc = e.target.checked; renderDetalheMembro(); }
+  else if (id==='nt-projeto'){ lerModal(); UI.mt.projeto = e.target.value; UI.mt.executores = []; renderCamada(); }
+  else if (id==='nr-escopo'){ lerModal(); UI.mr.escopo = e.target.value; renderCamada(); }
+  else if (id==='ns-benef'){ lerModal(); UI.ms.beneficiario = e.target.value; renderCamada(); }
+  else if (e.target.name==='ns-tipo'){ lerModal(); UI.ms.tipo = e.target.value; renderCamada(); }
+  else if (id==='ns-proj'){ lerModal(); renderCamada(); }
+  else if (id==='anexo-input'){ anexarArquivos(e.target.files); e.target.value = ''; }
+});
+document.addEventListener('dragover', e => { const z = e.target.closest && e.target.closest('.soltar'); if (z){ e.preventDefault(); z.classList.add('sobre'); } });
+document.addEventListener('dragleave', e => { const z = e.target.closest && e.target.closest('.soltar'); if (z) z.classList.remove('sobre'); });
+document.addEventListener('drop', e => { const z = e.target.closest && e.target.closest('.soltar'); if (z){ e.preventDefault(); z.classList.remove('sobre'); anexarArquivos(e.dataTransfer.files); } });
+document.addEventListener('input', e => {
+  if (e.target.id==='f-busca'){ UI.busca = e.target.value; renderQuadro(); }
+  if (e.target.id==='f-hist'){ UI.buscaHist = e.target.value; renderHistorico(); }
+});
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-aba],[data-tarefa],[data-reuniao],[data-membro],[data-filtro-lanc],[data-desconsiderar],[data-acao],[data-filtrar-projeto],[data-aprovar],[data-negar],[data-revogar],[data-revogar-ok],[data-revogar-cancela]');
+  if (!el) return;
+  const u = eu(), d = el.dataset;
+  if (d.aba){ Object.assign(UI, {aba:d.aba, revogar:null, restaurar:false, menu:false}); try { history.replaceState(null,'','#'+d.aba); } catch(_){} render(); window.scrollTo(0,0); return; }
+  if (d.tarefa){ UI.tarefa = d.tarefa; renderCamada(); return; }
+  if (d.reuniao){ UI.reuniao = d.reuniao; UI.encerrar = false; renderCamada(); return; }
+  if (d.membro){ UI.sel = d.membro; document.querySelectorAll('.membro').forEach(b => b.setAttribute('aria-pressed', b.dataset.membro===d.membro)); renderDetalheMembro(); g('detalhe-membro').scrollIntoView({behavior:'smooth', block:'start'}); return; }
+  if (d.filtroLanc){ UI.filtroLanc = d.filtroLanc; renderDetalheMembro(); return; }
+  if (d.desconsiderar){ const mot = (g('mot-'+d.desconsiderar)||{}).value || ''; if (tentar(() => Dados.desconsiderar(u, d.desconsiderar, mot), 'Lançamento desconsiderado')) render(); return; }
+  if (d.filtrarProjeto){ Object.assign(UI, {aba:'demandas', projeto:d.filtrarProjeto, pessoa:'', busca:'', minhas:false}); render(); return; }
+  if (d.aprovar || d.negar){
+    const id = d.aprovar || d.negar; const nota = (g('nota-'+id)||{}).value || '';
+    if (tentar(() => Dados.decidir(u, id, !!d.aprovar, nota), d.aprovar ? 'Acesso aprovado' : 'Solicitação negada')) render();
+    return;
+  }
+  if (d.revogar){ UI.revogar = d.revogar; render(); return; }
+  if ('revogarCancela' in d){ UI.revogar = null; render(); return; }
+  if (d.revogarOk){ if (tentar(() => Dados.revogar(u, d.revogarOk), 'Acesso revogado')){ UI.revogar = null; render(); } return; }
+  switch (d.acao){
+    case 'fechar': fechar(); break;
+    case 'menu': UI.menu = !UI.menu; renderLateral(); renderCamada(); break;
+    case 'nova-tarefa': UI.modal = 'tarefa'; UI.mt = null; renderCamada(); break;
+    case 'nova-reuniao': UI.modal = 'reuniao'; UI.mr = null; renderCamada(); break;
+    case 'nova-solicitacao': UI.modal = 'solicitacao'; UI.ms = null; renderCamada(); break;
+    case 'salvar-status': { const st = g('ft-status-so').value; if (tentar(() => Dados.mudarStatus(u, UI.tarefa, st), 'Status atualizado')) render(); break; }
+    case 'todos-presentes': document.querySelectorAll('[data-pr]').forEach(s => { if (!s.value) s.value = 'presente'; }); break;
+    case 'encerrar': tentar(() => Dados.salvarPresencas(u, UI.reuniao, lerPresencas())); UI.encerrar = true; renderCamada(); break;
+    case 'encerrar-cancela': UI.encerrar = false; renderCamada(); break;
+    case 'encerrar-ok': UI.encerrar = false; if (tentar(() => Dados.encerrarReuniao(u, UI.reuniao), 'Reunião encerrada e faltas lançadas')) render(); else renderCamada(); break;
+    case 'ver-anexo': UI.verAnexo = UI.verAnexo===d.id ? null : d.id; renderCamada(); break;
+    case 'remover-anexo': UI.removerAnexo = d.id; renderCamada(); break;
+    case 'remover-anexo-cancela': UI.removerAnexo = null; renderCamada(); break;
+    case 'remover-anexo-ok': UI.removerAnexo = null; if (tentar(() => Dados.removerAnexo(u, UI.reuniao, d.id), 'Anexo removido')) render(); else renderCamada(); break;
+    case 'salvar-transcricao': if (tentar(() => Dados.salvarTranscricao(u, UI.reuniao, g('tr-texto').value), 'Transcrição registrada')) render(); break;
+    case 'restaurar': UI.restaurar = true; render(); break;
+    case 'restaurar-cancela': UI.restaurar = false; render(); break;
+    case 'restaurar-ok': { const atual = S.atual; S = semente(); S.atual = usr(atual) ? atual : 'u1'; salvar(); UI.restaurar = false; UI.sel = null; render(); toast('Dados de exemplo restaurados'); break; }
+  }
+});
+document.addEventListener('submit', e => {
+  e.preventDefault();
+  const u = eu(), f = e.target.id;
+  if (f==='form-tarefa'){
+    const dados = {titulo:g('ft-titulo').value.trim(), descricao:g('ft-desc').value.trim(), status:g('ft-status').value, prioridade:g('ft-pri').value, prazo:g('ft-prazo').value, executores:marcados('ft'), restrito:g('ft-restrito')?g('ft-restrito').checked:trf(UI.tarefa).restrito};
+    if (!dados.titulo) return erroForm('ft-erro','Dê um título à demanda.');
+    if (!dados.prazo) return erroForm('ft-erro','Informe o prazo.');
+    if (!dados.executores.length) return erroForm('ft-erro','Atribua pelo menos um executor.');
+    if (tentar(() => Dados.editarTarefa(u, UI.tarefa, dados), 'Alterações salvas')) render();
+  }
+  if (f==='form-nova'){
+    const dados = {projeto:g('nt-projeto').value, titulo:g('nt-titulo').value.trim(), descricao:g('nt-desc').value.trim(), prazo:g('nt-prazo').value, prioridade:g('nt-pri').value, executores:marcados('nt'), restrito:g('nt-restrito')?g('nt-restrito').checked:false};
+    if (!dados.titulo) return erroForm('nt-erro','Dê um título à demanda.');
+    if (!dados.prazo) return erroForm('nt-erro','Informe o prazo.');
+    if (!dados.executores.length) return erroForm('nt-erro','Atribua pelo menos um executor.');
+    let t; if (tentar(() => { t = Dados.criarTarefa(u, dados); }, 'Demanda criada')){ UI.modal = null; UI.mt = null; UI.tarefa = t.id; render(); }
+  }
+  if (f==='form-reuniao'){
+    lerModal();
+    let r; try { r = Dados.criarReuniao(u, UI.mr); salvar(); } catch(err){ return erroForm('nr-erro', err.message); }
+    Object.assign(UI, {modal:null, mr:null, aba:'reunioes', reuniao:r.id}); render(); toast('Reunião agendada');
+  }
+  if (f==='form-presenca'){ if (tentar(() => Dados.salvarPresencas(u, UI.reuniao, lerPresencas()), 'Presença salva')) renderCamada(); }
+  if (f==='form-ata'){ if (tentar(() => Dados.salvarAta(u, UI.reuniao, g('ata-texto').value), 'Ata salva')) render(); }
+  if (f==='form-ajuste'){
+    try { Dados.ajustar(u, {membro:UI.sel, tipo:g('aj-tipo').value, valor:g('aj-valor').value, data:g('aj-data').value, justificativa:g('aj-just').value}); salvar(); }
+    catch(err){ return erroForm('aj-erro', err.message); }
+    render(); toast('Lançamento registrado');
+  }
+  if (f==='form-cfg'){
+    const c = {pontosIniciais:g('cfg-pontosIniciais').value, entregaNoPrazo:g('cfg-entregaNoPrazo').value, entregaAtrasada:g('cfg-entregaAtrasada').value, falta:g('cfg-falta').value, faltaJustificada:g('cfg-faltaJustificada').value, rankingPublico:g('cfg-ranking').checked};
+    if (tentar(() => Dados.salvarConfig(u, c), 'Regras salvas')) render();
+  }
+  if (f==='form-solic'){
+    lerModal();
+    const m = UI.ms;
+    try { Dados.solicitar(u, {beneficiario:m.beneficiario, tipo:m.tipo, projeto:m.projeto, codigo:m.codigo||'', justificativa:m.justificativa||'', validoAte:m.validoAte}); salvar(); }
+    catch(err){ return erroForm('ns-erro', err.message); }
+    Object.assign(UI, {modal:null, ms:null, aba:'acessos'}); render(); toast('Solicitação enviada');
+  }
+});
+document.addEventListener('keydown', e => {
+  if (e.key!=='Escape') return;
+  if (UI.modal || UI.tarefa || UI.reuniao) fechar();
+  else if (UI.menu){ UI.menu = false; renderLateral(); renderCamada(); }
+});
+
+if (!usr(S.atual)) S.atual = 'u1';
+S.reunioes.forEach(r => { r.anexos = r.anexos || []; if (!('transcricao' in r)) r.transcricao = null; });
+render();
+</script>
