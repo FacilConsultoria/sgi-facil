@@ -32,7 +32,9 @@ export function descreverEscopo(perfil: Perfil, tituloDaArea: (id: string) => st
     case 'diretor':
       return `Vê todos os núcleos de: ${perfil.areas_que_conduz.map(tituloDaArea).join(' e ') || perfil.area_titulo}.`;
     case 'assessor':
-      return 'Organiza agenda e atas das reuniões gerais e da Presidência.';
+      return perfil.eh_presidencia
+        ? 'Mesmo acesso da Presidência. Ajustar a própria pontuação e aprovar acessos por exceção dependem de aval da Presidente ou da Vice.'
+        : 'Organiza agenda e atas das reuniões gerais e da Presidência.';
     case 'gerente':
       return `Vê as demandas e as pessoas de ${perfil.nucleo_nome ?? perfil.area_titulo}.`;
     case 'membro':

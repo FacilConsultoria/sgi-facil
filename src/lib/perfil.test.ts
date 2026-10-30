@@ -54,6 +54,14 @@ describe('descreverEscopo', () => {
     );
   });
 
+  it('descreve a Assessoria de Presidência com acesso de Presidência e os avais', () => {
+    const maju = perfil({ papel: 'assessor', area_id: 'pres', eh_presidencia: true });
+    expect(descreverEscopo(maju, titulo)).toBe(
+      'Mesmo acesso da Presidência. Ajustar a própria pontuação e aprovar acessos por exceção dependem de aval da Presidente ou da Vice.',
+    );
+    expect(descreverEscopo(perfil({ papel: 'assessor' }), titulo)).toBe('Organiza agenda e atas das reuniões gerais e da Presidência.');
+  });
+
   it('descreve o escopo do membro', () => {
     expect(descreverEscopo(perfil({}), titulo)).toBe('Vê as demandas em que consta como executor.');
   });
