@@ -1,5 +1,6 @@
-// Sessão de quem está logado: perfil e nomes das áreas, lidos das visões do banco.
-import type { Session } from '@supabase/supabase-js';
+// Sessão de quem está logado (entrada por senha ou link do e-mail), perfil e nomes das áreas, lidos das visões do banco.
+import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
+import { CHAVE_SENHA_DEFINIDA } from '../features/auth/regras';
 import { supabase } from '../lib/supabase';
 import type { Perfil } from '../types/database';
 
@@ -26,6 +27,7 @@ export async function carregarContexto(): Promise<ContextoDaSessao | null> {
   };
 }
 
+/** Primeiro acesso: o link do e-mail abre a sessão, e a pessoa então cria a senha. */
 export async function enviarLinkDeAcesso(email: string): Promise<void> {
   const { error } = await supabase.auth.signInWithOtp({
     email,
@@ -34,15 +36,38 @@ export async function enviarLinkDeAcesso(email: string): Promise<void> {
   if (error) throw error;
 }
 
+/** "Esqueci minha senha": o link do e-mail abre a sessão em modo de recuperação (evento PASSWORD_RECOVERY). */
+export async function enviarLinkDeRecuperacao(email: string): Promise<void> {
+  const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin });
+  if (error) throw error;
+}
+
+export async function entrarComSenha(email: string, senha: string): Promise<void> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+  if (error) throw error;
+}
+
+/** Grava a senha e a marca de que ela já foi criada (senhaJaDefinida). */
+export async function definirSenha(senha: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: senha, data: { [CHAVE_SENHA_DEFINIDA]: true } });
+  if (error) throw error;
+}
+
+export async function sessaoAtual(): Promise<Session | null> {
+  const { data, error } = await supabase.auth.getSession();
+  if (error) throw error;
+  return data.session;
+}
+
 export async function sair(): Promise<void> {
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }
 
-/** Avisa a cada mudança de sessão (inclusive a inicial). */
-export function aoMudarSessao(acao: (sessao: Session | null) => void): void {
-  supabase.auth.onAuthStateChange((_evento, sessao) => {
+/** Avisa a cada mudança de sessão (inclusive a inicial), dizendo também qual evento a causou. */
+export function aoMudarSessao(acao: (sessao: Session | null, evento: AuthChangeEvent) => void): void {
+  supabase.auth.onAuthStateChange((evento, sessao) => {
     // a documentação do Supabase recomenda não chamar o cliente dentro deste callback
-    window.setTimeout(() => acao(sessao), 0);
+    window.setTimeout(() => acao(sessao, evento), 0);
   });
 }
