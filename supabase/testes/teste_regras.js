@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01, window.SQL02 e window.SQL03 antes deste módulo.
+// O runner injeta window.SQL01 a window.SQL04 antes deste módulo.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -44,6 +44,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(`insert into auth.users(email) values ('mel@facil.test'),('joao@facil.test')`);
     await db.exec(window.SQL01);
     await db.exec(window.SQL03);
+    await db.exec(window.SQL04);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -178,6 +179,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Exceção é só para consulta', PEDRO, `select mudar_status($1,'afazer')`, [dCli], 'Você não pode alterar o status desta demanda.');
     confere('Visão: exceção aparece como motivo e sem ações', await como(PEDRO, `select motivo_acesso, pode_gerir, pode_mudar_status from demandas_visiveis where id = $1`, [dCli]),
       [{ motivo_acesso: 'excecao', pode_gerir: false, pode_mudar_status: false }]);
+    confere('Visão 04: exceção mostra até quando vale', await valor(PEDRO, `select excecao_ate = privado.hoje() + 30 from demandas_visiveis where id = $1`, [dCli]), true);
     await permite('Pedido para demanda restrita pode ser feito', CAMILA, `select solicitar_acesso($1,'demanda',null,'PRE-001','Quero ver as metas para planejar posts.',privado.hoje() + 10)`, [iCamila]);
     const pedidoRestrito = await valor(MEL, `select id from solicitacoes where demanda_id is not null`);
     await bloqueia('Diretoria não aprova item restrito', JOAO, `select decidir_solicitacao($1,true,'')`, [pedidoRestrito], 'Você não pode decidir esta solicitação.');
@@ -213,6 +215,43 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     confere('Visão: reunião invisível para quem não foi convocado', (await como(CAMILA, `select id from reunioes_visiveis where id = $1`, [r1])).length, 0);
     confere('Visitante sem login não lê o perfil', (await tenta(null, `select * from meu_perfil`)).startsWith('permission denied'), true);
     confere('Visão não aceita gravação', (await tenta(JOAO, `update reunioes_visiveis set titulo = 'x'`)).startsWith('permission denied'), true);
+
+    // módulo de demandas (04)
+    await permite('Gerência valida a conclusão de novo', VICTOR, `select mudar_status($1,'concluida')`, [dCli]);
+    confere('Visão 04: executor não muda status de demanda concluída', await como(ANA, `select pode_gerir, pode_mudar_status from demandas_visiveis where id = $1`, [dCli]),
+      [{ pode_gerir: false, pode_mudar_status: false }]);
+    await bloqueia('Executor não reabre demanda concluída', ANA, `select mudar_status($1,'andamento')`, [dCli], 'Só a liderança do núcleo, a diretoria ou a Presidência reabrem uma demanda concluída.');
+    await permite('Gerência reabre demanda concluída', VICTOR, `select mudar_status($1,'andamento')`, [dCli]);
+    confere('Visão 04: executor volta a mudar status depois de reaberta', await valor(ANA, `select pode_mudar_status from demandas_visiveis where id = $1`, [dCli]), true);
+    confere('Visão 04: núcleo e exceção vazia para executor', await como(ANA, `select nucleo_nome, excecao_ate from demandas_visiveis where id = $1`, [dCli]),
+      [{ nucleo_nome: 'Entregas aos clientes', excecao_ate: null }]);
+    confere('Visão 04: projetos e quem cria demanda neles', {
+      duda: await como(DUDA, `select nome, pode_criar_demanda from projetos_visiveis order by nome`),
+      ana: await como(ANA, `select nome, pode_criar_demanda from projetos_visiveis order by nome`),
+      joao: await como(JOAO, `select nome, pode_criar_demanda from projetos_visiveis order by nome`),
+    }, {
+      duda: [{ nome: 'Instagram Comercial', pode_criar_demanda: true }],
+      ana: [{ nome: 'Mapeamento de processos', pode_criar_demanda: false }],
+      joao: [{ nome: 'Instagram Comercial', pode_criar_demanda: true }, { nome: 'Mapeamento de processos', pode_criar_demanda: true }],
+    });
+    confere('Visão 04: projetos visíveis = projetos da RLS', await valor(MEL, `select count(*)::int from projetos_visiveis`), await valor(MEL, `select count(*)::int from projetos`));
+    confere('Visão 04: núcleos onde cada perfil cria projetos', {
+      mel: await valor(MEL, `select count(*)::int from nucleos_visiveis where pode_criar_projeto`),
+      joao: (await como(JOAO, `select id from nucleos_visiveis where pode_criar_projeto order by id`)).map(r => r.id),
+      duda: (await como(DUDA, `select id from nucleos_visiveis where pode_criar_projeto order by id`)).map(r => r.id),
+      ana: await valor(ANA, `select count(*)::int from nucleos_visiveis where pode_criar_projeto`),
+    }, { mel: 8, joao: ['com-cap', 'com-mkt', 'proj-cli'], duda: ['com-mkt'], ana: 0 });
+    confere('Visão 04: pessoas que cada perfil pode atribuir', {
+      mel: await valor(MEL, `select count(*)::int from pessoas_atribuiveis`),
+      joao: (await como(JOAO, `select nome from pessoas_atribuiveis order by nome`)).map(r => r.nome),
+      duda: (await como(DUDA, `select nome from pessoas_atribuiveis order by nome`)).map(r => r.nome),
+      ana: (await como(ANA, `select nome from pessoas_atribuiveis order by nome`)).map(r => r.nome),
+    }, { mel: 11, joao: ['Ana', 'Camila', 'Duda', 'Emilli', 'João', 'Lucas', 'Victor'], duda: ['Camila', 'Duda'], ana: ['Ana'] });
+    confere('Visão 04: login sem cadastro não vê núcleos nem pessoas', [
+      await valor('sem-cadastro@facil.test', `select count(*)::int from nucleos_visiveis`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from pessoas_atribuiveis`)], [0, 0]);
+    confere('Visitante sem login não lê as visões 04', (await tenta(null, `select * from projetos_visiveis`)).startsWith('permission denied'), true);
+    confere('Visões 04 não aceitam gravação', (await tenta(MEL, `delete from pessoas_atribuiveis`)).startsWith('permission denied'), true);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');

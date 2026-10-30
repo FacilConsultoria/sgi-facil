@@ -17,10 +17,12 @@ try {
   $sql01 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '01_estrutura_e_regras.sql'))
   $sql02 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '02_dados_iniciais.sql'))
   $sql03 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '03_visoes_interface.sql'))
+  $sql04 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '04_modulo_demandas.sql'))
   $teste = [string](Get-Content -Raw -Encoding utf8 (Join-Path $aqui 'teste_regras.js'))
   $pagina = "<!doctype html><meta charset=utf-8><body><script>window.SQL01=" + (ConvertTo-Json -InputObject $sql01 -Compress) +
             ";window.SQL02=" + (ConvertTo-Json -InputObject $sql02 -Compress) +
-            ";window.SQL03=" + (ConvertTo-Json -InputObject $sql03 -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
+            ";window.SQL03=" + (ConvertTo-Json -InputObject $sql03 -Compress) +
+            ";window.SQL04=" + (ConvertTo-Json -InputObject $sql04 -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
   [IO.File]::WriteAllText((Join-Path $temp 'teste.html'), $pagina, (New-Object System.Text.UTF8Encoding $false))
 
   $url = 'file:///' + ((Join-Path $temp 'teste.html') -replace '\\', '/')
