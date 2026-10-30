@@ -7,6 +7,18 @@ textarea.curto { min-height: 56px; }
 .chip.aval-aprovado { --c: var(--ok); }
 .chip.aval-negado { --c: var(--danger); }
 
+/* abas da página Autorizações */
+.abas { display: flex; gap: 4px; border-bottom: 1px solid var(--line); margin-bottom: 16px; }
+.aba { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 14px; color: var(--ink-2); font-weight: 500; cursor: pointer; margin-bottom: -1px; }
+.aba:hover { color: var(--ink); }
+.aba[aria-selected='true'] { color: var(--accent-text); border-bottom-color: var(--accent); font-weight: 600; }
+.acoes-da-aba { justify-content: space-between; align-items: center; margin-bottom: 4px; }
+.acoes-da-aba .dica { max-width: 60ch; }
+.chip.acesso-pendente { --c: var(--warn); }
+.chip.acesso-aprovada { --c: var(--ok); }
+.chip.acesso-negada, .chip.acesso-revogada { --c: var(--danger); }
+.chip.acesso-expirada { --c: var(--ink-3); }
+
 /* aval dentro da lista de presença */
 .presenca-item { border-bottom: 1px solid var(--line); }
 .presenca-item .presenca { border-bottom: 0; }
