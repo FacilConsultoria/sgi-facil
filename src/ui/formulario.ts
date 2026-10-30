@@ -78,6 +78,41 @@ export function ligarEnvio<Resultado>(envio: Envio<Resultado>): void {
   });
 }
 
+export interface EscolhaDePessoas {
+  elemento: HTMLFieldSetElement;
+  marcadas: () => string[];
+  /** Avisa a cada marcação ou desmarcação (inclusive dos botões "marcar todas" e "limpar"). */
+  aoMudar: (acao: () => void) => void;
+}
+
+/** Lista de caixas de seleção com "Marcar todas" e "Limpar", para escolher pessoas uma a uma. */
+export function escolhaDePessoas(prefixo: string, legenda: string, pessoas: readonly { id: string; nome: string }[]): EscolhaDePessoas {
+  const caixas = pessoas.map((pessoa) => ({
+    pessoa,
+    caixa: el('input', { type: 'checkbox', id: `${prefixo}-${pessoa.id}`, value: pessoa.id }),
+  }));
+  const avisos: (() => void)[] = [];
+  const avisar = (): void => avisos.forEach((acao) => acao());
+  const definirTodas = (valor: boolean): void => {
+    for (const { caixa } of caixas) caixa.checked = valor;
+    avisar();
+  };
+  const marcarTodas = el('button', { type: 'button', class: 'btn peq' }, 'Marcar todas');
+  const limpar = el('button', { type: 'button', class: 'btn peq' }, 'Limpar');
+  marcarTodas.addEventListener('click', () => definirTodas(true));
+  limpar.addEventListener('click', () => definirTodas(false));
+  for (const { caixa } of caixas) caixa.addEventListener('change', avisar);
+
+  const lista = el('div', { class: 'picker' },
+    ...caixas.map(({ pessoa, caixa }) => el('label', { for: caixa.id }, caixa, ` ${pessoa.nome}`)));
+  if (caixas.length === 0) lista.append(el('p', { class: 'dica' }, 'Ninguém disponível no seu escopo.'));
+  return {
+    elemento: el('fieldset', {}, el('legend', {}, legenda), el('div', { class: 'linha acima-lista' }, marcarTodas, limpar), lista),
+    marcadas: () => caixas.filter(({ caixa }) => caixa.checked).map(({ caixa }) => caixa.value),
+    aoMudar: (acao) => { avisos.push(acao); },
+  };
+}
+
 /**
  * Executa uma ação avulsa (fora de um envio de formulário): trava o botão, mostra a mensagem
  * traduzida em caso de erro e devolve se deu certo. O detalhe técnico vai para o console.
