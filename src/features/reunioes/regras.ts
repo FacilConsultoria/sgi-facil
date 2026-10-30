@@ -51,7 +51,13 @@ export function agruparPublicosParaAgendar(publicos: readonly PublicoDeReuniao[]
     { titulo: 'Toda a Fácil', publicos: gerais },
     { titulo: 'Diretorias', publicos: disponiveis.filter((p) => p.escopo === 'area').sort(porTitulo) },
     { titulo: 'Núcleos', publicos: disponiveis.filter((p) => p.escopo === 'nucleo').sort(porTitulo) },
+    { titulo: 'Pessoas específicas', publicos: disponiveis.filter((p) => p.escopo === 'pessoas') },
   ].filter((grupo) => grupo.publicos.length > 0);
+}
+
+/** Público em que o convite é feito pessoa a pessoa, em vez de por diretoria ou núcleo. */
+export function ehPublicoDePessoas(chave: string): boolean {
+  return chave === chaveDoPublico('pessoas', null);
 }
 
 // ---------- lista ----------
@@ -106,6 +112,43 @@ export function presencasParaEnvio(selecoes: ReadonlyMap<string, Presenca | ''>)
   return Object.fromEntries(selecoes);
 }
 
+export interface OpcaoDePresenca {
+  id: Presenca;
+  nome: string;
+  /** Aparece, mas não pode ser escolhida (falta de diretoria só é justificada com aval). */
+  bloqueada: boolean;
+}
+
+/**
+ * Opções da lista de presença de uma pessoa. A falta de diretor só vira "justificada" com aval da
+ * Presidente ou da Vice; quem não é um deles vê a opção bloqueada, salvo se o aval já foi dado.
+ */
+export function opcoesDePresenca(ehDiretor: boolean, podeJustificarDiretoria: boolean, atual: Presenca | null): OpcaoDePresenca[] {
+  return OPCOES_DE_PRESENCA.map((opcao) => {
+    const bloqueada = opcao.id === 'justificada' && ehDiretor && !podeJustificarDiretoria && atual !== 'justificada';
+    return { ...opcao, bloqueada, nome: bloqueada ? `${opcao.nome} (precisa de aval)` : opcao.nome };
+  });
+}
+
+/** Mostra "Pedir aval" quando a falta de um diretor já está salva e quem organiza não pode justificá-la sozinho. */
+export function podePedirAvalDeJustificativa(ehDiretor: boolean, podeJustificarDiretoria: boolean, presencaSalva: Presenca | null): boolean {
+  return ehDiretor && !podeJustificarDiretoria && presencaSalva === 'falta';
+}
+
+export function validarMotivoDoAval(motivo: string): string | null {
+  return motivo.trim().length < 10 ? 'Explique o motivo em pelo menos 10 caracteres.' : null;
+}
+
+/** Texto lido por quem decide o aval (o banco exige pelo menos 15 caracteres). */
+export function resumoDoPedidoDeJustificativa(nome: string, tituloDaReuniao: string, motivo: string): string {
+  return `Justificar a falta de ${nome} na reunião “${tituloDaReuniao}”: ${motivo.trim()}`;
+}
+
+/** Exclusão de reunião encerrada exige o motivo, que fica registrado nos pontos desconsiderados. */
+export function validarExclusao(reuniaoEncerrada: boolean, motivo: string): string | null {
+  return reuniaoEncerrada && motivo.trim().length < 10 ? 'Escreva o motivo da exclusão (mínimo 10 caracteres).' : null;
+}
+
 /** Mensagem do banco para o encerramento sem todos marcados, antecipada na tela. */
 export function validarPresencasParaEncerrar(selecoes: ReadonlyMap<string, Presenca | ''>): string | null {
   const semRegistro = [...selecoes.values()].filter((valor) => valor === '').length;
@@ -119,6 +162,8 @@ export interface CamposDaReuniao {
   data: string;
   hora: string;
   publico: string;
+  /** Pessoas marcadas, quando o público é "pessoas escolhidas". */
+  pessoasEscolhidas?: number;
 }
 
 /** Checagem antes de enviar, com as mesmas mensagens do banco (que confere de novo). */
@@ -126,6 +171,7 @@ export function validarReuniao(campos: CamposDaReuniao): string | null {
   if (!campos.titulo.trim()) return 'Dê um título à reunião.';
   if (!campos.data || !campos.hora) return 'Informe data e horário.';
   if (!campos.publico) return 'Escolha um público da lista.';
+  if (ehPublicoDePessoas(campos.publico) && (campos.pessoasEscolhidas ?? 0) === 0) return 'Escolha pelo menos uma pessoa para convocar.';
   return null;
 }
 

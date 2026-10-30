@@ -9,6 +9,7 @@ const CLASSE_DO_PUBLICO: Record<EscopoReuniao, string> = {
   presidencia: 'chip m-presidencia',
   area: 'chip m-diretoria',
   nucleo: 'chip m-nucleo',
+  pessoas: 'chip',
 };
 
 export function seloDoPublico(escopo: EscopoReuniao, nome: string): HTMLElement {

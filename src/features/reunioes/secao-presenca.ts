@@ -1,14 +1,17 @@
 // Lista de presença da reunião: quem organiza marca e encerra (as faltas viram lançamentos de pontos);
-// os demais convocados só consultam a lista depois do encerramento.
+// os demais convocados só consultam a lista depois do encerramento. A falta de diretoria só vira
+// "justificada" com o aval da Presidente ou da Vice: quem organiza pede o aval daqui.
 import { plural } from '../../lib/texto';
-import type { ConvocadoDaReuniao, Presenca, ReuniaoVisivel } from '../../types/database';
+import type { AvalVisivel, ConvocadoDaReuniao, Presenca, ReuniaoVisivel } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el, substituir } from '../../ui/dom';
 import { executarAcao, ligarEnvio, linhaDeErro } from '../../ui/formulario';
 import type { ContextoDeReunioes } from './contexto';
-import { carregarConvocados, carregarReuniao, encerrarReuniao, salvarPresencas } from './dados';
+import { carregarAvaisDaReuniao, carregarConvocados, carregarReuniao, encerrarReuniao, salvarPresencas } from './dados';
+import { abrirPedidoDeAval } from './pedido-de-aval';
 import {
-  contarPresencas, NOME_DA_PRESENCA, OPCOES_DE_PRESENCA, presencasParaEnvio, validarPresencasParaEncerrar,
+  contarPresencas, NOME_DA_PRESENCA, opcoesDePresenca, podePedirAvalDeJustificativa, presencasParaEnvio,
+  validarPresencasParaEncerrar,
 } from './regras';
 import { secaoQueCarrega, type Secao } from './secao';
 
@@ -17,10 +20,12 @@ export function secaoDePresenca(contexto: ContextoDeReunioes, reuniaoId: string,
   return secaoQueCarrega({
     operacao: 'Carregar presença da reunião',
     carregar: async () => {
-      const [reuniao, convocados] = await Promise.all([carregarReuniao(reuniaoId), carregarConvocados(reuniaoId)]);
-      return { reuniao, convocados };
+      const [reuniao, convocados, avais] = await Promise.all([
+        carregarReuniao(reuniaoId), carregarConvocados(reuniaoId), carregarAvaisDaReuniao(reuniaoId),
+      ]);
+      return { reuniao, convocados, avais };
     },
-    montar: ({ reuniao, convocados }, atualizar) => {
+    montar: ({ reuniao, convocados, avais }, atualizar) => {
       if (!reuniao) return [el('p', { class: 'dica' }, 'Esta reunião não está mais disponível.')];
       const ordenados = [...convocados].sort((a, b) => nomeDe(a.pessoa_id).localeCompare(nomeDe(b.pessoa_id), 'pt-BR'));
       if (reuniao.encerrada) return [listaDaReuniaoEncerrada(ordenados, nomeDe)];
@@ -30,7 +35,7 @@ export function secaoDePresenca(contexto: ContextoDeReunioes, reuniaoId: string,
           el('p', { class: 'dica' }, `${plural(ordenados.length, 'pessoa convocada', 'pessoas convocadas')}. A presença é registrada por quem organiza a reunião.`),
         ];
       }
-      return [formularioDePresenca(reuniao, ordenados, nomeDe, atualizar, aoMudar)];
+      return [formularioDePresenca(contexto, reuniao, ordenados, avais, atualizar, aoMudar)];
     },
   });
 }
@@ -51,21 +56,47 @@ function seloDePresenca(presenca: Presenca | null): HTMLElement {
   return el('span', { class: presenca === 'presente' ? 'chip ok' : presenca === 'falta' ? 'chip ruim' : 'chip' }, NOME_DA_PRESENCA[presenca]);
 }
 
+/** Situação do aval de uma pessoa nesta reunião: o mais recente decide o que aparece. */
+function avalDaPessoa(avais: readonly AvalVisivel[], pessoaId: string): AvalVisivel | undefined {
+  return avais.find((aval) => aval.payload.pessoa === pessoaId);
+}
+
 function formularioDePresenca(
+  contexto: ContextoDeReunioes,
   reuniao: ReuniaoVisivel,
   convocados: readonly ConvocadoDaReuniao[],
-  nomeDe: (id: string) => string,
+  avais: readonly AvalVisivel[],
   atualizar: () => Promise<void>,
   aoMudar: () => Promise<void>,
 ): HTMLElement {
+  const { nomeDe, papelDe } = contexto.dados;
   const campos = new Map<string, HTMLSelectElement>();
   const linhas = convocados.map((convocado) => {
     const id = `presenca-${convocado.pessoa_id}`;
+    const ehDiretor = papelDe(convocado.pessoa_id) === 'diretor';
     const campo = el('select', { id },
       el('option', { value: '' }, 'Sem registro'),
-      ...OPCOES_DE_PRESENCA.map((opcao) => el('option', { value: opcao.id, selected: opcao.id === convocado.presenca }, opcao.nome)));
+      ...opcoesDePresenca(ehDiretor, reuniao.pode_justificar_diretoria, convocado.presenca).map((opcao) =>
+        el('option', { value: opcao.id, selected: opcao.id === convocado.presenca, disabled: opcao.bloqueada }, opcao.nome)));
     campos.set(convocado.pessoa_id, campo);
-    return el('div', { class: 'presenca' }, el('label', { for: id }, nomeDe(convocado.pessoa_id)), campo);
+    const linha = el('div', { class: 'presenca' }, el('label', { for: id }, nomeDe(convocado.pessoa_id)), campo);
+
+    const aval = avalDaPessoa(avais, convocado.pessoa_id);
+    const nota: HTMLElement[] = [];
+    if (aval?.status === 'pendente') {
+      nota.push(el('span', { class: 'chip s-revisao' }, 'Aval pendente'), el('span', { class: 'dica' }, 'A Presidente ou a Vice ainda vão decidir.'));
+    } else {
+      if (aval?.status === 'negado') nota.push(el('span', { class: 'chip ruim' }, 'Aval negado'), el('span', { class: 'dica' }, aval.nota ?? ''));
+      if (podePedirAvalDeJustificativa(ehDiretor, reuniao.pode_justificar_diretoria, convocado.presenca)) {
+        const pedir = el('button', { type: 'button', class: 'btn peq' }, 'Pedir aval para justificar');
+        pedir.addEventListener('click', () => abrirPedidoDeAval(contexto, reuniao, convocado.pessoa_id, async () => {
+          await atualizar();
+          await aoMudar();
+        }));
+        nota.push(pedir);
+      }
+    }
+    return nota.length ? el('div', { class: 'presenca-item' }, linha, el('div', { class: 'aval-linha' }, ...nota)) : linha;
   });
   const selecoes = (): Map<string, Presenca | ''> =>
     new Map([...campos].map(([pessoa, campo]) => [pessoa, campo.value as Presenca | '']));
@@ -95,8 +126,13 @@ function formularioDePresenca(
     },
   });
 
-  if (reuniao.pode_encerrar) montarEncerramento(areaDeEncerramento, reuniao, selecoes, erro, atualizar, aoMudar);
-  else areaDeEncerramento.append(el('p', { class: 'dica' }, 'O encerramento (que lança as faltas como pontos) libera no dia da reunião.'));
+  if (avais.some((aval) => aval.status === 'pendente')) {
+    areaDeEncerramento.append(el('p', { class: 'dica' }, 'Há pedido de aval pendente nesta reunião. Ela só pode ser encerrada depois da decisão.'));
+  } else if (reuniao.pode_encerrar) {
+    montarEncerramento(areaDeEncerramento, reuniao, selecoes, erro, atualizar, aoMudar);
+  } else {
+    areaDeEncerramento.append(el('p', { class: 'dica' }, 'O encerramento (que lança as faltas como pontos) libera no dia da reunião.'));
+  }
   return formulario;
 }
 

@@ -3,8 +3,8 @@
 import { registrarErro } from '../../lib/erros';
 import { supabase } from '../../lib/supabase';
 import type {
-  AnexoDaReuniao, ConvocadoDaReuniao, EscopoReuniao, PessoaResumo, PublicoDeReuniao, RegistroAuditoria, ReuniaoVisivel,
-  TranscricaoDaReuniao,
+  AnexoDaReuniao, AvalVisivel, ConvocadoDaReuniao, EscopoReuniao, Papel, PessoaAtribuivel, PessoaResumo, PublicoDeReuniao,
+  RegistroAuditoria, ReuniaoVisivel, TranscricaoDaReuniao,
 } from '../../types/database';
 import { caminhoDoAnexo } from './regras';
 
@@ -16,26 +16,36 @@ export interface DadosDasReunioes {
   publicos: PublicoDeReuniao[];
   /** Transcrições recebidas que ainda não foram ligadas a uma reunião (só Presidência e Assessoria veem). */
   semVinculo: TranscricaoDaReuniao[];
+  /** Pessoas que quem consulta pode escolher uma a uma para uma reunião. */
+  convocaveis: PessoaAtribuivel[];
   nomeDe: (id: string) => string;
+  papelDe: (id: string) => Papel | undefined;
 }
 
 export async function carregarReunioes(): Promise<DadosDasReunioes> {
-  const [reunioes, publicos, semVinculo, pessoas] = await Promise.all([
+  const [reunioes, publicos, semVinculo, convocaveis, pessoas] = await Promise.all([
     supabase.from('reunioes_visiveis').select('*'),
     supabase.from('escopos_de_reuniao').select('*'),
     supabase.from('transcricoes').select(COLUNAS_DA_TRANSCRICAO).is('reuniao_id', null).order('recebida_em', { ascending: false }),
-    supabase.from('pessoas').select('id, nome'),
+    supabase.from('pessoas_convocaveis').select('*').order('nome'),
+    supabase.from('pessoas').select('id, nome, papel'),
   ]);
-  for (const resposta of [reunioes, publicos, semVinculo, pessoas]) {
+  for (const resposta of [reunioes, publicos, semVinculo, convocaveis, pessoas]) {
     if (resposta.error) throw resposta.error;
   }
   const nomes = new Map<string, string>();
-  for (const pessoa of (pessoas.data ?? []) as PessoaResumo[]) nomes.set(pessoa.id, pessoa.nome);
+  const papeis = new Map<string, Papel | undefined>();
+  for (const pessoa of (pessoas.data ?? []) as PessoaResumo[]) {
+    nomes.set(pessoa.id, pessoa.nome);
+    papeis.set(pessoa.id, pessoa.papel);
+  }
   return {
     reunioes: (reunioes.data ?? []) as ReuniaoVisivel[],
     publicos: (publicos.data ?? []) as PublicoDeReuniao[],
     semVinculo: (semVinculo.data ?? []) as TranscricaoDaReuniao[],
+    convocaveis: (convocaveis.data ?? []) as PessoaAtribuivel[],
     nomeDe: (id) => nomes.get(id) ?? 'Pessoa sem cadastro',
+    papelDe: (id) => papeis.get(id),
   };
 }
 
@@ -79,6 +89,23 @@ export async function carregarHistoricoDaReuniao(reuniaoId: string): Promise<Reg
   return (data ?? []) as RegistroAuditoria[];
 }
 
+/** Avais de justificativa de falta feitos nesta reunião (os que a pessoa pode ver). */
+export async function carregarAvaisDaReuniao(reuniaoId: string): Promise<AvalVisivel[]> {
+  const { data, error } = await supabase.from('avais_visiveis').select('*').order('criado_em', { ascending: false });
+  if (error) throw error;
+  return ((data ?? []) as AvalVisivel[]).filter((aval) => aval.tipo === 'justificar_falta' && aval.payload.reuniao === reuniaoId);
+}
+
+/** Pede à Presidente ou à Vice que aceitem justificar a falta de um diretor nesta reunião. */
+export async function pedirAvalDeJustificativa(reuniaoId: string, pessoaId: string, resumo: string): Promise<void> {
+  const { error } = await supabase.rpc('solicitar_aval', {
+    p_tipo: 'justificar_falta',
+    p_payload: { reuniao: reuniaoId, pessoa: pessoaId },
+    p_resumo: resumo,
+  });
+  if (error) throw error;
+}
+
 export interface NovaReuniao {
   titulo: string;
   data: string;
@@ -86,6 +113,8 @@ export interface NovaReuniao {
   escopo: EscopoReuniao;
   escopoId: string | null;
   pauta: string;
+  /** Só para o público "pessoas escolhidas"; quem agenda entra na lista sozinho. */
+  pessoas?: string[];
 }
 
 /** Devolve o id da reunião criada; os convocados são definidos pelo banco a partir do público. */
@@ -97,9 +126,23 @@ export async function criarReuniao(nova: NovaReuniao): Promise<string> {
     p_escopo: nova.escopo,
     p_escopo_id: nova.escopoId,
     p_pauta: nova.pauta,
+    p_pessoas: nova.pessoas ?? null,
   });
   if (error) throw error;
   return data as string;
+}
+
+/**
+ * Exclui a reunião (o banco confere quem pode e, se já foi encerrada, desconsidera as faltas lançadas)
+ * e apaga os arquivos dela do armazenamento. Falha ao apagar arquivo vai só para o console.
+ */
+export async function excluirReuniao(reuniaoId: string, motivo: string): Promise<void> {
+  const { data, error } = await supabase.rpc('excluir_reuniao', { p_reuniao: reuniaoId, p_motivo: motivo || null });
+  if (error) throw error;
+  const caminhos = (data ?? []) as string[];
+  if (caminhos.length === 0) return;
+  const remocao = await supabase.storage.from(BUCKET_DE_ANEXOS).remove(caminhos);
+  if (remocao.error) registrarErro('Apagar arquivos da reunião excluída', remocao.error);
 }
 
 /** `presencas`: pessoa → "presente" | "justificada" | "falta" | "" (ver presencasParaEnvio). */

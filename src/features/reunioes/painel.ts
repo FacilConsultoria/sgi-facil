@@ -11,6 +11,7 @@ import { carregarHistoricoDaReuniao, carregarReuniao } from './dados';
 import { nomeDoPublico } from './regras';
 import { secaoQueCarrega, type Secao } from './secao';
 import { secaoDosAnexos } from './secao-anexos';
+import { secaoDeExclusao } from './secao-excluir';
 import { secaoDePresenca } from './secao-presenca';
 import { secaoDaAta, secaoDaTranscricao } from './secao-texto';
 
@@ -34,13 +35,14 @@ export function abrirPainelDaReuniao(contexto: ContextoDeReunioes, reuniaoId: st
       const ata = secaoDaAta(contexto, reuniaoId, aoMudar());
       const transcricao = secaoDaTranscricao(contexto, reuniaoId, aoMudar());
       const anexos = secaoDosAnexos(contexto, reuniaoId, aoMudar());
+      const exclusao = secaoDeExclusao(contexto, reuniaoId, fechar);
 
       return [
         el('div', { class: 'painel-cab' },
           el('span', { class: 'mono' }, conhecida ? `${dataCompleta(conhecida.data)} · ${horaCurta(conhecida.hora)}` : 'Reunião'),
           botaoFechar(fechar)),
         el('div', { class: 'painel-corpo' },
-          topo.elemento, presenca.elemento, ata.elemento, transcricao.elemento, anexos.elemento, historico.elemento),
+          topo.elemento, presenca.elemento, ata.elemento, transcricao.elemento, anexos.elemento, historico.elemento, exclusao.elemento),
       ];
     },
   });

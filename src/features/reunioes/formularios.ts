@@ -5,11 +5,11 @@ import { plural } from '../../lib/texto';
 import type { PublicoDeReuniao, TranscricaoDaReuniao } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el } from '../../ui/dom';
-import { abrirJanela, campo, ligarEnvio, linhaDeErro, rodapeDaJanela } from '../../ui/formulario';
+import { abrirJanela, campo, escolhaDePessoas, ligarEnvio, linhaDeErro, rodapeDaJanela } from '../../ui/formulario';
 import type { ContextoDeReunioes } from './contexto';
 import { criarReuniao, vincularTranscricao } from './dados';
 import { abrirPainelDaReuniao } from './painel';
-import { agruparPublicosParaAgendar, chaveDoPublico, validarReuniao } from './regras';
+import { agruparPublicosParaAgendar, chaveDoPublico, ehPublicoDePessoas, validarReuniao } from './regras';
 
 export function abrirNovaReuniao(contexto: ContextoDeReunioes): void {
   const { dados, hoje } = contexto;
@@ -23,7 +23,9 @@ export function abrirNovaReuniao(contexto: ContextoDeReunioes): void {
 
   abrirJanela(contexto.pagina, 'nova-reuniao-titulo', 'Agendar reunião', (fechar) => {
     const titulo = el('input', { type: 'text', id: 'nr-titulo', maxlength: '100', placeholder: 'Ex.: Alinhamento semanal' });
+    // começa sem público escolhido, para ninguém convocar todo mundo sem querer
     const publico = el('select', { id: 'nr-publico' },
+      el('option', { value: '' }, 'Escolha o público…'),
       ...grupos.map((grupo) => el('optgroup', { label: grupo.titulo },
         ...grupo.publicos.map((p) => el('option', { value: chaveDoPublico(p.escopo, p.escopo_id) }, p.titulo)))));
     const convocados = el('p', { class: 'dica' });
@@ -33,18 +35,27 @@ export function abrirNovaReuniao(contexto: ContextoDeReunioes): void {
     const botao = el('button', { type: 'submit', class: 'btn prim' }, 'Agendar');
     const erro = linhaDeErro();
 
+    const escolha = escolhaDePessoas('nr-pessoa', 'Pessoas convocadas', dados.convocaveis);
+    const blocoDePessoas = el('div', { hidden: true }, escolha.elemento);
+
     const publicoEscolhido = (): PublicoDeReuniao | undefined => publicos.find((p) => chaveDoPublico(p.escopo, p.escopo_id) === publico.value);
     const mostrarConvocados = (): void => {
-      const total = publicoEscolhido()?.total_convocados ?? 0;
-      convocados.textContent = `${plural(total, 'pessoa será convocada', 'pessoas serão convocadas')}.`;
+      const porPessoa = ehPublicoDePessoas(publico.value);
+      blocoDePessoas.hidden = !porPessoa;
+      const escolhido = publicoEscolhido();
+      if (porPessoa) convocados.textContent = `${plural(escolha.marcadas().length, 'pessoa escolhida', 'pessoas escolhidas')}, mais você.`;
+      else if (escolhido) convocados.textContent = `${plural(escolhido.total_convocados, 'pessoa será convocada', 'pessoas serão convocadas')}.`;
+      else convocados.textContent = 'Escolha quem será convocado.';
     };
     mostrarConvocados();
     publico.addEventListener('change', mostrarConvocados);
+    escolha.aoMudar(mostrarConvocados);
 
     const formulario = el('form', { class: 'form-janela', novalidate: true },
       el('div', { class: 'painel-corpo form' },
         campo('Título', titulo),
         el('div', {}, el('label', { for: 'nr-publico' }, 'Público'), publico, convocados),
+        blocoDePessoas,
         el('div', { class: 'dois' }, campo('Data', data), campo('Horário', hora)),
         campo('Pauta', pauta),
         erro.elemento),
@@ -53,9 +64,12 @@ export function abrirNovaReuniao(contexto: ContextoDeReunioes): void {
     ligarEnvio({
       formulario, botao, erro,
       operacao: 'Agendar reunião',
-      validar: () => validarReuniao({ titulo: titulo.value, data: data.value, hora: hora.value, publico: publico.value }),
+      validar: () => validarReuniao({
+        titulo: titulo.value, data: data.value, hora: hora.value, publico: publico.value, pessoasEscolhidas: escolha.marcadas().length,
+      }),
       acao: () => {
-        const escolhido = publicoEscolhido() ?? primeiro;
+        const escolhido = publicoEscolhido();
+        if (!escolhido) return Promise.reject(new Error('Público não escolhido.'));
         return criarReuniao({
           titulo: titulo.value.trim(),
           data: data.value,
@@ -63,6 +77,7 @@ export function abrirNovaReuniao(contexto: ContextoDeReunioes): void {
           escopo: escolhido.escopo,
           escopoId: escolhido.escopo_id,
           pauta: pauta.value.trim(),
+          pessoas: escolhido.escopo === 'pessoas' ? escolha.marcadas() : undefined,
         });
       },
       depois: async (id) => {

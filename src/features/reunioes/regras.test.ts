@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { ConvocadoDaReuniao, Presenca, PublicoDeReuniao, ReuniaoVisivel } from '../../types/database';
 import {
-  agruparPublicosParaAgendar, caminhoDoAnexo, chaveDoPublico, contarPresencas, descreverReuniao, extensaoDoArquivo,
-  formatarTamanho, LIMITE_DO_ANEXO_EM_BYTES, nomeDoPublico, nomeSeguroDeArquivo, presencasParaEnvio, separarReunioes,
-  situacaoDaReuniao, validarArquivo, validarPresencasParaEncerrar, validarReuniao, validarTranscricao,
+  agruparPublicosParaAgendar, caminhoDoAnexo, chaveDoPublico, contarPresencas, descreverReuniao, ehPublicoDePessoas,
+  extensaoDoArquivo, formatarTamanho, LIMITE_DO_ANEXO_EM_BYTES, nomeDoPublico, nomeSeguroDeArquivo, opcoesDePresenca,
+  podePedirAvalDeJustificativa, presencasParaEnvio, resumoDoPedidoDeJustificativa, separarReunioes, situacaoDaReuniao,
+  validarArquivo, validarExclusao, validarMotivoDoAval, validarPresencasParaEncerrar, validarReuniao, validarTranscricao,
 } from './regras';
 
 function reuniao(campos: Partial<ReuniaoVisivel>): ReuniaoVisivel {
@@ -11,7 +12,7 @@ function reuniao(campos: Partial<ReuniaoVisivel>): ReuniaoVisivel {
     id: 'r1', titulo: 'Alinhamento', data: '2026-11-10', hora: '19:00:00', escopo: 'geral', escopo_id: null, pauta: '',
     encerrada: false, ata: '', ata_por: null, ata_em: null, criado_por: 'u1', criado_em: '2026-10-30T12:00:00Z',
     pode_gerir: false, convocado: true, total_anexos: 0, tem_transcricao: false, total_convocados: 11, total_faltas: 0,
-    pode_encerrar: false,
+    pode_encerrar: false, pode_excluir: false, pode_justificar_diretoria: false,
     ...campos,
   };
 }
@@ -27,6 +28,7 @@ const PUBLICOS = [
   publico('area', 'com', 'Diretoria Comercial', true),
   publico('area', 'fin', 'Diretoria Financeira', false),
   publico('nucleo', 'com-mkt', 'Marketing · Diretoria Comercial', true),
+  publico('pessoas', null, 'Pessoas escolhidas', true),
 ];
 
 describe('públicos', () => {
@@ -46,7 +48,14 @@ describe('públicos', () => {
       ['Toda a Fácil', ['Reunião geral', 'Presidência']],
       ['Diretorias', ['Diretoria Comercial', 'Diretoria de Projetos']],
       ['Núcleos', ['Marketing · Diretoria Comercial']],
+      ['Pessoas específicas', ['Pessoas escolhidas']],
     ]);
+  });
+
+  it('reconhece o público de pessoas escolhidas', () => {
+    expect(ehPublicoDePessoas('pessoas:')).toBe(true);
+    expect(ehPublicoDePessoas('geral:')).toBe(false);
+    expect(nomeDoPublico(reuniao({ escopo: 'pessoas', escopo_id: null }), PUBLICOS)).toBe('Pessoas escolhidas');
   });
 
   it('omite grupos sem nenhum público disponível', () => {
@@ -107,7 +116,53 @@ describe('presença', () => {
   });
 });
 
+describe('presença de diretoria e aval', () => {
+  it('bloqueia "justificada" para diretor quando quem organiza não é Presidente nem Vice', () => {
+    const justificada = (diretor: boolean, presex: boolean, atual: Presenca | null) =>
+      opcoesDePresenca(diretor, presex, atual).find((o) => o.id === 'justificada');
+    expect(justificada(true, false, 'falta')).toEqual({ id: 'justificada', nome: 'Falta justificada (precisa de aval)', bloqueada: true });
+    expect(justificada(true, true, 'falta')?.bloqueada).toBe(false);
+    expect(justificada(false, false, 'falta')?.bloqueada).toBe(false);
+    expect(justificada(true, false, 'justificada')?.bloqueada).toBe(false);
+  });
+
+  it('as demais opções nunca são bloqueadas', () => {
+    expect(opcoesDePresenca(true, false, null).filter((o) => o.bloqueada).map((o) => o.id)).toEqual(['justificada']);
+  });
+
+  it('oferece o pedido de aval só para falta já salva de diretor', () => {
+    expect(podePedirAvalDeJustificativa(true, false, 'falta')).toBe(true);
+    expect(podePedirAvalDeJustificativa(true, false, null)).toBe(false);
+    expect(podePedirAvalDeJustificativa(true, false, 'presente')).toBe(false);
+    expect(podePedirAvalDeJustificativa(false, false, 'falta')).toBe(false);
+    expect(podePedirAvalDeJustificativa(true, true, 'falta')).toBe(false);
+  });
+
+  it('exige motivo e monta o resumo do pedido', () => {
+    expect(validarMotivoDoAval('curto')).toBe('Explique o motivo em pelo menos 10 caracteres.');
+    expect(validarMotivoDoAval('Viagem a trabalho')).toBe(null);
+    expect(resumoDoPedidoDeJustificativa('João', 'Status das entregas', ' Viagem a trabalho ')).toBe('Justificar a falta de João na reunião “Status das entregas”: Viagem a trabalho');
+    expect(resumoDoPedidoDeJustificativa('Ana', 'X', 'Consulta médica').length >= 15).toBe(true);
+  });
+});
+
+describe('exclusão', () => {
+  it('só exige motivo quando a reunião já foi encerrada', () => {
+    expect(validarExclusao(false, '')).toBe(null);
+    expect(validarExclusao(true, 'curto')).toBe('Escreva o motivo da exclusão (mínimo 10 caracteres).');
+    expect(validarExclusao(true, 'Lançada por engano')).toBe(null);
+  });
+});
+
 describe('formulários', () => {
+  it('exige pessoas marcadas no público de pessoas escolhidas', () => {
+    const base = { titulo: 'X', data: '2026-11-01', hora: '19:00', publico: 'pessoas:' };
+    expect(validarReuniao(base)).toBe('Escolha pelo menos uma pessoa para convocar.');
+    expect(validarReuniao({ ...base, pessoasEscolhidas: 0 })).toBe('Escolha pelo menos uma pessoa para convocar.');
+    expect(validarReuniao({ ...base, pessoasEscolhidas: 2 })).toBe(null);
+    expect(validarReuniao({ ...base, publico: 'geral:' })).toBe(null);
+  });
+
   it('valida a nova reunião na ordem do banco', () => {
     expect(validarReuniao({ titulo: ' ', data: '2026-11-01', hora: '19:00', publico: 'geral:' })).toBe('Dê um título à reunião.');
     expect(validarReuniao({ titulo: 'X', data: '', hora: '19:00', publico: 'geral:' })).toBe('Informe data e horário.');
