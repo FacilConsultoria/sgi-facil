@@ -72,7 +72,77 @@ export interface PessoaResumo {
   nome: string;
 }
 
-/** Linha da tabela public.auditoria filtrada por demanda. */
+export type EscopoReuniao = 'geral' | 'presidencia' | 'area' | 'nucleo';
+export type Presenca = 'presente' | 'justificada' | 'falta';
+export type OrigemRegistro = 'manual' | 'meet';
+
+/** Linha da visão public.reunioes_visiveis (supabase/05_modulo_reunioes.sql). `hora` vem como HH:MM:SS. */
+export interface ReuniaoVisivel {
+  id: string;
+  titulo: string;
+  data: string;
+  hora: string;
+  escopo: EscopoReuniao;
+  escopo_id: string | null;
+  pauta: string;
+  encerrada: boolean;
+  ata: string;
+  ata_por: string | null;
+  ata_em: string | null;
+  criado_por: string;
+  criado_em: string;
+  /** Organiza a reunião: edita ata, presença, transcrição e anexos. */
+  pode_gerir: boolean;
+  convocado: boolean;
+  total_anexos: number;
+  tem_transcricao: boolean;
+  total_convocados: number;
+  total_faltas: number;
+  /** Organiza, ainda não encerrou e a data já chegou. */
+  pode_encerrar: boolean;
+}
+
+/** Linha da visão public.escopos_de_reuniao: um público possível, com o nome e se a pessoa pode agendar para ele. */
+export interface PublicoDeReuniao {
+  escopo: EscopoReuniao;
+  escopo_id: string | null;
+  titulo: string;
+  pode_criar: boolean;
+  total_convocados: number;
+}
+
+/** Linha da tabela public.reuniao_convocados. `presenca` nulo = sem registro. */
+export interface ConvocadoDaReuniao {
+  pessoa_id: string;
+  presenca: Presenca | null;
+}
+
+/** Linha da tabela public.transcricoes. `reuniao_id` nulo = recebida e ainda sem reunião. */
+export interface TranscricaoDaReuniao {
+  id: string;
+  reuniao_id: string | null;
+  texto: string;
+  origem: OrigemRegistro;
+  titulo_origem: string | null;
+  inicio_origem: string | null;
+  registrado_por: string | null;
+  recebida_em: string;
+}
+
+/** Linha da tabela public.anexos. O arquivo fica no bucket "anexos", em `caminho`. */
+export interface AnexoDaReuniao {
+  id: string;
+  reuniao_id: string;
+  nome: string;
+  tipo: string;
+  tamanho: number;
+  caminho: string;
+  origem: OrigemRegistro;
+  enviado_por: string | null;
+  enviado_em: string;
+}
+
+/** Linha da tabela public.auditoria filtrada por demanda ou reunião. */
 export interface RegistroAuditoria {
   id: number;
   em: string;
