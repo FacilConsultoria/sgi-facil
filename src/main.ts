@@ -4,6 +4,7 @@ import './styles/base.css';
 import './styles/layout.css';
 import './styles/componentes.css';
 import './styles/demandas.css';
+import './styles/reunioes.css';
 
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { montarLayout, type Layout } from './app/layout';
