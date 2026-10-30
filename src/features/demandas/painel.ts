@@ -1,18 +1,17 @@
 // Painel lateral de uma demanda: detalhes, por que a pessoa vê, o que ela pode fazer
 // (editar, só mudar o status ou só consultar, conforme os indicadores do banco) e histórico.
+import { dataCompleta, dataEHora } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
 import type { DemandaVisivel, Prioridade, StatusDemanda } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { abrirCamada } from '../../ui/camada';
 import { el, substituir } from '../../ui/dom';
-import {
-  botaoFechar, campo, ligarEnvio, linhaDeErro, seletor, seletorDeExecutores, seloDeAcesso, seloDePrioridade, seloDeRestricao,
-  seloDeStatus,
-} from './componentes';
+import { botaoFechar, campo, ligarEnvio, linhaDeErro, seletor } from '../../ui/formulario';
+import { seletorDeExecutores, seloDeAcesso, seloDePrioridade, seloDeRestricao, seloDeStatus } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { carregarHistorico, editarDemanda, mudarStatus } from './dados';
 import {
-  agruparExecutores, dataCompleta, dataEHora, estaAtrasada, explicarAcesso, PRIORIDADES, STATUS, statusPermitidos, validarDemanda,
+  agruparExecutores, estaAtrasada, explicarAcesso, PRIORIDADES, STATUS, statusPermitidos, validarDemanda,
 } from './regras';
 
 export function abrirPainelDaDemanda(contexto: ContextoDeDemandas, demanda: DemandaVisivel): void {

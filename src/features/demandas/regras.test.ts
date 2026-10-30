@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { DemandaVisivel, PessoaAtribuivel } from '../../types/database';
 import {
-  agruparExecutores, dataCompleta, dataCurta, dataEHora, demandasDaEtapa, estaAtrasada, explicarAcesso, filtrarDemandas,
-  FILTROS_VAZIOS, hojeEmSaoPaulo, iniciais, resumir, somarDias, statusPermitidos, validarDemanda,
+  agruparExecutores, demandasDaEtapa, estaAtrasada, explicarAcesso, filtrarDemandas,
+  FILTROS_VAZIOS, iniciais, resumir, statusPermitidos, validarDemanda,
 } from './regras';
 
 function demanda(campos: Partial<DemandaVisivel>): DemandaVisivel {
@@ -20,23 +20,7 @@ function pessoa(id: string, nome: string, nucleo: string | null): PessoaAtribuiv
   return { id, nome, papel: 'membro', area_id: 'proj', nucleo_id: nucleo };
 }
 
-describe('datas', () => {
-  it('usa o dia de São Paulo, não o UTC', () => {
-    // 01:30 UTC de 31/10 ainda é 30/10 em São Paulo
-    expect(hojeEmSaoPaulo(new Date('2026-10-31T01:30:00Z'))).toBe('2026-10-30');
-  });
-
-  it('soma dias atravessando mês e ano', () => {
-    expect(somarDias('2026-10-30', 7)).toBe('2026-11-06');
-    expect(somarDias('2026-12-30', 3)).toBe('2027-01-02');
-  });
-
-  it('formata datas e horários', () => {
-    expect(dataCurta('2026-11-05')).toBe('05/11');
-    expect(dataCompleta('2026-11-05')).toBe('05/11/2026');
-    expect(dataEHora('2026-11-05T17:30:00Z')).toBe('05/11 14:30');
-  });
-
+describe('estaAtrasada', () => {
   it('marca atraso só em demanda aberta com prazo vencido', () => {
     expect(estaAtrasada({ status: 'andamento', prazo: '2026-10-29' }, '2026-10-30')).toBe(true);
     expect(estaAtrasada({ status: 'andamento', prazo: '2026-10-30' }, '2026-10-30')).toBe(false);

@@ -1,6 +1,7 @@
 // Regras de apresentação do módulo de Demandas. Funções puras, sem acesso a dados.
 // Permissões não são calculadas aqui: chegam prontas das visões do banco
 // (pode_gerir, pode_mudar_status, pode_criar_demanda) e só são lidas.
+import { dataCompleta } from '../../lib/datas';
 import type { DemandaVisivel, MotivoAcesso, PessoaAtribuivel, Prioridade, StatusDemanda } from '../../types/database';
 
 export const STATUS: readonly { id: StatusDemanda; nome: string }[] = [
@@ -34,43 +35,6 @@ export const NOME_DO_MOTIVO: Record<MotivoAcesso, string> = {
   executor: 'Executor',
   excecao: 'Exceção',
 };
-
-const FUSO = 'America/Sao_Paulo';
-
-// ---------- datas (o banco usa o dia de São Paulo; o site segue o mesmo fuso) ----------
-
-/** Dia de hoje em São Paulo, no formato AAAA-MM-DD. */
-export function hojeEmSaoPaulo(agora: Date = new Date()): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: FUSO, year: 'numeric', month: '2-digit', day: '2-digit' }).format(agora);
-}
-
-/** Soma dias a uma data AAAA-MM-DD, sem depender do fuso do aparelho. */
-export function somarDias(data: string, dias: number): string {
-  const [ano, mes, dia] = data.split('-').map(Number);
-  const resultado = new Date(Date.UTC(ano ?? 1970, (mes ?? 1) - 1, (dia ?? 1) + dias));
-  return resultado.toISOString().slice(0, 10);
-}
-
-/** "2026-11-05" → "05/11". */
-export function dataCurta(data: string): string {
-  const [, mes, dia] = data.split('-');
-  return `${dia}/${mes}`;
-}
-
-/** "2026-11-05" → "05/11/2026". */
-export function dataCompleta(data: string): string {
-  const [ano, mes, dia] = data.split('-');
-  return `${dia}/${mes}/${ano}`;
-}
-
-/** Instante do banco (timestamptz) → "05/11 14:30", no horário de São Paulo. */
-export function dataEHora(instante: string): string {
-  const partes = new Intl.DateTimeFormat('pt-BR', {
-    timeZone: FUSO, day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false,
-  }).formatToParts(new Date(instante));
-  const parte = (tipo: Intl.DateTimeFormatPartTypes): string => partes.find((p) => p.type === tipo)?.value ?? '';
-  return `${parte('day')}/${parte('month')} ${parte('hour')}:${parte('minute')}`;
-}
 
 export function estaAtrasada(demanda: Pick<DemandaVisivel, 'status' | 'prazo'>, hoje: string): boolean {
   return demanda.status !== 'concluida' && demanda.prazo < hoje;

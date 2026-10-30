@@ -1,6 +1,7 @@
 // Tela de Demandas: quadro por etapa com filtros, painel de detalhes e cadastro.
 // Mostra só o que a visão demandas_visiveis devolve (a RLS já aplicou a hierarquia).
 import type { ContextoDaSessao } from '../../app/sessao';
+import { hojeEmSaoPaulo } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
 import { el, substituir } from '../../ui/dom';
 import { cartaoDaDemanda } from './componentes';
@@ -9,7 +10,7 @@ import { carregarQuadro, type DadosDoQuadro } from './dados';
 import { abrirNovaDemanda, abrirNovoProjeto } from './formularios';
 import { abrirPainelDaDemanda } from './painel';
 import {
-  demandasDaEtapa, filtrarDemandas, FILTROS_VAZIOS, hojeEmSaoPaulo, resumir, STATUS, type Filtros,
+  demandasDaEtapa, filtrarDemandas, FILTROS_VAZIOS, resumir, STATUS, type Filtros,
 } from './regras';
 
 export function paginaDemandas(destino: HTMLElement, sessao: ContextoDaSessao): void {

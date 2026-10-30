@@ -1,38 +1,27 @@
 // Janelas de cadastro do módulo de Demandas: nova demanda e novo projeto.
 // As listas (projetos, núcleos, executores) vêm das visões do banco, já limitadas ao que a pessoa pode usar.
+import { somarDias } from '../../lib/datas';
 import type { Prioridade } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
-import { abrirCamada } from '../../ui/camada';
 import { el, substituir } from '../../ui/dom';
-import { botaoFechar, campo, ligarEnvio, linhaDeErro, seletor, seletorDeExecutores, type SeletorDeExecutores } from './componentes';
+import { abrirJanela, campo, ligarEnvio, linhaDeErro, rodapeDaJanela, seletor } from '../../ui/formulario';
+import { seletorDeExecutores, type SeletorDeExecutores } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { criarDemanda, criarProjeto } from './dados';
 import { abrirPainelDaDemanda } from './painel';
-import { agruparExecutores, PRIORIDADES, somarDias, validarDemanda } from './regras';
+import { agruparExecutores, PRIORIDADES, validarDemanda } from './regras';
 
-/** Estrutura comum: cabeçalho com título, corpo rolável e rodapé com Cancelar + ação principal. */
+/** Janela de cadastro da tela de Demandas (a estrutura comum fica em ui/formulario). */
 function janela(
   contexto: ContextoDeDemandas,
   idDoTitulo: string,
   titulo: string,
   montarFormulario: (fechar: () => void) => HTMLFormElement,
 ): void {
-  abrirCamada(contexto.pagina, {
-    tipo: 'modal',
-    idDoTitulo,
-    montar: (fechar) => {
-      const formulario = montarFormulario(fechar);
-      formulario.prepend(el('div', { class: 'painel-cab' }, el('h2', { id: idDoTitulo }, titulo), botaoFechar(fechar)));
-      return [formulario];
-    },
-  });
+  abrirJanela(contexto.pagina, idDoTitulo, titulo, montarFormulario);
 }
 
-function rodape(fechar: () => void, botao: HTMLButtonElement): HTMLElement {
-  const cancelar = el('button', { type: 'button', class: 'btn' }, 'Cancelar');
-  cancelar.addEventListener('click', fechar);
-  return el('div', { class: 'modal-pe' }, cancelar, botao);
-}
+const rodape = rodapeDaJanela;
 
 export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: string): void {
   const { dados, perfil, hoje } = contexto;
