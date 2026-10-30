@@ -70,9 +70,11 @@ export interface PessoaAtribuivel {
 export interface PessoaResumo {
   id: string;
   nome: string;
+  /** Só vem quando a consulta pede a coluna. */
+  papel?: Papel;
 }
 
-export type EscopoReuniao = 'geral' | 'presidencia' | 'area' | 'nucleo';
+export type EscopoReuniao = 'geral' | 'presidencia' | 'area' | 'nucleo' | 'pessoas';
 export type Presenca = 'presente' | 'justificada' | 'falta';
 export type OrigemRegistro = 'manual' | 'meet';
 
@@ -100,6 +102,30 @@ export interface ReuniaoVisivel {
   total_faltas: number;
   /** Organiza, ainda não encerrou e a data já chegou. */
   pode_encerrar: boolean;
+  /** Reunião aberta: quem organiza. Encerrada: Presidência (incluindo a Assessoria) e diretoria que organiza. */
+  pode_excluir: boolean;
+  /** Presidente ou Vice: justificam a falta de diretoria sem pedir aval. */
+  pode_justificar_diretoria: boolean;
+}
+
+export type TipoDeAval = 'ajuste_proprio' | 'decidir_solicitacao' | 'justificar_falta';
+export type StatusDeAval = 'pendente' | 'aprovado' | 'negado';
+
+/** Linha da visão public.avais_visiveis (supabase/07_assessoria_aval_publico_exclusao.sql). */
+export interface AvalVisivel {
+  id: string;
+  tipo: TipoDeAval;
+  solicitante: string;
+  resumo: string;
+  /** O que será executado se aprovarem; o formato depende do tipo. */
+  payload: Record<string, unknown>;
+  status: StatusDeAval;
+  decidido_por: string | null;
+  decidido_em: string | null;
+  nota: string | null;
+  criado_em: string;
+  /** Presidente ou Vice, em aval pendente que não é seu. */
+  pode_decidir: boolean;
 }
 
 /** Linha da visão public.escopos_de_reuniao: um público possível, com o nome e se a pessoa pode agendar para ele. */
