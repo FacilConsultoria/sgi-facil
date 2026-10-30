@@ -18,6 +18,12 @@ describe('rotaDoHash', () => {
     expect(rotaDoHash('#autorizacoes').titulo).toBe('Autorizações');
   });
 
+  it('leva os endereços antigos de Pontuações e Ranking para Pontuação e ranking', () => {
+    expect(rotaDoHash('#pontuacoes').id).toBe('pontuacao');
+    expect(rotaDoHash('#/ranking').id).toBe('pontuacao');
+    expect(rotaDoHash('#pontuacao').titulo).toBe('Pontuação e ranking');
+  });
+
   it('chama a primeira tela de Tela Inicial', () => {
     expect(rotaDoHash('').titulo).toBe('Tela Inicial');
   });

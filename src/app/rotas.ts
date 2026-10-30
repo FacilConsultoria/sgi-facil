@@ -12,8 +12,7 @@ export const ROTAS: readonly Rota[] = [
   { id: 'projetos', titulo: 'Projetos', disponivel: false },
   { id: 'reunioes', titulo: 'Reuniões e atas', disponivel: true },
   { id: 'presencas', titulo: 'Presenças', disponivel: false },
-  { id: 'pontuacoes', titulo: 'Pontuações', disponivel: false },
-  { id: 'ranking', titulo: 'Ranking', disponivel: false },
+  { id: 'pontuacao', titulo: 'Pontuação e ranking', disponivel: true },
   { id: 'estrutura', titulo: 'Estrutura e equipe', disponivel: false },
   { id: 'autorizacoes', titulo: 'Autorizações', disponivel: true },
   { id: 'historico', titulo: 'Histórico completo', disponivel: false },
@@ -22,8 +21,10 @@ export const ROTAS: readonly Rota[] = [
 
 const ROTA_INICIAL: Rota = { id: 'dashboard', titulo: 'Tela Inicial', disponivel: true };
 
-// endereços antigos que passaram a ser abas de Autorizações
-const ENDERECOS_ANTIGOS: Readonly<Record<string, string>> = { acessos: 'autorizacoes', avais: 'autorizacoes' };
+// endereços antigos que passaram a ser abas de Autorizações e de Pontuação e ranking
+const ENDERECOS_ANTIGOS: Readonly<Record<string, string>> = {
+  acessos: 'autorizacoes', avais: 'autorizacoes', pontuacoes: 'pontuacao', ranking: 'pontuacao',
+};
 
 /** Converte "#demandas" ou "#/demandas" na rota; hash vazio ou desconhecido leva à Tela Inicial. */
 export function rotaDoHash(hash: string): Rota {
