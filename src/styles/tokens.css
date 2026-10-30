@@ -23,9 +23,16 @@
   --danger: #c02525;
   --warn: #975a06;
   --ok: #18794a;
+  /* selos de motivo de acesso (mesmos tons do protótipo) */
+  --presex: #6e3b82;
+  --direx: #0b3b73;
+  --gerencia: #86610c;
+  --executor: #2f6b4a;
+  --excecao: #b04d16;
   --shadow: 0 1px 2px rgba(11, 59, 115, 0.05), 0 8px 24px rgba(11, 59, 115, 0.08);
   --scrim: rgba(6, 20, 40, 0.42);
   --f-body: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+  --f-mono: ui-monospace, 'Cascadia Mono', Consolas, monospace;
   --r: 12px;
   color-scheme: light;
 }
@@ -46,6 +53,11 @@
     --danger: #f38a8a;
     --warn: #e3ae5c;
     --ok: #6ccb93;
+    --presex: #c79bdb;
+    --direx: #8cc0f7;
+    --gerencia: #d9b160;
+    --executor: #7fc49c;
+    --excecao: #f0955e;
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
     --scrim: rgba(0, 0, 0, 0.58);
     color-scheme: dark;
