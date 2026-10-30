@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL05 antes deste módulo.
+// O runner injeta window.SQL01 a window.SQL07 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -46,6 +46,8 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL03);
     await db.exec(window.SQL04);
     await db.exec(window.SQL05);
+    await db.exec(window.SQL06);
+    await db.exec(window.SQL07);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -110,7 +112,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
 
     const visiveis = {};
     for (const n of ['mel', 'luis', 'joao', 'victor', 'emilli', 'duda', 'maju', 'ana', 'lucas', 'camila', 'pedro']) visiveis[n] = await valor(`${n}@facil.test`, `select count(*)::int from demandas`);
-    confere('Demandas visíveis por perfil', visiveis, { mel: 5, luis: 5, joao: 3, victor: 2, emilli: 0, duda: 1, maju: 0, ana: 2, lucas: 1, camila: 1, pedro: 0 });
+    confere('Demandas visíveis por perfil', visiveis, { mel: 5, luis: 5, joao: 3, victor: 2, emilli: 0, duda: 1, maju: 5, ana: 2, lucas: 1, camila: 1, pedro: 0 });
     confere('Vice-Presidência vê registro restrito', await valor(LUIS, `select count(*)::int from demandas where projeto_id = $1`, [pEst]), 1);
     confere('Diretoria não vê registro restrito da Presidência', await valor(JOAO, `select count(*)::int from demandas where projeto_id = $1`, [pEst]), 0);
     confere('Membro vê só o projeto em que atua', (await como(ANA, `select nome from projetos`)).map(r => r.nome), ['Mapeamento de processos']);
@@ -148,7 +150,8 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     confere('Falta vira −2', await valor(MEL, `select valor from lancamentos where pessoa_id = $1 and tipo = 'falta'`, [iLucas]), -2);
     confere('Pessoa não convocada não vê a reunião', await valor(CAMILA, `select count(*)::int from reunioes where id = $1`, [r1]), 0);
     await permite('Assessoria agenda reunião geral', MAJU, `select criar_reuniao('Geral de novembro', privado.hoje() + 9, '19:00', 'geral', null, '')`);
-    await bloqueia('Assessoria não agenda reunião de diretoria', MAJU, `select criar_reuniao('x', privado.hoje(), '19:00', 'area', 'com', '')`, [], 'Escolha um público da lista.');
+    await permite('Assessoria (com acesso de Presidência) agenda reunião de diretoria', MAJU, `select criar_reuniao('Alinhamento da Comercial', privado.hoje() + 12, '19:00', 'area', 'com', '')`);
+    await bloqueia('Gerência não agenda reunião geral', DUDA, `select criar_reuniao('x', privado.hoje(), '19:00', 'geral', null, '')`, [], 'Escolha um público da lista.');
     await permite('Gerência agenda reunião do núcleo', DUDA, `select criar_reuniao('Pauta de novembro', privado.hoje() + 2, '17:00', 'nucleo', 'com-mkt', '')`);
     await permite('Organizador salva ata', JOAO, `select salvar_ata($1,'Clientes dentro do prazo.')`, [r1]);
     await bloqueia('Convocado comum não edita ata', ANA, `select salvar_ata($1,'tentativa')`, [r1], 'Você não pode editar esta ata.');
@@ -259,15 +262,14 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     confere('Visão 05: públicos em que cada perfil agenda reunião', {
       mel: (await publicos(MEL)).length,
       luis: (await publicos(LUIS)).length,
+      maju: (await publicos(MAJU)).length,
       joao: await publicos(JOAO),
       duda: await publicos(DUDA),
-      maju: await publicos(MAJU),
       ana: await publicos(ANA),
     }, {
-      mel: 14, luis: 14,
-      joao: ['area:com', 'area:proj', 'nucleo:com-cap', 'nucleo:com-mkt', 'nucleo:proj-cli'],
-      duda: ['nucleo:com-mkt'],
-      maju: ['geral:', 'presidencia:'],
+      mel: 15, luis: 15, maju: 15,
+      joao: ['area:com', 'area:proj', 'geral:', 'nucleo:com-cap', 'nucleo:com-mkt', 'nucleo:proj-cli', 'pessoas:'],
+      duda: ['nucleo:com-mkt', 'pessoas:'],
       ana: [],
     });
     confere('Visão 05: a área da Presidência não repete o público Presidência', await valor(MEL, `select count(*)::int from escopos_de_reuniao where escopo = 'area' and escopo_id = 'pres'`), 0);
@@ -285,6 +287,116 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       futura: await valor(DUDA, `select bool_or(pode_encerrar) from reunioes_visiveis where titulo = 'Pauta de novembro'`),
     }, { joao: true, ana: false, futura: false });
     confere('Visões 05 não aceitam gravação', (await tenta(MEL, `update reunioes_visiveis set titulo = 'x'`)).startsWith('permission denied'), true);
+
+    // Assessoria de Presidência, avais, público por pessoas e exclusão (06 e 07)
+    const iMaju = await id('Maju');
+    confere('Assessoria tem o acesso da Presidência, sem ser a Presidente', await como(MAJU, `select eh_presidencia, eh_presidente, pode_ajustar_pontos from meu_perfil`),
+      [{ eh_presidencia: true, eh_presidente: false, pode_ajustar_pontos: true }]);
+    await permite('Assessoria cria projeto em qualquer núcleo', MAJU, `select criar_projeto('Rotina da Assessoria','Interno','com-mkt')`);
+    await permite('Assessoria vê e gere registro restrito da Presidência', MAJU, `select mudar_status($1,'andamento')`, [(await valor(MEL, `select id from demandas where codigo = 'PRE-001'`))]);
+    await bloqueia('Assessoria não ajusta a própria pontuação direto', MAJU, `select lancar_pontos($1,'ajuste',2,privado.hoje(),'Ajuste qualquer de teste aqui')`, [iMaju], 'Ninguém ajusta a própria pontuação.');
+    await bloqueia('Assessoria não aprova item restrito direto', MAJU, `select decidir_solicitacao($1,true,'')`, [pedidoRestrito], 'Você não pode decidir esta solicitação.');
+    confere('Perfil: só a Presidente e a Vice dão aval', [
+      await valor(MEL, `select pode_justificar_diretoria from reunioes_visiveis limit 1`),
+      await valor(LUIS, `select pode_justificar_diretoria from reunioes_visiveis limit 1`),
+      await valor(JOAO, `select pode_justificar_diretoria from reunioes_visiveis limit 1`),
+      await valor(MAJU, `select pode_justificar_diretoria from reunioes_visiveis limit 1`)], [true, true, false, false]);
+
+    // aval: ajuste da própria pontuação
+    const ajuste = `jsonb_build_object('tipo','ajuste','valor',2,'data',privado.hoje())`;
+    await bloqueia('Só a Assessoria pede aval de ajuste próprio', JOAO, `select solicitar_aval('ajuste_proprio', ${ajuste}, 'Ajuste que não deveria ser permitido a ele')`, [], 'Só a Assessoria de Presidência pede aval para ajustar a própria pontuação.');
+    await bloqueia('Aval exige explicação', MAJU, `select solicitar_aval('ajuste_proprio', ${ajuste}, 'curto')`, [], 'Explique o pedido em pelo menos 15 caracteres.');
+    await bloqueia('Aval de ajuste valida o valor', MAJU, `select solicitar_aval('ajuste_proprio', jsonb_build_object('tipo','ajuste','valor',0,'data',privado.hoje()), 'Horas extras do evento regional de outubro')`, [], 'Informe o tipo, um valor inteiro entre −20 e 20 (diferente de zero) e uma data até hoje.');
+    const avalAjuste = await valor(MAJU, `select solicitar_aval('ajuste_proprio', ${ajuste}, 'Horas extras do evento regional de outubro')`);
+    confere('Aval pendente: Assessoria vê o próprio, a Presidente decide, João não vê', {
+      maju: await como(MAJU, `select status, pode_decidir from avais_visiveis where id = $1`, [avalAjuste]),
+      mel: await como(MEL, `select status, pode_decidir from avais_visiveis where id = $1`, [avalAjuste]),
+      joao: (await como(JOAO, `select id from avais_visiveis`)).length,
+    }, { maju: [{ status: 'pendente', pode_decidir: false }], mel: [{ status: 'pendente', pode_decidir: true }], joao: 0 });
+    await bloqueia('A Assessoria não decide o próprio aval', MAJU, `select decidir_aval($1,true,'')`, [avalAjuste], 'Você não pode decidir este aval.');
+    await bloqueia('Diretoria não decide aval', JOAO, `select decidir_aval($1,true,'')`, [avalAjuste], 'Você não pode decidir este aval.');
+    await permite('Presidente aprova o aval', MEL, `select decidir_aval($1,true,'Autorizado')`, [avalAjuste]);
+    confere('Aprovar executa o ajuste para a Assessoria', await como(MEL, `select tipo, valor, criado_por = $2 as por_presidente from lancamentos where pessoa_id = $1 and tipo = 'ajuste'`, [iMaju, iMel]),
+      [{ tipo: 'ajuste', valor: 2, por_presidente: true }]);
+    await bloqueia('Aval decidido não decide de novo', LUIS, `select decidir_aval($1,true,'')`, [avalAjuste], 'Você não pode decidir este aval.');
+    const avalNegado = await valor(MAJU, `select solicitar_aval('ajuste_proprio', ${ajuste}, 'Segundo ajuste solicitado para o mesmo evento')`);
+    await permite('Vice nega o aval', LUIS, `select decidir_aval($1,false,'Já compensado no ajuste anterior')`, [avalNegado]);
+    confere('Negar não executa nada', [await valor(MEL, `select count(*)::int from lancamentos where pessoa_id = $1 and tipo = 'ajuste'`, [iMaju]), await valor(MAJU, `select status from avais_visiveis where id = $1`, [avalNegado])], [1, 'negado']);
+
+    // aval: aprovar acesso por exceção
+    await permite('Pedido de acesso para o aval', PEDRO, `select solicitar_acesso($1,'projeto',$2,null,'Vou apoiar a estimativa de custos de pessoal do projeto.',privado.hoje() + 30)`, [iPedro, pCli]);
+    const pedido2 = await valor(MEL, `select id from solicitacoes where beneficiario = $1 and status = 'pendente'`, [iPedro]);
+    await bloqueia('Gerência não pede aval de acesso', DUDA, `select solicitar_aval('decidir_solicitacao', jsonb_build_object('solicitacao',$1::text,'aprovar',true), 'Aprovação que não é da gerência dela')`, [pedido2], 'Só a Assessoria de Presidência pede aval para decidir acessos por exceção.');
+    const avalAcesso = await valor(MAJU, `select solicitar_aval('decidir_solicitacao', jsonb_build_object('solicitacao',$1::text,'aprovar',true,'nota','Só consulta'), 'Apoio ao orçamento, aprovado pela assessoria')`, [pedido2]);
+    await bloqueia('Aval duplicado para a mesma solicitação', MAJU, `select solicitar_aval('decidir_solicitacao', jsonb_build_object('solicitacao',$1::text,'aprovar',true), 'Mesmo pedido enviado uma segunda vez')`, [pedido2], 'Já existe um pedido de aval pendente para esta solicitação.');
+    confere('Sem o aval, o acesso ainda não existe', await valor(PEDRO, `select count(*)::int from demandas where projeto_id = $1`, [pCli]), 0);
+    await permite('Presidente aprova o aval e o acesso é concedido', MEL, `select decidir_aval($1,true,'')`, [avalAcesso]);
+    confere('Acesso por exceção vale depois do aval', await valor(PEDRO, `select count(*)::int from demandas where projeto_id = $1`, [pCli]), 2);
+    const avalRestrito = await valor(MAJU, `select solicitar_aval('decidir_solicitacao', jsonb_build_object('solicitacao',$1::text,'aprovar',true), 'Planejamento de posts sobre as metas 2027')`, [pedidoRestrito]);
+    await bloqueia('Vice não executa aprovação de item restrito', LUIS, `select decidir_aval($1,true,'')`, [avalRestrito], 'Você não pode decidir esta solicitação.');
+    confere('Aval segue pendente depois do erro', await valor(MEL, `select status from avais_visiveis where id = $1`, [avalRestrito]), 'pendente');
+    await permite('Presidente aprova item restrito pelo aval', MEL, `select decidir_aval($1,true,'')`, [avalRestrito]);
+    confere('Camila passa a ver a demanda restrita', await valor(CAMILA, `select count(*)::int from demandas where codigo = 'PRE-001'`), 1);
+
+    // público por pessoas escolhidas
+    confere('Quem cada perfil pode escolher pessoalmente', {
+      mel: await valor(MEL, `select count(*)::int from pessoas_convocaveis`),
+      joao: await valor(JOAO, `select count(*)::int from pessoas_convocaveis`),
+      duda: (await como(DUDA, `select nome from pessoas_convocaveis order by nome`)).map(r => r.nome),
+      ana: await valor(ANA, `select count(*)::int from pessoas_convocaveis`),
+    }, { mel: 11, joao: 11, duda: ['Camila', 'Duda'], ana: 0 });
+    const rPessoas = await valor(JOAO, `select criar_reuniao('Alinhamento Comercial e Projetos', privado.hoje() + 4, '15:00', 'pessoas', null, '', array[$1,$2]::uuid[])`, [iAna, iCamila]);
+    confere('Convocados: os escolhidos mais quem agendou', (await db.query(`select p.nome from reuniao_convocados rc join pessoas p on p.id = rc.pessoa_id where reuniao_id = $1 order by 1`, [rPessoas])).rows.map(r => r.nome), ['Ana', 'Camila', 'João']);
+    confere('Quem foi escolhido vê a reunião; quem não foi, não', [await valor(CAMILA, `select count(*)::int from reunioes_visiveis where id = $1`, [rPessoas]), await valor('lucas@facil.test', `select count(*)::int from reunioes_visiveis where id = $1`, [rPessoas])], [1, 0]);
+    confere('Só quem agendou (e a Presidência) organiza', [await valor(JOAO, `select pode_gerir from reunioes_visiveis where id = $1`, [rPessoas]), await valor(DUDA, `select count(*)::int from reunioes_visiveis where id = $1`, [rPessoas]), await valor(MEL, `select pode_gerir from reunioes_visiveis where id = $1`, [rPessoas])], [true, 0, true]);
+    await permite('Gerência escolhe gente do próprio núcleo', DUDA, `select criar_reuniao('Pauta de posts', privado.hoje() + 6, '16:00', 'pessoas', null, '', array[$1]::uuid[])`, [iCamila]);
+    await bloqueia('Gerência não escolhe gente de outro núcleo', DUDA, `select criar_reuniao('x', privado.hoje() + 6, '16:00', 'pessoas', null, '', array[$1]::uuid[])`, [iPedro], 'Há pessoas fora do seu escopo.');
+    await bloqueia('Escolher ao menos uma pessoa', JOAO, `select criar_reuniao('x', privado.hoje() + 6, '16:00', 'pessoas', null, '', array[]::uuid[])`, [], 'Escolha pelo menos uma pessoa para convocar.');
+    await bloqueia('Membro não agenda', ANA, `select criar_reuniao('x', privado.hoje() + 6, '16:00', 'pessoas', null, '', array[$1]::uuid[])`, [iAna], 'Escolha um público da lista.');
+    await permite('Diretoria agenda reunião com todos', JOAO, `select criar_reuniao('Assembleia comercial', privado.hoje() + 20, '19:00', 'geral', null, '')`);
+    confere('Reunião com todos convoca todos os ativos', await valor(JOAO, `select total_convocados from reunioes_visiveis where titulo = 'Assembleia comercial'`), 11);
+
+    // falta de diretoria: só justificada com aval
+    await permite('Organizador marca as presenças', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rHoje, JSON.stringify({ [iAna]: 'presente', [iJoao]: 'falta', [iLucas]: 'presente', [iVictor]: 'presente' })]);
+    await bloqueia('Diretoria não se justifica sozinha', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rHoje, JSON.stringify({ [iAna]: 'presente', [iJoao]: 'justificada', [iLucas]: 'presente', [iVictor]: 'presente' })], 'A falta de diretoria só é justificada com aval da Presidência ou da Vice-Presidência. Peça o aval pelo sistema.');
+    await permite('Falta de quem não é diretoria é justificada normalmente', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rHoje, JSON.stringify({ [iAna]: 'presente', [iJoao]: 'falta', [iLucas]: 'justificada', [iVictor]: 'presente' })]);
+    await bloqueia('Quem não organiza não pede aval', ANA, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Viagem a trabalho autorizada pela Presidência')`, [rHoje, iJoao], 'Você não pode pedir aval para esta reunião.');
+    await bloqueia('Aval só para falta de diretor', JOAO, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Pedido que não cabe para um membro')`, [rHoje, iLucas], 'O aval vale para a falta de um diretor já registrada nesta reunião.');
+    await bloqueia('Presidente justifica direto, sem aval', MEL, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Tentativa de pedir aval sendo a Presidente')`, [rHoje, iJoao], 'A Presidente e a Vice justificam a falta diretamente.');
+    const avalFalta = await valor(JOAO, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Viagem a trabalho autorizada pela Presidência')`, [rHoje, iJoao]);
+    await bloqueia('Não encerra com aval pendente', JOAO, `select encerrar_reuniao($1)`, [rHoje], 'Há pedido de aval pendente nesta reunião. Aguarde a decisão antes de encerrar.');
+    await permite('Vice aprova a justificativa', LUIS, `select decidir_aval($1,true,'')`, [avalFalta]);
+    confere('Presença do diretor passa a justificada', await valor(MEL, `select presenca from reuniao_convocados where reuniao_id = $1 and pessoa_id = $2`, [rHoje, iJoao]), 'justificada');
+    await permite('Organizador salva de novo mantendo a justificativa aprovada', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rHoje, JSON.stringify({ [iAna]: 'presente', [iJoao]: 'justificada', [iLucas]: 'justificada', [iVictor]: 'presente' })]);
+    await permite('Sem aval pendente, encerra', JOAO, `select encerrar_reuniao($1)`, [rHoje]);
+    confere('Falta justificada vira lançamento sem pontos', await como(MEL, `select valor from lancamentos where reuniao_id = $1 and pessoa_id = $2`, [rHoje, iJoao]), [{ valor: 0 }]);
+
+    // excluir reuniões
+    const rFutura = await valor(DUDA, `select criar_reuniao('Reunião para excluir', privado.hoje() + 8, '10:00', 'nucleo', 'com-mkt', '')`);
+    confere('Indicador de exclusão por situação', {
+      dudaFutura: await valor(DUDA, `select pode_excluir from reunioes_visiveis where id = $1`, [rFutura]),
+      anaEncerrada: await valor(ANA, `select pode_excluir from reunioes_visiveis where id = $1`, [r1]),
+      victorEncerrada: await valor(VICTOR, `select pode_excluir from reunioes_visiveis where id = $1`, [r1]),
+      joaoEncerrada: await valor(JOAO, `select pode_excluir from reunioes_visiveis where id = $1`, [r1]),
+      majuEncerrada: await valor(MAJU, `select pode_excluir from reunioes_visiveis where id = $1`, [r1]),
+    }, { dudaFutura: true, anaEncerrada: false, victorEncerrada: false, joaoEncerrada: true, majuEncerrada: true });
+    await bloqueia('Quem não organiza não exclui', ANA, `select excluir_reuniao($1)`, [rFutura], 'Você não pode excluir esta reunião.');
+    await bloqueia('Convocado comum não exclui', VICTOR, `select excluir_reuniao($1)`, [r1], 'Você não pode excluir esta reunião.');
+    await permite('Quem organiza exclui reunião ainda aberta', DUDA, `select excluir_reuniao($1)`, [rFutura]);
+    confere('Reunião aberta some com os convocados', [await valor(MEL, `select count(*)::int from reunioes where id = $1`, [rFutura]), await valor(MEL, `select count(*)::int from reuniao_convocados where reuniao_id = $1`, [rFutura])], [0, 0]);
+    await bloqueia('Reunião encerrada exige motivo', JOAO, `select excluir_reuniao($1)`, [r1], 'Escreva o motivo da exclusão (mínimo 10 caracteres).');
+    confere('Antes de excluir: a falta de Lucas conta e o arquivo existe', [await valor(MEL, `select count(*)::int from lancamentos where reuniao_id = $1 and tipo = 'falta' and desconsiderado_em is null`, [r1]), await valor(MEL, `select count(*)::int from anexos where reuniao_id = $1`, [r1])], [1, 1]);
+    confere('Arquivo de reunião existente não é apagado por quem é de fora', (await como(CAMILA, `delete from storage.objects where name = $1 returning name`, [r1 + '/apresentacao.pdf'])).length, 0);
+    const caminhos = await valor(JOAO, `select excluir_reuniao($1, 'Reunião lançada por engano na data errada')`, [r1]);
+    confere('Exclusão devolve os arquivos para o site apagar', caminhos, [r1 + '/apresentacao.pdf']);
+    confere('Faltas da reunião excluída são desconsideradas com o motivo', await como(MEL, `select desconsiderado_em is not null as riscado, reuniao_id is null as sem_reuniao, motivo_desconsideracao from lancamentos where pessoa_id = $1 and tipo = 'falta' and descricao like 'Falta em: Status das entregas%'`, [iLucas]),
+      [{ riscado: true, sem_reuniao: true, motivo_desconsideracao: 'Reunião excluída: Reunião lançada por engano na data errada' }]);
+    confere('Reunião, anexo e transcrição saem junto', [await valor(MEL, `select count(*)::int from reunioes where id = $1`, [r1]), await valor(MEL, `select count(*)::int from anexos where reuniao_id = $1`, [r1]), await valor(MEL, `select count(*)::int from transcricoes where reuniao_id = $1`, [r1])], [0, 0, 0]);
+    confere('Com a reunião excluída, o arquivo órfão pode ser apagado', (await como(JOAO, `delete from storage.objects where name = $1 returning name`, [r1 + '/apresentacao.pdf'])).length, 1);
+    confere('A exclusão fica no histórico da Presidência', await valor(MEL, `select count(*)::int from auditoria where acao = 'Excluiu reunião' and reuniao_id = $1`, [r1]), 1);
+    await permite('Presidente exclui reunião aberta de outra pessoa', MEL, `select excluir_reuniao($1)`, [rPessoas]);
+    confere('Avais: visitante sem login e sem cadastro', [(await tenta(null, `select * from avais_visiveis`)).startsWith('permission denied'), await valor('sem-cadastro@facil.test', `select count(*)::int from avais_visiveis`)], [true, 0]);
+    confere('Avais não aceitam gravação direta', (await tenta(MEL, `update avais set status = 'aprovado'`)).startsWith('permission denied'), true);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
