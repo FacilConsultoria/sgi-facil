@@ -220,6 +220,71 @@ export interface RegistroAuditoria {
   detalhe: string;
 }
 
+export type TipoDeLancamento = 'demanda' | 'evento' | 'falta' | 'ajuste';
+
+/** Linha da visão public.pontuacao_pessoas (supabase/09_modulo_pontuacao.sql): pessoa cuja pontuação detalhada quem consulta pode ver. */
+export interface PessoaComPontuacao {
+  id: string;
+  nome: string;
+  papel: Papel;
+  area_id: string;
+  nucleo_id: string | null;
+  curso: string | null;
+  /** Nome do núcleo ou, sem núcleo, da área. */
+  setor: string;
+  /** Pontos iniciais mais os lançamentos que não foram desconsiderados. */
+  pontos: number;
+  entregas: number;
+  faltas: number;
+  /** Faltas lançadas sem perda de pontos. */
+  justificadas: number;
+  /** Projetos com demanda em aberto que quem consulta pode ver. */
+  projetos_ativos: string[];
+  /** Quantos outros projetos ativos a pessoa tem, sem o nome (quem consulta não os vê). */
+  projetos_ocultos: number;
+  /** Lança ajuste ou evento para esta pessoa e desconsidera lançamentos dela. */
+  pode_ajustar: boolean;
+  /** Assessoria de Presidência olhando a própria pontuação: ajustar depende do aval da Presidente ou da Vice. */
+  pode_pedir_aval: boolean;
+}
+
+/** Linha da visão public.lancamentos_visiveis. `data` no formato AAAA-MM-DD. */
+export interface LancamentoVisivel {
+  id: string;
+  pessoa_id: string;
+  tipo: TipoDeLancamento;
+  descricao: string;
+  data: string;
+  valor: number;
+  demanda_id: string | null;
+  reuniao_id: string | null;
+  criado_por: string | null;
+  criado_em: string;
+  desconsiderado_por: string | null;
+  desconsiderado_em: string | null;
+  motivo_desconsideracao: string | null;
+  /** Só vêm quando quem consulta pode ver a demanda. */
+  demanda_codigo: string | null;
+  demanda_titulo: string | null;
+  pode_desconsiderar: boolean;
+}
+
+/** Linha da função public.ranking(): só as pessoas que quem consulta pode ver, do maior para o menor saldo. */
+export interface LinhaDoRanking {
+  pessoa_id: string;
+  nome: string;
+  setor: string;
+  pontos: number;
+  entregas: number;
+  faltas: number;
+}
+
+/** Parte da tabela public.config que a tela de pontuação mostra. */
+export interface ConfigDePontuacao {
+  pontos_iniciais: number;
+  ranking_publico: boolean;
+}
+
 /** Linha da visão public.meu_perfil: quem está logado e o que pode fazer. */
 export interface Perfil {
   id: string;
