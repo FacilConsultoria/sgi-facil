@@ -1,5 +1,5 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05, 06, 07 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07, 08 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
@@ -48,6 +48,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL05);
     await db.exec(window.SQL06);
     await db.exec(window.SQL07);
+    await db.exec(window.SQL08);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -397,6 +398,39 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await permite('Presidente exclui reunião aberta de outra pessoa', MEL, `select excluir_reuniao($1)`, [rPessoas]);
     confere('Avais: visitante sem login e sem cadastro', [(await tenta(null, `select * from avais_visiveis`)).startsWith('permission denied'), await valor('sem-cadastro@facil.test', `select count(*)::int from avais_visiveis`)], [true, 0]);
     confere('Avais não aceitam gravação direta', (await tenta(MEL, `update avais set status = 'aprovado'`)).startsWith('permission denied'), true);
+
+    // pedidos de acesso por exceção (08)
+    const nomesDe = async (email, sql, params) => (await como(email, sql, params)).map(r => r.nome);
+    confere('Para quem cada perfil pode pedir acesso', {
+      joao: await nomesDe(JOAO, `select nome from beneficiarios_de_acesso order by nome`),
+      duda: await nomesDe(DUDA, `select nome from beneficiarios_de_acesso order by nome`),
+      ana: await nomesDe(ANA, `select nome from beneficiarios_de_acesso order by nome`),
+      mel: (await como(MEL, `select 1 from beneficiarios_de_acesso`)).length,
+      maju: (await como(MAJU, `select 1 from beneficiarios_de_acesso`)).length,
+    }, { joao: ['Ana', 'Camila', 'Duda', 'Emilli', 'João', 'Lucas', 'Victor'], duda: ['Camila', 'Duda'], ana: ['Ana'], mel: 0, maju: 0 });
+    confere('Projetos que podem ser pedidos para Pedro (sem restritos, sem os que ele já tem)', await nomesDe(PEDRO, `select nome from projetos_solicitaveis($1)`, [iPedro]),
+      ['Caixa e orçamento', 'Instagram Comercial', 'Rotina da Assessoria']);
+    confere('Quem não pode pedir para a pessoa recebe lista vazia', [(await como(DUDA, `select nome from projetos_solicitaveis($1)`, [iPedro])).length, (await como(MEL, `select nome from projetos_solicitaveis($1)`, [iPedro])).length], [0, 0]);
+    confere('Gerência recebe a lista da própria equipe', (await nomesDe(DUDA, `select nome from projetos_solicitaveis($1)`, [iCamila])).includes('Mapeamento de processos'), true);
+    await permite('Pedido de acesso ao projeto de marketing', PEDRO, `select solicitar_acesso($1,'projeto',$2,null,'Vou apoiar o calendário de posts do Instagram Comercial.',privado.hoje() + 10)`, [iPedro, pMkt]);
+    const pedido3 = await valor(MEL, `select id from solicitacoes where beneficiario = $1 and projeto_id = $2 and status = 'pendente'`, [iPedro, pMkt]);
+    const acoesNoPedido = email => como(email, `select pode_aprovar, pode_pedir_aval from solicitacoes_visiveis where id = $1`, [pedido3]);
+    confere('Pedido: nome do alvo e quem pode agir', {
+      alvo: await valor(JOAO, `select alvo_nome from solicitacoes_visiveis where id = $1`, [pedido3]),
+      mel: await acoesNoPedido(MEL), maju: await acoesNoPedido(MAJU), joao: await acoesNoPedido(JOAO), pedro: await acoesNoPedido(PEDRO),
+    }, {
+      alvo: 'Instagram Comercial · Conteúdo',
+      mel: [{ pode_aprovar: true, pode_pedir_aval: false }], maju: [{ pode_aprovar: false, pode_pedir_aval: true }],
+      joao: [{ pode_aprovar: true, pode_pedir_aval: false }], pedro: [{ pode_aprovar: false, pode_pedir_aval: false }],
+    });
+    confere('Pedido de demanda mostra código e título', await valor(MEL, `select alvo_nome from solicitacoes_visiveis where id = $1`, [pedidoRestrito]), 'PRE-001 · Metas 2027');
+    await bloqueia('Assessoria não pede acesso: ela decide', MAJU, `select solicitar_acesso($1,'projeto',$2,null,'Tentativa de pedido que a Assessoria não faz',privado.hoje() + 10)`, [iMaju, pCli], 'Você não pode pedir acesso para essa pessoa.');
+    await bloqueia('Gerência não pede para quem é de outro núcleo', DUDA, `select solicitar_acesso($1,'projeto',$2,null,'Pedido de uma gerência para quem não é do núcleo dela',privado.hoje() + 10)`, [iPedro, pCli], 'Você não pode pedir acesso para essa pessoa.');
+    const avalPedido3 = await valor(MAJU, `select solicitar_aval('decidir_solicitacao', jsonb_build_object('solicitacao',$1::text,'aprovar',false,'nota','Sem necessidade agora'), 'Posts já cobertos pela equipe de marketing')`, [pedido3]);
+    confere('Depois de pedir o aval, a Assessoria não pede de novo', await valor(MAJU, `select pode_pedir_aval from solicitacoes_visiveis where id = $1`, [pedido3]), false);
+    await permite('Presidente aprova o aval de negar o pedido', MEL, `select decidir_aval($1,true,'Ok')`, [avalPedido3]);
+    confere('Pedido fica negado pelo aval', await valor(MEL, `select status from solicitacoes where id = $1`, [pedido3]), 'negada');
+    confere('Visões e função de acesso fechadas ao visitante', [(await tenta(null, `select * from beneficiarios_de_acesso`)).startsWith('permission denied'), (await tenta(null, `select * from projetos_solicitaveis($1)`, [iPedro])).startsWith('permission denied')], [true, true]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
