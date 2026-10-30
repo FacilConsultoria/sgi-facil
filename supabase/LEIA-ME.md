@@ -11,6 +11,8 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 | `03_visoes_interface.sql` | Visões que o site lê: perfil de quem está logado e, para demandas, reuniões e pedidos, os indicadores do que cada pessoa pode fazer. |
 | `04_modulo_demandas.sql` | Para a tela de Demandas: projetos, núcleos e pessoas que cada um pode usar nos cadastros, e a regra de que só a liderança reabre uma demanda concluída. |
 | `05_modulo_reunioes.sql` | Para a tela de Reuniões e atas: os públicos em que cada pessoa pode agendar (com quantos seriam convocados) e, em cada reunião, convocados, faltas e se já dá para encerrar. |
+| `06_reuniao_por_pessoas.sql` | Um comando só: cria o público "pessoas escolhidas". **Rode sozinho**, antes do 07. |
+| `07_assessoria_aval_publico_exclusao.sql` | Assessoria de Presidência com acesso de Presidência, avais (pedidos que a Presidente ou a Vice aprovam), reunião para pessoas escolhidas, diretorias agendando para todos e exclusão de reuniões. |
 | `functions/receber-transcricao/index.ts` | Endereço que vai receber as transcrições do Meet quando a automação estiver pronta. Pode ficar para depois. |
 
 ## 1. Criar o projeto
@@ -31,6 +33,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 4. Clique em **Run**. Se esquecer algum e-mail, o script avisa e não grava nada.
 5. Abra mais uma query, cole `03_visoes_interface.sql` e clique em **Run**.
 6. Repita com `04_modulo_demandas.sql` e depois com `05_modulo_reunioes.sql`.
+7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql`.
 
 Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `areas` deve ter 5.
 
@@ -71,7 +74,7 @@ A função recebe `titulo`, `inicio` (data e hora com fuso) e `texto`, e vincula
 
 ## Como as regras foram testadas
 
-Os cinco scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 113 verificações por perfil: quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
+Os sete scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 179 verificações por perfil (inclui Assessoria, avais, público por pessoas, exclusão de reuniões e arquivos órfãos): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
 
 Para repetir os testes em qualquer computador Windows com Edge e internet, a partir da pasta do projeto:
 
