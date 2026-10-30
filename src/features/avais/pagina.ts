@@ -1,4 +1,4 @@
-// Tela de Avais: pedidos que dependem da Presidente ou da Vice-Presidência. Quem pediu acompanha o
+// Avais: pedidos que dependem da Presidente ou da Vice-Presidência. Quem pediu acompanha o
 // andamento; a Presidente e a Vice aprovam ou negam (o indicador pode_decidir vem do banco).
 import { dataEHora } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
@@ -10,33 +10,27 @@ import { executarAcao, linhaDeErro } from '../../ui/formulario';
 import { carregarAvais, decidirAval, type DadosDosAvais } from './dados';
 import { descreverAcaoDoAval, NOME_DO_STATUS_DE_AVAL, NOME_DO_TIPO_DE_AVAL, separarAvais } from './regras';
 
-export function paginaAvais(destino: HTMLElement): void {
-  const pagina = el('div', { class: 'pagina-avais' });
-  substituir(destino, pagina);
+/** Monta o conteúdo de Avais dentro de `destino` (a página Autorizações cuida do título e das abas). */
+export function montarAvais(destino: HTMLElement): void {
+  const conteudo = el('div', {});
+  substituir(destino, conteudo);
 
   const recarregar = async (): Promise<void> => {
     try {
       const dados = await carregarAvais();
-      // a pessoa pode ter mudado de tela enquanto os dados chegavam
-      if (pagina.isConnected) substituir(pagina, ...desenhar(dados, recarregar));
+      // a pessoa pode ter trocado de aba enquanto os dados chegavam
+      if (destino.isConnected) substituir(conteudo, ...desenhar(dados, recarregar));
     } catch (erro: unknown) {
       registrarErro('Carregar avais', erro);
-      if (!pagina.isConnected) return;
+      if (!destino.isConnected) return;
       const tentar = el('button', { type: 'button', class: 'btn' }, 'Tentar de novo');
       tentar.addEventListener('click', () => void recarregar());
-      substituir(pagina, cabecalho(), el('section', { class: 'bloco' }, el('p', {}, mensagemParaUsuario(erro)), el('div', { class: 'linha' }, tentar)));
+      substituir(conteudo, el('section', { class: 'bloco' }, el('p', {}, mensagemParaUsuario(erro)), el('div', { class: 'linha' }, tentar)));
     }
   };
 
-  substituir(pagina, cabecalho(), el('p', { class: 'meta' }, 'Carregando avais…'));
+  substituir(conteudo, el('p', { class: 'meta' }, 'Carregando avais…'));
   void recarregar();
-}
-
-function cabecalho(): HTMLElement {
-  return el('section', { class: 'cab' },
-    el('div', {},
-      el('h1', {}, 'Avais'),
-      el('p', { class: 'sub' }, 'Pedidos que dependem da Presidente ou da Vice-Presidência. Ao aprovar, o sistema executa a ação; ao negar, nada muda.')));
 }
 
 function desenhar(dados: DadosDosAvais, recarregar: () => Promise<void>): HTMLElement[] {
@@ -46,7 +40,7 @@ function desenhar(dados: DadosDosAvais, recarregar: () => Promise<void>): HTMLEl
       ? el('div', { class: 'lista' }, ...avais.map((aval) => cartaoDoAval(aval, dados.nomeDe, recarregar)))
       : el('p', { class: 'vazio' }, vazio);
   return [
-    cabecalho(),
+    el('p', { class: 'dica' }, 'Pedidos que dependem da Presidente ou da Vice-Presidência. Ao aprovar, o sistema executa a ação; ao negar, nada muda.'),
     el('section', { class: 'secao' },
       el('h2', {}, `Aguardando decisão · ${plural(pendentes.length, 'pedido', 'pedidos')}`),
       lista(pendentes, 'Nenhum pedido aguardando decisão.')),
