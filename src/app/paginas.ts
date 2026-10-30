@@ -1,0 +1,15 @@
+// Liga cada rota à sua tela. Módulos ainda não migrados mostram a tela "em migração".
+import { paginaDashboard } from '../features/dashboard/pagina';
+import { paginaEmMigracao } from '../features/em-migracao/pagina';
+import type { Rota } from './rotas';
+import type { ContextoDaSessao } from './sessao';
+
+export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: ContextoDaSessao): void {
+  switch (rota.id) {
+    case 'dashboard':
+      paginaDashboard(destino, contexto);
+      return;
+    default:
+      paginaEmMigracao(destino, rota);
+  }
+}
