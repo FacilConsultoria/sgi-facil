@@ -108,7 +108,50 @@ export interface ReuniaoVisivel {
   pode_justificar_diretoria: boolean;
 }
 
-export type TipoDeAval = 'ajuste_proprio' | 'decidir_solicitacao' | 'justificar_falta';
+export type StatusDeSolicitacao = 'pendente' | 'aprovada' | 'negada' | 'revogada';
+/** Igual ao status, mais "expirada" (aprovada com a validade vencida; calculado pelo banco). */
+export type SituacaoDeSolicitacao = StatusDeSolicitacao | 'expirada';
+export type AlvoDeSolicitacao = 'projeto' | 'demanda';
+
+/** Linha da visão public.solicitacoes_visiveis (supabase/03 e 08): pedido de acesso por exceção. Datas AAAA-MM-DD. */
+export interface SolicitacaoVisivel {
+  id: string;
+  solicitante: string;
+  beneficiario: string;
+  alvo: AlvoDeSolicitacao;
+  projeto_id: string | null;
+  demanda_id: string | null;
+  justificativa: string;
+  valido_ate: string;
+  status: StatusDeSolicitacao;
+  decidido_por: string | null;
+  decidido_em: string | null;
+  nota: string | null;
+  revogado_por: string | null;
+  revogado_em: string | null;
+  criado_em: string;
+  situacao: SituacaoDeSolicitacao;
+  area_id: string;
+  /** Item restrito à Presidência: só a Presidente aprova. */
+  alvo_restrito: boolean;
+  pode_aprovar: boolean;
+  pode_revogar: boolean;
+  /** O que foi pedido: "Projeto · Cliente" ou "COD-001 · Título da demanda". */
+  alvo_nome: string;
+  /** Assessoria de Presidência: pode pedir aval da Presidente ou da Vice para decidir o pedido. */
+  pode_pedir_aval: boolean;
+}
+
+/** Linha da função public.projetos_solicitaveis(pessoa). */
+export interface ProjetoSolicitavel {
+  id: string;
+  nome: string;
+  cliente: string;
+  nucleo_nome: string;
+  area_id: string;
+}
+
+export type TipoDeAval ='ajuste_proprio' | 'decidir_solicitacao' | 'justificar_falta';
 export type StatusDeAval = 'pendente' | 'aprovado' | 'negado';
 
 /** Linha da visão public.avais_visiveis (supabase/07_assessoria_aval_publico_exclusao.sql). */
