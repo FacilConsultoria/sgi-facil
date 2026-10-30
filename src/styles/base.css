@@ -1,0 +1,124 @@
+/* Elementos base e componentes reutilizáveis (botões, formulários, blocos, avisos). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+html {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+h1 { font-size: 1.5rem; }
+h2 { font-size: 1.1rem; }
+p { margin: 0; }
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+input[type='email'],
+input[type='text'],
+select,
+textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 11px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 9px 16px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.btn:hover { border-color: var(--ink-3); }
+.btn:disabled { opacity: 0.6; cursor: progress; }
+.btn.prim { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+.btn.prim:hover:not(:disabled) { background: var(--side-1); border-color: var(--side-1); }
+.btn.largo { width: 100%; }
+
+.form { display: flex; flex-direction: column; gap: 14px; }
+.mensagem-form { min-height: 1.5em; font-size: 0.86rem; color: var(--ink-2); }
+.mensagem-form.erro { color: var(--danger); }
+
+.cab { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; margin-bottom: 18px; }
+.cab .sub { color: var(--ink-3); margin-top: 2px; max-width: 72ch; }
+
+.bloco { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 18px; display: flex; flex-direction: column; gap: 8px; max-width: 72ch; }
+.meta { color: var(--ink-3); font-size: 0.82rem; }
+.vazio { color: var(--ink-3); padding: 18px; border: 1px dashed var(--line); border-radius: var(--r); text-align: center; }
+
+.aviso-flutuante {
+  position: fixed;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  max-width: calc(100% - 32px);
+  background: var(--ink);
+  color: var(--bg);
+  padding: 10px 16px;
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  font-weight: 500;
+  z-index: 60;
+}
+.aviso-flutuante.erro { background: var(--danger); color: #fff; }
+
+/* telas fora da aplicação logada (login, cadastro ausente) */
+.tela-acesso { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; background: linear-gradient(160deg, var(--side-2), var(--side-1)); }
+.cartao-acesso { width: min(420px, 100%); background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 28px; display: flex; flex-direction: column; gap: 14px; }
+.marca-acesso { display: flex; align-items: center; gap: 10px; color: var(--accent); }
+.marca-acesso strong { color: var(--ink); font-size: 0.95rem; }
+.logo-acesso { width: 40px; height: auto; fill: currentColor; }
