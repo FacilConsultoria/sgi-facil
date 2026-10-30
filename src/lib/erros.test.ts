@@ -30,6 +30,31 @@ describe('mensagemParaUsuario', () => {
     );
   });
 
+  it('traduz os erros de login por senha', () => {
+    expect(mensagemParaUsuario({ status: 400, code: 'invalid_credentials', message: 'Invalid login credentials' })).toBe(
+      'E-mail ou senha incorretos. No primeiro acesso, ou se esqueceu a senha, receba um link de acesso.',
+    );
+    expect(mensagemParaUsuario({ code: 'same_password', message: 'New password should be different from the old password.' })).toBe(
+      'A nova senha precisa ser diferente da anterior.',
+    );
+    expect(mensagemParaUsuario({ code: 'weak_password', message: 'Password should be at least 6 characters.' })).toBe(
+      'Senha fraca. Escolha uma senha mais forte, com letras e números.',
+    );
+  });
+
+  it('traduz falha no envio do e-mail de acesso', () => {
+    expect(mensagemParaUsuario({ status: 500, message: 'Error sending magic link email' })).toBe(
+      'Não foi possível enviar o e-mail agora. Tente de novo em alguns minutos; se continuar, avise a Gente e Gestão.',
+    );
+    expect(mensagemParaUsuario({ status: 400, code: 'email_address_not_authorized', message: 'Email address not authorized' })).toBe(
+      'Não foi possível enviar o e-mail agora. Tente de novo em alguns minutos; se continuar, avise a Gente e Gestão.',
+    );
+  });
+
+  it('trata sessão ausente como sessão expirada', () => {
+    expect(mensagemParaUsuario({ message: 'Auth session missing!' })).toBe('Sua sessão expirou. Entre novamente.');
+  });
+
   it('trata valores que não são erros', () => {
     expect(mensagemParaUsuario(undefined)).toBe('Algo deu errado. Tente de novo; se continuar, avise a Gente e Gestão.');
   });

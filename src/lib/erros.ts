@@ -25,7 +25,17 @@ export function mensagemParaUsuario(erro: unknown): string {
   if (/failed to fetch|networkerror|load failed|network request failed/i.test(texto)) {
     return 'Sem conexão com o servidor. Verifique a internet e tente de novo.';
   }
-  if (/jwt expired|invalid jwt|refresh token/i.test(texto)) return 'Sua sessão expirou. Entre novamente.';
+  if (code === 'invalid_credentials' || /invalid login credentials/i.test(texto)) {
+    return 'E-mail ou senha incorretos. No primeiro acesso, ou se esqueceu a senha, receba um link de acesso.';
+  }
+  if (code === 'same_password' || /different from the old password/i.test(texto)) return 'A nova senha precisa ser diferente da anterior.';
+  if (code === 'weak_password' || /password should (be|contain)|weak password/i.test(texto)) {
+    return 'Senha fraca. Escolha uma senha mais forte, com letras e números.';
+  }
+  if (/error sending .*email|email_address_not_authorized|email address not authorized/i.test(texto) || code === 'email_address_not_authorized') {
+    return 'Não foi possível enviar o e-mail agora. Tente de novo em alguns minutos; se continuar, avise a Gente e Gestão.';
+  }
+  if (/jwt expired|invalid jwt|refresh token|auth session missing/i.test(texto)) return 'Sua sessão expirou. Entre novamente.';
   if (code === '42501' || /permission denied|row-level security/i.test(texto)) {
     return 'Você não tem permissão para esta ação.';
   }
