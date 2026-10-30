@@ -1,0 +1,18 @@
+/* Tela de Avais e detalhes de aval dentro da reunião. */
+.aval { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r); padding: 14px 16px; display: flex; flex-direction: column; gap: 6px; }
+.aval-resumo { font-weight: 500; overflow-wrap: anywhere; }
+.aval .form { margin-top: 6px; }
+textarea.curto { min-height: 56px; }
+.chip.aval-pendente { --c: var(--warn); }
+.chip.aval-aprovado { --c: var(--ok); }
+.chip.aval-negado { --c: var(--danger); }
+
+/* aval dentro da lista de presença */
+.presenca-item { border-bottom: 1px solid var(--line); }
+.presenca-item .presenca { border-bottom: 0; }
+.aval-linha { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 0 0 8px; }
+
+/* escolha de pessoas e zona de exclusão */
+.acima-lista { margin-bottom: 8px; }
+.zona-de-perigo { border-top: 1px dashed var(--line); padding-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+.zona-de-perigo:empty { display: none; }
