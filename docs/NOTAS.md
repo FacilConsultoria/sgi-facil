@@ -139,11 +139,19 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - **Assessoria** vê Aprovar/Negar substituídos por **"Pedir aval para aprovar/negar"** (aval do tipo `decidir_solicitacao`). Revogar continua só da Presidente (ou de quem aprovou); a Assessoria não revoga (decisão conservadora, fácil de mudar).
   - Site: tipos ok, 84/84 testes, simulação das telas no Edge. Ainda falta o botão da Assessoria para pedir aval de ajuste da própria pontuação (chega com Pontuações).
 
+- **Pontuação e ranking (30/10/2026):** próximo módulo da ordem do ADR. Decisão minha, por analogia com Autorizações: **Pontuações** e **Ranking** do protótipo viraram **uma tela só, "Pontuação e ranking"**, com duas abas (endereços antigos `#pontuacoes` e `#ranking` levam a ela). Fácil de separar de novo.
+  - **Pontuações:** grade de pessoas (as que a regra `pode_ver_pontuacao` deixa ver, em ordem alfabética, com busca a partir de 9 pessoas) e, ao escolher uma, o detalhe: saldo, posição no ranking, cargo, curso, entregas, faltas (+ justificadas), projetos ativos (só o nome dos que quem consulta pode ver; os outros viram "Projeto de outra área") e a linha do tempo de lançamentos com filtro por tipo e "mostrar desconsiderados". Demanda de outra área aparece como "demanda de outra área" (a RLS esconde o nome).
+  - **Ajuste manual:** quem pode (Presidência e Gente e Gestão, nunca na própria pontuação; a Assessoria entra por ter acesso de Presidência) lança ajuste ou evento (−20 a 20, data até hoje, justificativa ≥ 15 caracteres) e desconsidera lançamentos (motivo ≥ 10). **Assessoria na própria pontuação:** o formulário vira "Pedir aval à Presidência" (aval `ajuste_proprio`; o texto do pedido vira a descrição do lançamento quando a Presidente ou a Vice aprovam). Isso fecha o item pendente da seção anterior.
+  - **Ranking:** tabela com posição, setor, entregas, faltas e pontos; "você" destacado; quem aparece segue `ranking()` (e a opção `ranking_publico`).
+  - Banco: migração `09_modulo_pontuacao.sql` (visões `pontuacao_pessoas` e `lancamentos_visiveis`, função `privado.projetos_ativos_de`). As regras de lançar, desconsiderar e do ranking não mudaram. Contagem: "faltas" = lançamentos de falta que tiram pontos (como no ranking); "justificadas" = lançamentos de falta sem perda de pontos.
+  - Código novo reutilizável: `ui/abas.ts` (página com abas; Autorizações passou a usá-la) e `ui/recarregavel.ts` (carregar, "Tentar de novo" e redesenhar).
+  - Banco 204/204; site: tipos ok, 106/106 testes e simulação das telas no Edge (Presidente, Assessoria e membro).
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) também feito; próximo: Pontuação e ranking (depois presenças, estrutura e cadastro de pessoas, histórico, regras).
+4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) e Pontuação e ranking também feitos; próximo: presenças (depois estrutura e cadastro de pessoas, histórico, regras e projetos).
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
