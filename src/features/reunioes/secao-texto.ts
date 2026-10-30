@@ -92,7 +92,7 @@ export function secaoDaTranscricao(contexto: ContextoDeReunioes, reuniaoId: stri
       }
       return [
         el('h3', {}, 'Transcrição'),
-        el('p', { class: 'dica' }, 'Com a integração ativa, a transcrição do Google Meet chega aqui ao fim da reunião.'),
+        el('p', { class: 'dica' }, 'Nenhuma transcrição registrada.'),
         podeGerir ? campoDeColar() : null,
       ];
     },

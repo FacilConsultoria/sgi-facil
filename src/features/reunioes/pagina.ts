@@ -72,11 +72,6 @@ function desenhar(contexto: ContextoDeReunioes): HTMLElement[] {
 
   return [
     cabecalho(contexto),
-    el('div', { class: 'aviso integracao' },
-      el('span', { class: 'ponto', 'aria-hidden': 'true' }),
-      el('p', {},
-        el('strong', {}, 'Integração com o Google Meet: planejada. '),
-        'Ao fim de cada reunião, a transcrição e os arquivos vão chegar aqui sozinhos, ligados à reunião agendada. Até lá, quem organiza pode colar a transcrição e anexar arquivos manualmente.')),
     ...(dados.semVinculo.length ? [blocoSemVinculo(contexto)] : []),
     el('section', { class: 'secao' }, el('h2', {}, 'Próximas e pendentes'), lista(abertas, 'Nenhuma reunião agendada.')),
     el('section', { class: 'secao' }, el('h2', {}, 'Realizadas'), lista(encerradas, 'Nenhuma reunião encerrada ainda.')),
