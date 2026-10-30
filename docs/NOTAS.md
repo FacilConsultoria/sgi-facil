@@ -18,6 +18,7 @@ Aplicação web interna da Fácil Consultoria (empresa júnior) para organizar d
 
 - Paleta oficial: branco + azul **#1479E1**. Azul-escuro **#0B3B73** para textos menores (sugestão da Fácil).
 - Texto branco pequeno sobre #1479E1 fica abaixo do contraste AA; por isso #1479E1 vai em botões, números grandes e barras, e o texto pequeno em #0B3B73.
+- Tela de login: fundo #0B3B73, cartão #0B1F3A; símbolo, favicon e botão em **#1478C0**, o tom das faces do logotipo (medido em "Logo - Fácil Consultoria (Azul e Cinza).png"; branco sobre ele = 4,7:1, passa AA). Assinatura (símbolo + nome) com a mesma largura do cartão (400px; 100% no celular), dimensionada em cqi.
 - Logo: símbolo redesenhado em SVG no menu lateral (círculo + quatro paralelogramos). Fonte Poppins.
 - Tema claro e escuro.
 
@@ -33,7 +34,11 @@ Aplicação web interna da Fácil Consultoria (empresa júnior) para organizar d
 | Duda | `gerente` | Marketing (`com-mkt`). |
 | Maju | `assessor` | Assessoria de Presidência (`pres-ass`). |
 
-Gente e Gestão e Diretoria Administrativa vagas: ajustes de pontos e regras ficam com a Presex (Mel e Luis). E-mails reais ficam só no banco do Supabase, nunca no repositório nem no artefato (público por link).
+Gente e Gestão e Diretoria Administrativa vagas: ajustes de pontos e regras ficam com a Presex (Mel e Luis).
+
+**Supabase em produção (29/10/2026):** projeto `sgi-facil-br`, organização `sgi-facil`, região São Paulo (sa-east-1), URL `https://prjhsfipxtvnuxshzkjv.supabase.co`. Scripts 01, 03 e 02 (com os e-mails reais) rodados pelo SQL Editor; conferência: 7 pessoas, 5 áreas, 8 núcleos, 14 políticas RLS, 3 políticas de arquivos, bucket `anexos`, 4 visões, 23 funções públicas. "Automatically expose new tables" desligado na criação. Chave pública: Settings → API Keys → Legacy → `anon public` (vai para a Vercel). Senha do banco: guardada pelo usuário, nunca pedir. O projeto antigo `sgi-facil` (us-east-1, vazio) pode ser apagado pelo usuário.
+
+**Site no ar (30/10/2026):** https://sgi-facil.vercel.app (Vercel, conta da Fácil `facilconsultoria-4157`, plano Hobby, projeto `sgi-facil`, Vite). Publica sozinho a cada commit em `main`. Variáveis na Vercel: `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (colada pelo usuário). Supabase Auth: Site URL `https://sgi-facil.vercel.app` e Redirect URL `https://sgi-facil.vercel.app/**`. GitHub App da Vercel instalado só no repositório `sgi-facil`. CI: verificações #6 e #7 verdes (a #4 falhou por ordem de commits e foi corrigida na #5). E-mails reais ficam só no banco do Supabase, nunca no repositório nem no artefato (público por link).
 
 ## Estrutura Fácil 27 (fonte: "Funções e Responsabilidades — Fácil 27"; histórico)
 
