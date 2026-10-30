@@ -3,15 +3,17 @@ import type { Perfil } from '../types/database';
 
 const TITULO_DO_PAPEL: Record<Perfil['papel'], string> = {
   presidente: 'Presidência',
+  vice: 'Vice-Presidência',
   diretor: 'Diretoria',
   gerente: 'Gerência',
   assessor: 'Assessoria',
   membro: 'Membro',
 };
 
-/** Ex.: "Diretoria Comercial · cobre a Diretoria de Projetos" ou "Gerência · Marketing". */
+/** Ex.: "Diretoria Comercial · cobre a Diretoria de Projetos", "Vice-Presidência · Diretoria Financeira" ou "Gerência · Marketing". */
 export function descreverCargo(perfil: Perfil, tituloDaArea: (id: string) => string): string {
   if (perfil.papel === 'presidente') return 'Presidência';
+  if (perfil.papel === 'vice') return ['Vice-Presidência', ...perfil.areas_que_conduz.map(tituloDaArea)].join(' · ');
   if (perfil.papel === 'diretor') {
     const [principal, ...cobertas] = perfil.areas_que_conduz.length ? perfil.areas_que_conduz : [perfil.area_id];
     const partes = [tituloDaArea(principal ?? perfil.area_id), ...cobertas.map((id) => `cobre a ${tituloDaArea(id)}`)];
@@ -25,6 +27,7 @@ export function descreverCargo(perfil: Perfil, tituloDaArea: (id: string) => str
 export function descreverEscopo(perfil: Perfil, tituloDaArea: (id: string) => string): string {
   switch (perfil.papel) {
     case 'presidente':
+    case 'vice':
       return 'Acesso irrestrito a todas as diretorias, projetos e relatórios.';
     case 'diretor':
       return `Vê todos os núcleos de: ${perfil.areas_que_conduz.map(tituloDaArea).join(' e ') || perfil.area_titulo}.`;
