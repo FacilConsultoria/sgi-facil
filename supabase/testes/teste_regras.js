@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL04 antes deste módulo.
+// O runner injeta window.SQL01 a window.SQL05 antes deste módulo.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -45,6 +45,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL01);
     await db.exec(window.SQL03);
     await db.exec(window.SQL04);
+    await db.exec(window.SQL05);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -252,6 +253,38 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       await valor('sem-cadastro@facil.test', `select count(*)::int from pessoas_atribuiveis`)], [0, 0]);
     confere('Visitante sem login não lê as visões 04', (await tenta(null, `select * from projetos_visiveis`)).startsWith('permission denied'), true);
     confere('Visões 04 não aceitam gravação', (await tenta(MEL, `delete from pessoas_atribuiveis`)).startsWith('permission denied'), true);
+
+    // módulo de reuniões (05)
+    const publicos = async email => (await como(email, `select escopo || ':' || coalesce(escopo_id, '') as chave from escopos_de_reuniao where pode_criar order by 1`)).map(r => r.chave);
+    confere('Visão 05: públicos em que cada perfil agenda reunião', {
+      mel: (await publicos(MEL)).length,
+      luis: (await publicos(LUIS)).length,
+      joao: await publicos(JOAO),
+      duda: await publicos(DUDA),
+      maju: await publicos(MAJU),
+      ana: await publicos(ANA),
+    }, {
+      mel: 14, luis: 14,
+      joao: ['area:com', 'area:proj', 'nucleo:com-cap', 'nucleo:com-mkt', 'nucleo:proj-cli'],
+      duda: ['nucleo:com-mkt'],
+      maju: ['geral:', 'presidencia:'],
+      ana: [],
+    });
+    confere('Visão 05: a área da Presidência não repete o público Presidência', await valor(MEL, `select count(*)::int from escopos_de_reuniao where escopo = 'area' and escopo_id = 'pres'`), 0);
+    confere('Visão 05: quantas pessoas cada público convoca', await como(ANA, `select escopo || ':' || coalesce(escopo_id, '') as chave, total_convocados from escopos_de_reuniao where (escopo, coalesce(escopo_id, '')) in (('geral',''),('presidencia',''),('area','proj'),('nucleo','com-mkt')) order by 1`),
+      [{ chave: 'area:proj', total_convocados: 4 }, { chave: 'geral:', total_convocados: 11 }, { chave: 'nucleo:com-mkt', total_convocados: 3 }, { chave: 'presidencia:', total_convocados: 3 }]);
+    confere('Visão 05: nome do público para exibir', await valor(ANA, `select titulo from escopos_de_reuniao where escopo = 'nucleo' and escopo_id = 'com-mkt'`), 'Marketing · Diretoria Comercial');
+    confere('Visão 05: login sem cadastro não vê públicos', await valor('sem-cadastro@facil.test', `select count(*)::int from escopos_de_reuniao`), 0);
+    confere('Visitante sem login não lê os públicos', (await tenta(null, `select * from escopos_de_reuniao`)).startsWith('permission denied'), true);
+    confere('Visão 05: reunião encerrada mostra convocados e faltas', await como(JOAO, `select total_convocados, total_faltas, pode_gerir, pode_encerrar from reunioes_visiveis where id = $1`, [r1]),
+      [{ total_convocados: 4, total_faltas: 1, pode_gerir: true, pode_encerrar: false }]);
+    const rHoje = await valor(JOAO, `select criar_reuniao('Reunião de hoje', privado.hoje(), '10:00', 'area', 'proj', '')`);
+    confere('Visão 05: só quem organiza encerra, e só a partir do dia', {
+      joao: await valor(JOAO, `select pode_encerrar from reunioes_visiveis where id = $1`, [rHoje]),
+      ana: await valor(ANA, `select pode_encerrar from reunioes_visiveis where id = $1`, [rHoje]),
+      futura: await valor(DUDA, `select bool_or(pode_encerrar) from reunioes_visiveis where titulo = 'Pauta de novembro'`),
+    }, { joao: true, ana: false, futura: false });
+    confere('Visões 05 não aceitam gravação', (await tenta(MEL, `update reunioes_visiveis set titulo = 'x'`)).startsWith('permission denied'), true);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
