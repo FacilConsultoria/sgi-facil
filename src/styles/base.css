@@ -117,12 +117,16 @@ label {
 .aviso-flutuante.erro { background: var(--danger); color: #fff; }
 
 /* Telas fora da aplicação logada (login, cadastro ausente). Iguais nos dois temas:
-   fundo #0B3B73 (oficial), símbolo #1479E1 (oficial), cartão azul-escuro com texto claro. */
+   fundo #0B3B73 (oficial), cartão azul-escuro com texto claro, e símbolo e botão no
+   tom das faces do logotipo, #1478C0 (medido no arquivo "Logo - Fácil Consultoria
+   (Azul e Cinza).png"; branco sobre ele tem contraste 4,7:1).
+   Assinatura e cartão têm a mesma largura (--largura-acesso). */
 .tela-acesso {
   --acesso-fundo: #0b3b73;
   --acesso-cartao: #0b1f3a;
-  --acesso-simbolo: #1479e1;
-  --acesso-botao: #1479e1;
+  --acesso-simbolo: #1478c0;
+  --acesso-botao: #1478c0;
+  --largura-acesso: min(400px, 100%);
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
@@ -134,19 +138,30 @@ label {
   background: var(--acesso-fundo);
 }
 
-/* Assinatura: a altura do símbolo é a soma das duas linhas de texto, então
-   ícone e bloco de texto têm a mesma altura e os centros verticais coincidem. */
+/* Assinatura dimensionada pela própria largura (unidades cqi), igual à do cartão.
+   Proporções medidas na Poppins: título 700 = 8,678 × tamanho da fonte; subtítulo 400 =
+   13,301 × tamanho. Com subtítulo = 0,6524 × título, as duas linhas têm a mesma largura.
+   Símbolo: altura = soma das duas linhas (centros verticais coincidem), largura = 1,4762 ×
+   altura; espaço = 0,45 × título. Total = 11,908 × título = 100% → título = 8,398cqi. */
 .assinatura {
-  --titulo: clamp(1.7rem, 5.5vw, 2.8rem);
-  --subtitulo: clamp(1rem, 3.2vw, 1.6rem);
+  --titulo: 8.398cqi;
+  --subtitulo: calc(var(--titulo) * 0.6524);
+  container-type: inline-size;
+  width: var(--largura-acesso);
   display: flex;
   align-items: center;
-  gap: clamp(14px, 3vw, 24px);
   color: #ffffff;
 }
-.assinatura-simbolo { height: calc(var(--titulo) * 1.1 + var(--subtitulo) * 1.2); width: auto; aspect-ratio: 403 / 273; fill: var(--acesso-simbolo); flex: none; }
-.assinatura-texto { display: flex; flex-direction: column; }
-.assinatura-texto strong { font-size: var(--titulo); font-weight: 700; line-height: 1.1; letter-spacing: -0.01em; }
+.assinatura-simbolo {
+  height: calc(var(--titulo) * 1.1 + var(--subtitulo) * 1.2);
+  width: auto;
+  aspect-ratio: 403 / 273;
+  margin-right: calc(var(--titulo) * 0.45);
+  fill: var(--acesso-simbolo);
+  flex: none;
+}
+.assinatura-texto { display: flex; flex-direction: column; white-space: nowrap; }
+.assinatura-texto strong { font-size: var(--titulo); font-weight: 700; line-height: 1.1; }
 .assinatura-texto span { font-size: var(--subtitulo); font-weight: 400; line-height: 1.2; color: rgba(255, 255, 255, 0.8); }
 
 /* Cartão: tokens próprios, independentes do tema do aparelho. */
@@ -161,7 +176,7 @@ label {
   --side-1: #0b3b73;
   --danger: #f38a8a;
   color-scheme: dark;
-  width: min(420px, 100%);
+  width: var(--largura-acesso);
   background: var(--surface);
   color: var(--ink);
   border-radius: 16px;
