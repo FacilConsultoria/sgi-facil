@@ -56,6 +56,7 @@ textarea {
 
 input[type='email'],
 input[type='text'],
+input[type='password'],
 select,
 textarea {
   width: 100%;
@@ -187,5 +188,22 @@ label {
   gap: 14px;
 }
 .cartao-acesso h1 { line-height: 1.2; }
+.cartao-acesso input[readonly] { opacity: 0.75; }
+/* ações secundárias do cartão (primeiro acesso, esqueci a senha, trocar e-mail) */
+.acoes-secundarias { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; }
+.btn-link {
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 2px 0;
+  font-size: 0.86rem;
+  color: var(--ink-2);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  text-align: left;
+}
+.btn-link:hover:not(:disabled) { color: var(--ink); }
+.btn-link:disabled { opacity: 0.6; cursor: progress; }
 /* a linha de status só ocupa espaço quando tem mensagem; sem ela, o respiro de baixo = o de cima */
 .cartao-acesso .mensagem-form:empty { display: none; }
