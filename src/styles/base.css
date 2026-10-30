@@ -117,7 +117,7 @@ label {
 .aviso-flutuante.erro { background: var(--danger); color: #fff; }
 
 /* telas fora da aplicação logada (login, cadastro ausente) */
-.tela-acesso { min-height: 100%; display: grid; place-items: center; padding: 24px 16px; background: linear-gradient(160deg, var(--side-2), var(--side-1)); }
+.tela-acesso { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: linear-gradient(160deg, var(--side-2), var(--side-1)); }
 .cartao-acesso { width: min(420px, 100%); background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 28px; display: flex; flex-direction: column; gap: 14px; }
 .marca-acesso { display: flex; align-items: center; gap: 10px; color: var(--accent); }
 .marca-acesso strong { color: var(--ink); font-size: 0.95rem; }
