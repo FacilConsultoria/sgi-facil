@@ -124,6 +124,16 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - Refatoração de apoio: auxiliares compartilhados saíram de Demandas para `src/lib/datas.ts`, `src/lib/texto.ts` e `src/ui/formulario.ts`.
   - Verificado: tipos ok, 64/64 testes e simulação da tela inteira no Edge com Supabase simulado (44 conferências). Não há "editar/cancelar reunião" (o banco não tem essas funções ainda).
 
+- **Assessoria, avais, público por pessoas e exclusão (30/10/2026, decisões do usuário):**
+  - **Assessoria de Presidência** (papel `assessor` na área da Presidência) passa a ter o mesmo acesso da Presidência (`privado.eh_presidencia` agora inclui ela: vê e gere tudo, inclusive restritos, cadastra pessoas, altera regras, agenda qualquer reunião). **Só duas coisas dependem de aval:** ajustar a própria pontuação e aprovar acessos por exceção.
+  - **Aval** = pedido que a Presidente ou a Vice aprovam ou negam no sistema (`public.avais`, funções `solicitar_aval` e `decidir_aval`, visão `avais_visiveis`). Ao aprovar, o banco executa a ação com as regras de quem aprovou (a Vice, por exemplo, ainda não aprova item restrito). Quem pediu não decide o próprio aval. Tipos: `ajuste_proprio`, `decidir_solicitacao`, `justificar_falta`.
+  - **Falta de diretoria**: só vira "justificada" na lista de presença com aval (regra em `salvar_presencas`); a Presidente e a Vice marcam direto. Reunião com aval pendente não encerra. Interpretei que a Assessoria também precisa do aval nesse caso (conservador; fácil de relaxar).
+  - **Público das reuniões**: novo público "pessoas escolhidas" (enum `pessoas`, migração 06 separada por limitação do Postgres). Presidência/Vice/Assessoria e diretores escolhem qualquer pessoa; gerentes, só do núcleo. **Diretorias também agendam para "todos"** (público geral). O formulário começa sem público escolhido para ninguém convocar todos sem querer.
+  - **Excluir reunião** (`excluir_reuniao`): aberta, quem organiza; encerrada, só Presidência (incluindo Assessoria) ou diretoria que organiza, com motivo (≥10 caracteres): as faltas lançadas são desconsideradas, ficam sem reunião e os arquivos são apagados. Os arquivos órfãos podem ser lidos e apagados por quem tem cadastro (`privado.arquivo_orfao`), senão o site não conseguiria limpá-los.
+  - Site: público por pessoas no agendamento, "Pedir aval para justificar" na presença, "Excluir reunião" no painel, nova página **Avais** (pedidos pendentes e decididos; quem pode decidir vê Aprovar/Negar).
+  - **Pendente:** os botões para a Assessoria pedir aval de ajuste da própria pontuação e de aprovação de acesso por exceção chegam junto com os módulos Pontuações e Acessos (o banco e a página Avais já tratam esses dois tipos).
+  - Banco 179/179; site: tipos ok, 74/74 testes e simulação das telas no Edge.
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
