@@ -35,8 +35,12 @@ Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `area
 
 ## 3. Login
 
-O login por e-mail com link mágico já vem ligado: a pessoa digita o e-mail, recebe um link e entra, sem senha. Para começar, isso basta.
+O acesso funciona assim (o Supabase já vem com e-mail e senha ligados):
 
+- **Primeiro acesso:** a pessoa digita o e-mail, escolhe "Primeiro acesso? Receber link por e-mail", abre o link e cria a própria senha (mínimo de 10 caracteres, com letras e números). A marca de que a senha foi criada fica no cadastro de acesso do Supabase (`senha_definida`).
+- **Próximos acessos:** e-mail e depois senha. "Esqueci minha senha" envia um novo link, que leva direto à criação de uma nova senha.
+- **Envio dos e-mails:** o envio padrão do Supabase só entrega para quem é da equipe do projeto e tem limite de 2 por hora; por isso é preciso ligar um serviço de e-mail próprio antes de convidar a equipe (Authentication → Emails → SMTP Settings). O Resend com domínio verificado funciona; sem domínio, ele só entrega para o e-mail dono da conta do Resend.
+- Em **Authentication → Sign In / Providers → Email**, deixe **Minimum password length** em 10.
 - Quem entrar com um e-mail que **não** está cadastrado em `pessoas` consegue criar a sessão, mas o banco não mostra nada para essa pessoa.
 - Os próximos membros são cadastrados pelo próprio SGI, pela Presidência ou pela Gente e Gestão.
 - Login com o botão "Entrar com Google" pode ser ligado depois em **Authentication → Sign In / Providers → Google**. Ele exige criar uma credencial no Google Cloud; eu passo o roteiro quando for a hora.
