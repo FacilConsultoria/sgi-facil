@@ -2,6 +2,7 @@
 import { paginaDashboard } from '../features/dashboard/pagina';
 import { paginaDemandas } from '../features/demandas/pagina';
 import { paginaEmMigracao } from '../features/em-migracao/pagina';
+import { paginaReunioes } from '../features/reunioes/pagina';
 import type { Rota } from './rotas';
 import type { ContextoDaSessao } from './sessao';
 
@@ -12,6 +13,9 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
       return;
     case 'demandas':
       paginaDemandas(destino, contexto);
+      return;
+    case 'reunioes':
+      paginaReunioes(destino);
       return;
     default:
       paginaEmMigracao(destino, rota);

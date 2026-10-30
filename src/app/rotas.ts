@@ -10,7 +10,7 @@ export const ROTAS: readonly Rota[] = [
   { id: 'dashboard', titulo: 'Dashboard', disponivel: true },
   { id: 'demandas', titulo: 'Demandas', disponivel: true },
   { id: 'projetos', titulo: 'Projetos', disponivel: false },
-  { id: 'reunioes', titulo: 'Reuniões e atas', disponivel: false },
+  { id: 'reunioes', titulo: 'Reuniões e atas', disponivel: true },
   { id: 'presencas', titulo: 'Presenças', disponivel: false },
   { id: 'pontuacoes', titulo: 'Pontuações', disponivel: false },
   { id: 'ranking', titulo: 'Ranking', disponivel: false },
