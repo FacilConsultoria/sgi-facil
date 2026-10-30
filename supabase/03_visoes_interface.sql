@@ -15,9 +15,10 @@ select p.id, p.nome, p.email, p.papel,
        p.area_id, a.titulo as area_titulo,
        p.nucleo_id, n.nome as nucleo_nome,
        array(select x.id from public.areas x
-              where p.papel = 'diretor' and (x.titular = p.id or x.cobertura = p.id)
+              where p.papel in ('diretor','vice') and (x.titular = p.id or x.cobertura = p.id)
               order by x.id) as areas_que_conduz,
        privado.eh_presidencia(p.id) as eh_presidencia,
+       privado.eh_presidente(p.id) as eh_presidente,
        (privado.eh_presidencia(p.id) or privado.eh_gestor_pessoas(p.id)) as pode_ajustar_pontos,
        (privado.eh_presidencia(p.id) or privado.eh_gestor_pessoas(p.id)) as pode_cadastrar_pessoas,
        (privado.eh_presidencia(p.id) or privado.dirige(p.id, c.area_gestao_pessoas)) as pode_editar_regras
@@ -68,7 +69,7 @@ select s.id, s.solicitante, s.beneficiario, s.alvo, s.projeto_id, s.demanda_id, 
        privado.alvo_restrito(s.id) as alvo_restrito,
        privado.pode_aprovar(privado.eu(), s.id) as pode_aprovar,
        (s.status = 'aprovada' and s.valido_ate >= privado.hoje()
-        and (privado.eh_presidencia(privado.eu()) or s.decidido_por = privado.eu())) as pode_revogar
+        and (privado.eh_presidente(privado.eu()) or s.decidido_por = privado.eu())) as pode_revogar
   from public.solicitacoes s;
 
 grant execute on function privado.pode_aprovar(uuid, uuid) to authenticated;

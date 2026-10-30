@@ -7,7 +7,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 | Arquivo | O que faz |
 |---|---|
 | `01_estrutura_e_regras.sql` | Cria as tabelas, as regras de acesso (quem vê o quê, direto no banco), as operações do sistema (criar demanda, validar, lançar pontos, encerrar reunião, pedir acesso etc.) e o espaço para arquivos das reuniões. |
-| `02_dados_iniciais.sql` | Cadastra a estrutura Fácil 27 (Presidência, diretorias, núcleos, vagas e coberturas) e as quatro pessoas já definidas: Presidência, Victor, Emilli e Duda. |
+| `02_dados_iniciais.sql` | Cadastra a estrutura 2027 (Presidência, Vice, diretorias, núcleos, vagas e coberturas) e as sete lideranças: Mel, Luis, João, Victor, Emilli, Duda e Maju. |
 | `03_visoes_interface.sql` | Visões que o site lê: perfil de quem está logado e, para demandas, reuniões e pedidos, os indicadores do que cada pessoa pode fazer. |
 | `functions/receber-transcricao/index.ts` | Endereço que vai receber as transcrições do Meet quando a automação estiver pronta. Pode ficar para depois. |
 
@@ -25,13 +25,11 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 
 1. No menu à esquerda, abra **SQL Editor** e clique em **New query**.
 2. Cole todo o conteúdo de `01_estrutura_e_regras.sql` e clique em **Run**. Deve aparecer "Success. No rows returned".
-3. Abra outra query. Cole `02_dados_iniciais.sql` e, **antes de rodar**, troque no topo:
-   - os quatro `PREENCHER` pelos e-mails Google reais (Presidência, Victor, Emilli, Duda);
-   - `Presidente` pelo nome do titular da Presidência.
+3. Abra outra query. Cole `02_dados_iniciais.sql` e, **antes de rodar**, troque no topo os sete `PREENCHER` pelos e-mails Google reais. Não salve o arquivo com os e-mails preenchidos no repositório.
 4. Clique em **Run**. Se esquecer algum e-mail, o script avisa e não grava nada.
 5. Abra mais uma query, cole `03_visoes_interface.sql` e clique em **Run**.
 
-Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 4 linhas e `areas` deve ter 5.
+Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `areas` deve ter 5.
 
 ## 3. Login
 
@@ -66,7 +64,7 @@ A função recebe `titulo`, `inicio` (data e hora com fuso) e `texto`, e vincula
 
 ## Como as regras foram testadas
 
-Os três scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 84 verificações por perfil: quem vê quais demandas, quem valida, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões e bloqueio de escrita direta. Todas passaram (29/10/2026).
+Os três scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 90 verificações por perfil: quem vê quais demandas, quem valida, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões e bloqueio de escrita direta. Todas passaram (29/10/2026).
 
 Para repetir os testes em qualquer computador Windows com Edge e internet, a partir da pasta do projeto:
 

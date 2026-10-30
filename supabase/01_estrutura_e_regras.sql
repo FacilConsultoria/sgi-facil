@@ -13,7 +13,7 @@
 create schema if not exists privado;
 
 -- ---------- tipos ----------
-create type public.papel as enum ('presidente','diretor','gerente','assessor','membro');
+create type public.papel as enum ('presidente','vice','diretor','gerente','assessor','membro');
 create type public.status_demanda as enum ('afazer','andamento','revisao','concluida');
 create type public.prioridade as enum ('alta','media','baixa');
 create type public.escopo_reuniao as enum ('geral','presidencia','area','nucleo');
@@ -53,7 +53,7 @@ create table public.pessoas (
   curso        text,
   ativo        boolean not null default true,
   criado_em    timestamptz not null default now(),
-  check (papel in ('presidente','diretor') or nucleo_id is not null)
+  check (papel in ('presidente','vice','diretor') or nucleo_id is not null)
 );
 
 alter table public.areas
@@ -243,15 +243,22 @@ language sql stable security definer set search_path = public as $$
   select papel from public.pessoas where id = p and ativo
 $$;
 
+-- Presex: Presidência e Vice-Presidência, com acesso irrestrito
 create or replace function privado.eh_presidencia(p uuid) returns boolean
+language sql stable security definer set search_path = public as $$
+  select coalesce(privado.papel_de(p) in ('presidente','vice'), false)
+$$;
+
+-- só a Presidente: aprova pedidos de itens restritos e revoga qualquer acesso
+create or replace function privado.eh_presidente(p uuid) returns boolean
 language sql stable security definer set search_path = public as $$
   select coalesce(privado.papel_de(p) = 'presidente', false)
 $$;
 
--- diretor titular ou que cobre a vacância da área
+-- diretor (ou vice que acumula uma diretoria) titular ou que cobre a vacância da área
 create or replace function privado.dirige(p uuid, p_area text) returns boolean
 language sql stable security definer set search_path = public as $$
-  select coalesce(privado.papel_de(p) = 'diretor', false)
+  select coalesce(privado.papel_de(p) in ('diretor','vice'), false)
      and exists (select 1 from public.areas a where a.id = p_area and (a.titular = p or a.cobertura = p))
 $$;
 
@@ -336,7 +343,7 @@ language sql stable security definer set search_path = public as $$
   select p is not null and (
        p = p_pessoa or privado.eh_presidencia(p) or privado.eh_gestor_pessoas(p)
     or exists (select 1 from public.pessoas x where x.id = p_pessoa and (
-             (x.papel <> 'presidente' and privado.dirige(p, x.area_id))
+             (x.papel not in ('presidente','vice') and privado.dirige(p, x.area_id))
           or (x.nucleo_id is not null and privado.lidera(p, x.nucleo_id)))))
 $$;
 
@@ -396,7 +403,7 @@ language sql stable security definer set search_path = public as $$
   select p is not null and exists (
     select 1 from public.solicitacoes s
     where s.id = p_sol and s.status = 'pendente' and p <> s.beneficiario and p <> s.solicitante
-      and (privado.eh_presidencia(p)
+      and (privado.eh_presidente(p)
            or (not privado.alvo_restrito(s.id) and privado.dirige(p, privado.area_alvo(s.id)))))
 $$;
 
@@ -527,8 +534,8 @@ begin
   if not (privado.eh_presidencia(v_eu) or privado.eh_gestor_pessoas(v_eu)) then
     raise exception 'Só a Presidência e a Gente e Gestão cadastram pessoas.';
   end if;
-  if p_papel in ('presidente','diretor') and not privado.eh_presidencia(v_eu) then
-    raise exception 'Só a Presidência cadastra Presidência e diretorias.';
+  if p_papel in ('presidente','vice','diretor') and not privado.eh_presidencia(v_eu) then
+    raise exception 'Só a Presidência cadastra Presidência, Vice-Presidência e diretorias.';
   end if;
   if p_nucleo is not null and privado.area_do_nucleo(p_nucleo) is distinct from p_area then
     raise exception 'O núcleo escolhido não pertence a essa área.';
@@ -553,7 +560,7 @@ begin
   if not (privado.eh_presidencia(v_eu) or privado.eh_gestor_pessoas(v_eu)) then
     raise exception 'Só a Presidência e a Gente e Gestão alteram cadastros.';
   end if;
-  if (p_papel in ('presidente','diretor') or v_antes.papel in ('presidente','diretor')) and not privado.eh_presidencia(v_eu) then
+  if (p_papel in ('presidente','vice','diretor') or v_antes.papel in ('presidente','vice','diretor')) and not privado.eh_presidencia(v_eu) then
     raise exception 'Só a Presidência altera cadastros da Presidência e das diretorias.';
   end if;
   if p_nucleo is not null and privado.area_do_nucleo(p_nucleo) is distinct from p_area then
@@ -894,7 +901,7 @@ begin
   select * into b from public.pessoas where id = p_beneficiario and ativo;
   if not found or privado.eh_presidencia(v_eu) or not (
        b.id = v_eu
-    or (v_papel = 'diretor' and privado.dirige(v_eu, b.area_id) and b.papel <> 'presidente')
+    or (v_papel = 'diretor' and privado.dirige(v_eu, b.area_id) and b.papel not in ('presidente','vice'))
     or (v_papel in ('gerente','assessor') and b.nucleo_id = (select nucleo_id from public.pessoas where id = v_eu))) then
     raise exception 'Você não pode pedir acesso para essa pessoa.';
   end if;
@@ -941,7 +948,7 @@ declare v_eu uuid := privado.exigir_login(); s public.solicitacoes%rowtype;
 begin
   select * into s from public.solicitacoes where id = p_solicitacao;
   if not found or s.status <> 'aprovada' or s.valido_ate < privado.hoje()
-     or not (privado.eh_presidencia(v_eu) or s.decidido_por = v_eu) then
+     or not (privado.eh_presidente(v_eu) or s.decidido_por = v_eu) then
     raise exception 'Você não pode revogar este acesso.';
   end if;
   update public.solicitacoes set status = 'revogada', revogado_por = v_eu, revogado_em = now() where id = p_solicitacao;
@@ -967,7 +974,7 @@ create trigger sgi_vincular_login after insert on auth.users
 grant usage on schema privado to authenticated;
 revoke all on all functions in schema privado from public;
 grant execute on function
-  privado.eu(), privado.hoje(), privado.papel_de(uuid), privado.eh_presidencia(uuid), privado.dirige(uuid, text),
+  privado.eu(), privado.hoje(), privado.papel_de(uuid), privado.eh_presidencia(uuid), privado.eh_presidente(uuid), privado.dirige(uuid, text),
   privado.lidera(uuid, text), privado.area_do_nucleo(text), privado.eh_gestor_pessoas(uuid),
   privado.escopo_projeto(uuid, uuid), privado.pode_gerir_demanda(uuid, uuid), privado.concessao_ativa(uuid, uuid),
   privado.pode_ver_demanda(uuid, uuid), privado.pode_ver_projeto(uuid, uuid), privado.pode_ver_pontuacao(uuid, uuid),
