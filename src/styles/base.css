@@ -116,9 +116,42 @@ label {
 }
 .aviso-flutuante.erro { background: var(--danger); color: #fff; }
 
-/* telas fora da aplicação logada (login, cadastro ausente) */
-.tela-acesso { min-height: 100vh; min-height: 100dvh; display: grid; place-items: center; padding: 24px 16px; background: linear-gradient(160deg, var(--side-2), var(--side-1)); }
-.cartao-acesso { width: min(420px, 100%); background: var(--surface); border-radius: 16px; box-shadow: var(--shadow); padding: 28px; display: flex; flex-direction: column; gap: 14px; }
-.marca-acesso { display: flex; align-items: center; gap: 10px; color: var(--accent); }
-.marca-acesso strong { color: var(--ink); font-size: 0.95rem; }
-.logo-acesso { width: 40px; height: auto; fill: currentColor; }
+/* Telas fora da aplicação logada (login, cadastro ausente).
+   Só cores oficiais, nos dois temas: fundo #0B3B73, símbolo #1479E1, texto branco;
+   o cartão redefine os tokens para a versão clara (branco + #0B3B73 + #1479E1). */
+.tela-acesso {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 28px;
+  padding: 32px 16px;
+  background: #0b3b73;
+}
+.assinatura { display: flex; align-items: center; gap: clamp(14px, 3vw, 24px); color: #ffffff; }
+.assinatura-simbolo { width: clamp(72px, 14vw, 120px); height: auto; fill: #1479e1; flex: none; }
+.assinatura-texto { display: flex; flex-direction: column; line-height: 1.1; }
+.assinatura-texto strong { font-size: clamp(1.7rem, 5.5vw, 2.8rem); font-weight: 700; letter-spacing: -0.01em; }
+.assinatura-texto span { font-size: clamp(1rem, 3.2vw, 1.6rem); font-weight: 400; margin-top: 4px; }
+.cartao-acesso {
+  --surface: #ffffff;
+  --line: #d5e2f2;
+  --ink: #0b3b73;
+  --ink-2: #0b3b73;
+  --ink-3: #0b3b73;
+  --accent: #1479e1;
+  --accent-ink: #ffffff;
+  --side-1: #0b3b73;
+  --danger: #c02525;
+  color-scheme: light;
+  width: min(420px, 100%);
+  background: var(--surface);
+  color: var(--ink);
+  border-radius: 16px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
