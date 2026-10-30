@@ -1,0 +1,73 @@
+/* Tela de Reuniões e atas: lista, presença, ata, transcrição e anexos. */
+.secao { margin-top: 26px; }
+.secao > h2 { margin-bottom: 10px; }
+.secao > .dica { margin: -4px 0 12px; }
+
+.aviso { background: var(--accent-soft); border-radius: var(--r); padding: 12px 16px; color: var(--ink-2); margin-bottom: 16px; font-size: 0.88rem; }
+.aviso strong { color: var(--ink); }
+.integracao { display: flex; gap: 12px; align-items: flex-start; }
+.integracao .ponto { width: 10px; height: 10px; border-radius: 50%; background: var(--warn); margin-top: 6px; flex: none; }
+
+/* lista de reuniões */
+.lista { display: flex; flex-direction: column; gap: 10px; }
+.reuniao {
+  appearance: none;
+  text-align: left;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 14px 16px;
+  cursor: pointer;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+}
+.reuniao:hover { border-color: var(--accent); }
+.reuniao-info { display: flex; flex-direction: column; min-width: 0; }
+.reuniao-info .item-tit { font-weight: 600; overflow-wrap: anywhere; }
+.data-bloco { border-radius: 10px; background: var(--accent-soft); color: var(--accent-text); text-align: center; padding: 6px 0; line-height: 1.15; }
+.data-bloco b { display: block; font-size: 1.3rem; font-weight: 600; }
+.data-bloco span { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; }
+
+/* painel: presença, ata e transcrição */
+.selos + .dl { margin-top: 14px; }
+.presenca { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.presenca:last-of-type { border-bottom: 0; }
+.presenca label { margin: 0; font-weight: 500; font-size: 0.9rem; color: var(--ink); }
+.presenca .chip { justify-self: end; }
+.linha.acima { margin-top: 12px; }
+.ata { white-space: pre-wrap; background: var(--surface-2); border-radius: 8px; padding: 12px; font-size: 0.88rem; color: var(--ink-2); overflow-wrap: anywhere; }
+textarea.alto { min-height: 140px; }
+details > summary { cursor: pointer; color: var(--accent-text); font-weight: 500; font-size: 0.86rem; }
+details[open] > summary { margin-bottom: 8px; }
+.bloco-reu { display: flex; flex-direction: column; gap: 8px; }
+.bloco-reu > .linha { justify-content: space-between; }
+
+/* anexos (e transcrições sem reunião, que usam a mesma lista) */
+.anexos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.anexo, .sem-vinculo { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: grid; grid-template-columns: 42px minmax(0, 1fr) auto; gap: 10px; align-items: center; }
+.sem-vinculo { grid-template-columns: minmax(0, 1fr) auto; align-items: start; background: var(--surface); }
+.anexo-info { display: flex; flex-direction: column; min-width: 0; }
+.anexo-info b { font-weight: 500; font-size: 0.88rem; overflow-wrap: anywhere; }
+.ext { width: 42px; height: 42px; border-radius: 8px; background: var(--accent-soft); color: var(--accent-text); display: grid; place-items: center; font-size: 0.66rem; font-weight: 700; letter-spacing: 0.04em; }
+.anexo .acoes { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.soltar { display: flex; flex-direction: column; align-items: center; gap: 2px; border: 1.5px dashed var(--line); border-radius: 10px; padding: 16px; text-align: center; cursor: pointer; color: var(--ink-2); font-size: 0.86rem; margin: 0; font-weight: 400; }
+.soltar:hover, .soltar.sobre { border-color: var(--accent); background: var(--accent-soft); }
+.soltar u { color: var(--accent-text); }
+.soltar span { color: var(--ink-3); font-size: 0.76rem; }
+
+/* chips de situação usados na lista */
+.chip.ok { --c: var(--ok); }
+.chip.ruim { --c: var(--danger); }
+
+@media (max-width: 560px) {
+  .reuniao { grid-template-columns: 54px minmax(0, 1fr); }
+  .reuniao > .chip { grid-column: 2; justify-self: start; }
+  .anexo { grid-template-columns: 42px minmax(0, 1fr); }
+  .anexo .acoes { grid-column: 1 / -1; justify-content: flex-start; }
+  .sem-vinculo { grid-template-columns: minmax(0, 1fr); }
+  .presenca { grid-template-columns: minmax(0, 1fr); }
+  .presenca .chip { justify-self: start; }
+}

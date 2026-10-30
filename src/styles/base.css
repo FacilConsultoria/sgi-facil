@@ -89,6 +89,8 @@ label {
 .btn.prim { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
 .btn.prim:hover:not(:disabled) { background: var(--side-1); border-color: var(--side-1); }
 .btn.largo { width: 100%; }
+.btn.peq { padding: 5px 10px; font-size: 0.82rem; }
+.btn.perigo { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 45%, transparent); }
 
 .form { display: flex; flex-direction: column; gap: 14px; }
 .mensagem-form { min-height: 1.5em; font-size: 0.86rem; color: var(--ink-2); }

@@ -101,7 +101,7 @@ label.check { display: inline-flex; align-items: center; gap: 6px; margin: 0; fo
 /* formulários longos */
 .form h3 { font-size: 0.95rem; }
 textarea { resize: vertical; min-height: 84px; }
-input[type='date'] { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; }
+input[type='date'], input[type='time'] { width: 100%; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 8px 11px; }
 .dois { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 fieldset { border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px 10px; margin: 0; min-width: 0; }
 legend { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); padding: 0 4px; }
