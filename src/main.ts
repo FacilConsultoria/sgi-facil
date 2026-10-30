@@ -2,6 +2,8 @@
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/layout.css';
+import './styles/componentes.css';
+import './styles/demandas.css';
 
 import type { Session } from '@supabase/supabase-js';
 import { montarLayout, type Layout } from './app/layout';
