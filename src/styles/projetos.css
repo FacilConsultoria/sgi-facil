@@ -1,0 +1,11 @@
+/* Tela Projetos: cartões com andamento. */
+.grade-projetos { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.cartao-projeto { max-width: none; min-width: 0; }
+.cartao-projeto h3 { overflow-wrap: anywhere; }
+.cartao-projeto-topo { justify-content: space-between; align-items: center; gap: 6px 8px; margin-bottom: 2px; }
+.cartao-projeto-topo .eyebrow { flex: 1 1 auto; min-width: 0; }
+.barra { height: 8px; border-radius: 999px; background: var(--line); overflow: hidden; margin: 6px 0 4px; }
+.barra i { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.cartao-projeto-numeros { justify-content: space-between; gap: 4px 12px; }
+.cartao-projeto-numeros .atrasadas { color: var(--danger); font-weight: 600; }
+.cartao-projeto .linha:last-child { margin-top: 10px; }
