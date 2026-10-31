@@ -4,6 +4,7 @@ import { paginaDashboard } from '../features/dashboard/pagina';
 import { paginaDemandas } from '../features/demandas/pagina';
 import { paginaEmMigracao } from '../features/em-migracao/pagina';
 import { paginaPontuacao } from '../features/pontuacao/pagina';
+import { paginaPresencas } from '../features/presencas/pagina';
 import { paginaReunioes } from '../features/reunioes/pagina';
 import type { Rota } from './rotas';
 import type { ContextoDaSessao } from './sessao';
@@ -21,6 +22,9 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
       return;
     case 'autorizacoes':
       paginaAutorizacoes(destino);
+      return;
+    case 'presencas':
+      paginaPresencas(destino, contexto);
       return;
     case 'pontuacao':
       paginaPontuacao(destino, contexto);
