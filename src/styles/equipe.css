@@ -1,12 +1,19 @@
 /* Tela Estrutura e equipe: organograma em árvore e cadastro de pessoas. */
 .av { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--accent-ink); font-size: 0.78rem; font-weight: 600; }
 
-/* organograma: árvore de retângulos do mesmo tamanho, ligados por linhas */
-.arvore { --linha: color-mix(in srgb, var(--ink-3) 55%, transparent); --vao: 18px; overflow-x: auto; padding: 8px 4px 16px; margin-top: 12px; }
+/* organograma: árvore de retângulos do mesmo tamanho, ligados por linhas, sem rolagem.
+   A largura de cada retângulo é a da caixa dividida pelo número de folhas (--folhas, definido na página). */
+.arvore-caixa { container-type: inline-size; margin-top: 12px; }
+.arvore {
+  --linha: color-mix(in srgb, var(--ink-3) 55%, var(--bg));
+  --vao: 18px;
+  --larg: clamp(112px, calc(100cqw / var(--folhas) - 24px), 200px);
+  padding: 8px 0 16px;
+}
 .arvore ul { list-style: none; margin: 0; padding: var(--vao) 0 0; display: flex; justify-content: center; position: relative; }
-.arvore > ul { padding-top: 0; width: max-content; min-width: 100%; }
+.arvore > ul { padding-top: 0; }
 .arvore li { position: relative; display: flex; flex-direction: column; align-items: center; padding: var(--vao) 10px 0; }
-.arvore > ul > li { padding-top: 0; }
+.arvore > ul > li { padding: 0; }
 /* linha vertical do pai até a barra dos filhos */
 .arvore li > ul::before { content: ''; position: absolute; top: 0; left: 50%; height: var(--vao); border-left: 2px solid var(--linha); }
 /* barra horizontal entre irmãos e descida até cada filho */
@@ -22,43 +29,52 @@
 
 .no {
   appearance: none;
-  text-align: left;
-  width: 264px;
-  height: 76px;
+  width: var(--larg);
+  height: 64px;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: 2px;
+  text-align: center;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--r);
-  padding: 0 14px;
+  padding: 6px 8px;
   cursor: pointer;
   position: relative;
   z-index: 1;
+  min-width: 0;
 }
 .no:hover { border-color: var(--accent); }
 .no:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .no.vago { border-style: dashed; }
-.no-txt { display: flex; flex-direction: column; min-width: 0; }
-.no-txt b { font-size: 0.78rem; color: var(--ink-3); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.no-txt span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+.no b { max-width: 100%; font-size: 0.72rem; line-height: 1.15; color: var(--ink-3); font-weight: 600; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.no span { max-width: 100%; font-size: 0.9rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* janela do cargo */
 .no-pessoa { display: flex; gap: 10px; align-items: center; }
 .modal h3 { font-size: 0.82rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; }
 .texto-da-funcao { white-space: pre-line; overflow-wrap: anywhere; }
 
-/* telas estreitas: a árvore vira uma lista recuada */
-@media (max-width: 700px) {
-  .arvore { overflow-x: visible; }
-  .arvore > ul { width: auto; }
-  .arvore ul { flex-direction: column; align-items: stretch; padding-top: 0; }
-  .arvore li { align-items: flex-start; padding: 10px 0 0 0; }
-  .arvore li > ul { margin-left: 18px; padding-left: 14px; border-left: 2px solid var(--linha); }
+/* telas estreitas: os cargos se alinham por nível, em colunas iguais, ligados por linhas
+   (--colunas = cargos do nível mais cheio; cada retângulo traz --nivel e --coluna) */
+@container (max-width: 659px) {
+  .arvore { display: grid; grid-template-columns: repeat(var(--colunas), minmax(0, 1fr)); column-gap: 10px; row-gap: 28px; padding: 4px 0 12px; }
+  .arvore ul, .arvore li { display: contents; }
   .arvore li::before, .arvore li::after, .arvore li > ul::before { display: none; }
-  .no { max-width: 100%; }
+  .no { width: 100%; grid-row: var(--nivel); grid-column: var(--coluna); height: 68px; padding: 4px 5px; }
+  .no b { font-size: 0.68rem; }
+  .no span { font-size: 0.8rem; }
+  /* ligação de cima: traço vertical e, entre irmãos, a barra horizontal até o centro dos vizinhos */
+  .no::before { content: ''; position: absolute; top: -14px; height: 14px; border-top: 2px solid var(--linha); }
+  .no[data-lugar='unico']::before { display: none; }
+  .no[data-lugar='primeiro']::before { left: 50%; width: calc(50% + 5px); border-left: 2px solid var(--linha); border-top-left-radius: 6px; }
+  .no[data-lugar='ultimo']::before { left: -5px; width: calc(50% + 5px); border-right: 2px solid var(--linha); border-top-right-radius: 6px; }
+  .no[data-lugar='meio']::before { left: -5px; width: calc(100% + 10px); background: linear-gradient(var(--linha), var(--linha)) center / 2px 100% no-repeat; }
+  /* ligação de baixo: traço vertical até a barra dos filhos */
+  .no[data-filhos='sim']::after { content: ''; position: absolute; top: 100%; left: 50%; height: 14px; border-left: 2px solid var(--linha); }
 }
-
 /* cadastro */
 .filtro-desativadas { margin-top: 8px; }
 .tabela tr.desativada td { opacity: 0.6; }
