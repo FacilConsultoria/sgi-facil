@@ -9,7 +9,7 @@ export interface Rota {
 export const ROTAS: readonly Rota[] = [
   { id: 'dashboard', titulo: 'Tela Inicial', disponivel: true },
   { id: 'demandas', titulo: 'Demandas', disponivel: true },
-  { id: 'projetos', titulo: 'Projetos', disponivel: false },
+  { id: 'projetos', titulo: 'Projetos', disponivel: true },
   { id: 'reunioes', titulo: 'Reuniões e atas', disponivel: true },
   { id: 'presencas', titulo: 'Presenças', disponivel: true },
   { id: 'pontuacao', titulo: 'Pontuação e ranking', disponivel: true },

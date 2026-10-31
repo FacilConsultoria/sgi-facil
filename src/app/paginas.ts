@@ -7,6 +7,7 @@ import { paginaEquipe } from '../features/equipe/pagina';
 import { paginaHistorico } from '../features/historico/pagina';
 import { paginaPontuacao } from '../features/pontuacao/pagina';
 import { paginaPresencas } from '../features/presencas/pagina';
+import { paginaProjetos } from '../features/projetos/pagina';
 import { paginaRegras } from '../features/regras/pagina';
 import { paginaReunioes } from '../features/reunioes/pagina';
 import type { Rota } from './rotas';
@@ -37,6 +38,9 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
       return;
     case 'pontuacao':
       paginaPontuacao(destino, contexto);
+      return;
+    case 'projetos':
+      paginaProjetos(destino);
       return;
     case 'regras':
       paginaRegras(destino, contexto);
