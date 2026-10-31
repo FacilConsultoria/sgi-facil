@@ -3,7 +3,7 @@
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL13 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL14 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -54,6 +54,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL11);
     await db.exec(window.SQL12);
     await db.exec(window.SQL13);
+    await db.exec(window.SQL14);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -678,6 +679,48 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Valor fora de −50 a 50 é recusado', MEL, `select salvar_config(12,60,1,-2,0,true)`, [], 'Use números inteiros entre −50 e 50.');
     await bloqueia('Gerência de outra área não salva regras', DUDA, `select salvar_config(12,2,1,-2,0,true)`, [], 'Só a Presidência e a Diretoria Administrativa alteram as regras.');
     confere('Salvar as regras fica no histórico', await valor(MEL, `select count(*)::int from historico_visivel where acao = 'Alterou regras de pontuação'`) >= 1, true);
+
+    // projetos (14)
+    const pessoasDoTeste = [['Mel', MEL], ['Luis', LUIS], ['Maju', MAJU], ['João', JOAO], ['Victor', VICTOR], ['Duda', DUDA], ['Gina', GINA], ['Ana', ANA], ['Camila', CAMILA], ['Pedro', PEDRO]];
+    const totalDeProjetos = await valor(MEL, `select count(*)::int from projetos`);
+    const painelDeMel = await como(MEL, `select nome, acesso, restrito, total_demandas from projetos_painel`);
+    confere('Projetos: Presidente vê todos, com acesso integral', [painelDeMel.length, painelDeMel.every(p => p.acesso === 'integral'), painelDeMel.find(p => p.nome === 'Planejamento 2027').restrito], [totalDeProjetos, true, true]);
+    confere('Projetos: quem não conduz a área não vê o projeto restrito da Presidência', (await como(JOAO, `select 1 from projetos_painel where nome = 'Planejamento 2027'`)).length, 0);
+    const projetosConferidos = {};
+    for (const [nome, email] of pessoasDoTeste) {
+      const linhas = await como(email, `select id, total_demandas, concluidas, atrasadas from projetos_painel`);
+      const visiveis = await como(email, `select projeto_id, status, prazo from demandas`);
+      const hoje = await valor(email, `select privado.hoje()::text`);
+      projetosConferidos[nome] = linhas.every(l => {
+        const dele = visiveis.filter(d => d.projeto_id === l.id);
+        return l.total_demandas === dele.length
+          && l.concluidas === dele.filter(d => d.status === 'concluida').length
+          && l.atrasadas === dele.filter(d => d.status !== 'concluida' && String(d.prazo).slice(0, 10) < hoje).length;
+      }) && linhas.reduce((soma, l) => soma + l.total_demandas, 0) === visiveis.length;
+    }
+    confere('Projetos: os números de cada projeto batem com as demandas que a pessoa enxerga (10 pessoas)', Object.values(projetosConferidos).every(Boolean), true);
+    confere('Projetos: membro tem acesso parcial; a exceção do projeto inteiro aparece só para quem a recebeu', {
+      ana: (await como(ANA, `select distinct acesso from projetos_painel`)).map(l => l.acesso),
+      camilaNoFinanceiro: await valor(CAMILA, `select acesso from projetos_painel where id = $1`, [pFin]),
+      joaoNoFinanceiro: (await como(JOAO, `select acesso from projetos_painel where id = $1`, [pFin])).map(l => l.acesso),
+    }, { ana: ['parcial'], camilaNoFinanceiro: 'excecao', joaoNoFinanceiro: [] });
+    confere('Projetos: Diretoria e Gerência têm acesso integral aos projetos da sua área', {
+      joao: await valor(JOAO, `select acesso from projetos_painel where id = $1`, [pMkt]),
+      duda: await valor(DUDA, `select acesso from projetos_painel where id = $1`, [pMkt]),
+    }, { joao: 'integral', duda: 'integral' });
+    // atraso: com o prazo no passado e a demanda aberta, ela entra em "atrasadas"; concluída, deixa de entrar
+    await db.query(`update demandas set prazo = privado.hoje() - 3 where codigo = 'FIN-001'`);
+    const atrasoDoFinanceiro = await como(MEL, `select total_demandas, concluidas, atrasadas from projetos_painel where id = $1`, [pFin]);
+    confere('Projetos: demanda aberta com prazo vencido conta como atrasada', [atrasoDoFinanceiro[0].atrasadas, atrasoDoFinanceiro[0].concluidas], [1, 0]);
+    await db.query(`update demandas set prazo = privado.hoje() + 15 where codigo = 'FIN-001'`);
+    confere('Projetos fechados ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from projetos_painel`)).startsWith('permission denied'),
+      (await como('sem-cadastro@facil.test', `select * from projetos_painel`)).length,
+    ], [true, 0]);
+    confere('Projetos não aceita gravação direta', [
+      recusada.test(await tenta(MEL, `delete from projetos_painel`)),
+      recusada.test(await tenta(MEL, `update projetos_painel set nome = 'x'`)),
+    ], [true, true]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');

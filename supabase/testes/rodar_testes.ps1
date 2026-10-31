@@ -27,6 +27,7 @@ try {
   $sql11 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '11_modulo_equipe.sql'))
   $sql12 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '12_modulo_historico.sql'))
   $sql13 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '13_modulo_regras.sql'))
+  $sql14 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '14_modulo_projetos.sql'))
   $teste = [string](Get-Content -Raw -Encoding utf8 (Join-Path $aqui 'teste_regras.js'))
   $pagina = "<!doctype html><meta charset=utf-8><body><script>window.SQL01=" + (ConvertTo-Json -InputObject $sql01 -Compress) +
             ";window.SQL02=" + (ConvertTo-Json -InputObject $sql02 -Compress) +
@@ -40,7 +41,8 @@ try {
             ";window.SQL10=" + (ConvertTo-Json -InputObject $sql10 -Compress) +
             ";window.SQL11=" + (ConvertTo-Json -InputObject $sql11 -Compress) +
             ";window.SQL12=" + (ConvertTo-Json -InputObject $sql12 -Compress) +
-            ";window.SQL13=" + (ConvertTo-Json -InputObject $sql13 -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
+            ";window.SQL13=" + (ConvertTo-Json -InputObject $sql13 -Compress) +
+            ";window.SQL14=" + (ConvertTo-Json -InputObject $sql14 -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
   [IO.File]::WriteAllText((Join-Path $temp 'teste.html'), $pagina, (New-Object System.Text.UTF8Encoding $false))
 
   $url = 'file:///' + ((Join-Path $temp 'teste.html') -replace '\\', '/')
