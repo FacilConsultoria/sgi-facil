@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10, 11 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL10 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL11 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -51,6 +51,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL08);
     await db.exec(window.SQL09);
     await db.exec(window.SQL10);
+    await db.exec(window.SQL11);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -532,6 +533,88 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       (await tenta(null, `select * from frequencia()`)).startsWith('permission denied'),
       (await como('sem-cadastro@facil.test', `select * from frequencia()`)).length,
     ], [true, 0]);
+
+    // estrutura e equipe (11)
+    const GINA = 'gina@facil.test';
+    await como(MEL, `select cadastrar_pessoa($1,'Gina','gerente','adm','adm-gg')`, [GINA]);
+    await db.query(`insert into auth.users(email) values ($1)`, [GINA]);
+    const iGina = await id('Gina');
+    confere('Gerente de Gente e Gestão passa a cadastrar pessoas', await valor(GINA, `select pode_cadastrar_pessoas from meu_perfil`), true);
+    await permite('Gente e Gestão cadastra membro de outra área', GINA, `select cadastrar_pessoa('novo1@facil.test','Novo Um','membro','com','com-cap','Administração')`);
+    await permite('Assessoria cadastra membro (tem acesso de Presidência)', MAJU, `select cadastrar_pessoa('novo2@facil.test','Novo Dois','membro','proj','proj-cli')`);
+    const msgPresidencia = 'Só a Presidência cadastra pessoas da Presidência e das diretorias.';
+    await bloqueia('Gente e Gestão não cadastra diretoria', GINA, `select cadastrar_pessoa('d1@facil.test','Diretor Novo','diretor','com')`, [], msgPresidencia);
+    await bloqueia('Gente e Gestão não cria "assessora" na área da Presidência', GINA, `select cadastrar_pessoa('falsa@facil.test','Falsa','assessor','pres','pres-ass')`, [], msgPresidencia);
+    await bloqueia('Gente e Gestão não move membro para a área da Presidência', GINA, `select atualizar_pessoa($1,'Ana','membro','pres','pres-gab',null,true)`, [iAna], 'Só a Presidência altera cadastros da Presidência e das diretorias.');
+    await bloqueia('Gente e Gestão não altera o cadastro da diretoria', GINA, `select atualizar_pessoa($1,'João','diretor','com',null,null,true)`, [iJoao], 'Só a Presidência altera cadastros da Presidência e das diretorias.');
+    await bloqueia('E-mail inválido', MEL, `select cadastrar_pessoa('sem-arroba','X','membro','com','com-mkt')`, [], 'Informe um e-mail válido.');
+    await bloqueia('Nome em branco', MEL, `select cadastrar_pessoa('b1@facil.test','  ','membro','com','com-mkt')`, [], 'Informe o nome.');
+    await bloqueia('Membro precisa de núcleo', MEL, `select cadastrar_pessoa('b2@facil.test','B','membro','com')`, [], 'Escolha o núcleo.');
+    await bloqueia('Vice-Presidente só na Presidência', MEL, `select cadastrar_pessoa('b3@facil.test','B','vice','com')`, [], 'Presidente e Vice-Presidente pertencem à Presidência.');
+    await bloqueia('Área inexistente', MEL, `select cadastrar_pessoa('b4@facil.test','B','diretor','nao-existe')`, [], 'Área não encontrada.');
+    await bloqueia('E-mail já cadastrado', MEL, `select cadastrar_pessoa('ana@facil.test','Outra Ana','membro','proj','proj-cli')`, [], 'Já existe uma pessoa cadastrada com o e-mail ana@facil.test.');
+    await bloqueia('Ninguém altera o próprio cadastro', MEL, `select atualizar_pessoa($1,'Mel','presidente','pres',null,null,true)`, [iMel], 'Ninguém altera o próprio cadastro.');
+    await bloqueia('Gerência comum não altera cadastros', DUDA, `select atualizar_pessoa($1,'Lucas','membro','proj','proj-cli',null,true)`, [iLucas], 'Só a Presidência e a Gente e Gestão alteram cadastros.');
+    await permite('Gente e Gestão altera o curso de um membro', GINA, `select atualizar_pessoa($1,'Lucas Prado','membro','proj','proj-cli','Engenharia',true)`, [iLucas]);
+    confere('Curso gravado e vazio vira nulo', [await valor(MEL, `select curso from pessoas where id = $1`, [iLucas]),
+      await valor(GINA, `select atualizar_pessoa($1,'Lucas Prado','membro','proj','proj-cli','  ',true)`, [iLucas]).then(() => valor(MEL, `select curso from pessoas where id = $1`, [iLucas]))], ['Engenharia', null]);
+    await bloqueia('Quem conduz uma área não é desativado', MEL, `select atualizar_pessoa($1,'João','diretor','com',null,null,false)`, [iJoao],
+      'Esta pessoa conduz a área Diretoria Comercial. Troque o titular ou a cobertura antes de desativá-la ou mudar o cargo.');
+    await bloqueia('Quem conduz uma área não vira gerência', MEL, `select atualizar_pessoa($1,'João','gerente','com','com-cap',null,true)`, [iJoao],
+      'Esta pessoa conduz a área Diretoria Comercial. Troque o titular ou a cobertura antes de desativá-la ou mudar o cargo.');
+    await permite('Gente e Gestão desativa um membro', GINA, `select atualizar_pessoa($1,'Novo Um','membro','com','com-cap','Administração',false)`, [await id('Novo Um')]);
+
+    const emails = email => como(email, `select count(*) filter (where email is not null)::int as com_email, count(*)::int as total, count(*) filter (where not ativo)::int as inativas from equipe_pessoas`);
+    const totalDePessoas = await valor(MEL, `select count(*)::int from pessoas`);
+    confere('Equipe: e-mail e pessoas desativadas só para quem cadastra', {
+      mel: await emails(MEL), gina: await emails(GINA), ana: await emails(ANA), duda: await emails(DUDA),
+    }, {
+      mel: [{ com_email: totalDePessoas, total: totalDePessoas, inativas: 2 }],
+      gina: [{ com_email: totalDePessoas, total: totalDePessoas, inativas: 2 }],
+      ana: [{ com_email: 0, total: totalDePessoas - 2, inativas: 0 }],
+      duda: [{ com_email: 0, total: totalDePessoas - 2, inativas: 0 }],
+    });
+    const edita = (email, nome) => como(email, `select pode_editar from equipe_pessoas where nome = $1`, [nome]);
+    confere('Quem pode editar quem', {
+      melAna: await edita(MEL, 'Ana'), melMel: await edita(MEL, 'Mel'), melJoao: await edita(MEL, 'João'), majuAna: await edita(MAJU, 'Ana'),
+      ginaLucas: await edita(GINA, 'Lucas Prado'), ginaJoao: await edita(GINA, 'João'), ginaMaju: await edita(GINA, 'Maju'), anaLucas: await edita(ANA, 'Lucas Prado'),
+    }, {
+      melAna: [{ pode_editar: true }], melMel: [{ pode_editar: false }], melJoao: [{ pode_editar: true }], majuAna: [{ pode_editar: true }],
+      ginaLucas: [{ pode_editar: true }], ginaJoao: [{ pode_editar: false }], ginaMaju: [{ pode_editar: false }], anaLucas: [{ pode_editar: false }],
+    });
+    const lista = async (email, sql) => (await como(email, sql)).map(r => Object.values(r)[0]).sort();
+    confere('Cargos e áreas que cada perfil pode usar no cadastro', {
+      melPapeis: await lista(MEL, `select papel from papeis_cadastraveis`), ginaPapeis: await lista(GINA, `select papel from papeis_cadastraveis`), anaPapeis: await lista(ANA, `select papel from papeis_cadastraveis`),
+      melAreas: await lista(MEL, `select id from areas_cadastraveis`), ginaAreas: await lista(GINA, `select id from areas_cadastraveis`), anaAreas: await lista(ANA, `select id from areas_cadastraveis`),
+    }, {
+      melPapeis: ['assessor', 'diretor', 'gerente', 'membro', 'presidente', 'vice'], ginaPapeis: ['assessor', 'gerente', 'membro'], anaPapeis: [],
+      melAreas: ['adm', 'com', 'fin', 'pres', 'proj'], ginaAreas: ['adm', 'com', 'fin', 'proj'], anaAreas: [],
+    });
+    confere('Áreas da estrutura: todos veem, só a Presidência define', {
+      ana: await como(ANA, `select count(*)::int as n, bool_or(pode_definir_lideranca) as pode from areas_da_estrutura`),
+      maju: await como(MAJU, `select bool_and(pode_definir_lideranca) as pode from areas_da_estrutura`),
+      joao: await como(JOAO, `select bool_or(pode_definir_lideranca) as pode from areas_da_estrutura`),
+      titulares: await como(ANA, `select id, titular is not null as tem_titular, cobertura is not null as tem_cobertura from areas_da_estrutura where id in ('proj','adm') order by id`),
+    }, {
+      ana: [{ n: 5, pode: false }], maju: [{ pode: true }], joao: [{ pode: false }],
+      titulares: [{ id: 'adm', tem_titular: false, tem_cobertura: true }, { id: 'proj', tem_titular: false, tem_cobertura: true }],
+    });
+    confere('Candidatos a titular ou cobertura: só para a Presidência', {
+      mel: await lista(MEL, `select nome from candidatos_a_lideranca`), joao: await lista(JOAO, `select nome from candidatos_a_lideranca`),
+    }, { mel: ['João', 'Luis', 'Mel'], joao: [] });
+    await bloqueia('Diretoria não define liderança', JOAO, `select definir_lideranca_area('adm', null, $1)`, [iJoao], 'Só a Presidência define titulares e coberturas.');
+    await bloqueia('Titular precisa ser Presidência ou diretoria', MEL, `select definir_lideranca_area('adm', $1, null)`, [iVictor], 'Titular e cobertura precisam ser Presidente, Vice-Presidente ou diretoria ativa.');
+    await bloqueia('Pessoa desativada não conduz área', MEL, `select definir_lideranca_area('adm', null, $1)`, [await id('Novo Um')], 'Titular e cobertura precisam ser Presidente, Vice-Presidente ou diretoria ativa.');
+    await bloqueia('Titular e cobertura diferentes', MEL, `select definir_lideranca_area('adm', $1, $1)`, [iJoao], 'Titular e cobertura devem ser pessoas diferentes.');
+    await bloqueia('Área inexistente na liderança', MEL, `select definir_lideranca_area('nao-existe', null, $1)`, [iMel], 'Área não encontrada.');
+    await permite('Presidente define a cobertura da Administrativa', MEL, `select definir_lideranca_area('adm', null, $1)`, [iMel]);
+    await permite('Assessoria define a cobertura de Projetos', MAJU, `select definir_lideranca_area('proj', null, $1)`, [iJoao]);
+    confere('Estrutura equipe: visões fechadas ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from equipe_pessoas`)).startsWith('permission denied'),
+      (await tenta(null, `select * from areas_da_estrutura`)).startsWith('permission denied'),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from equipe_pessoas`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from papeis_cadastraveis`),
+    ], [true, true, 0, 0]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
