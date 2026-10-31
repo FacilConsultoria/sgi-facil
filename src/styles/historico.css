@@ -1,0 +1,4 @@
+/* Tela Histórico completo: lista de registros. A base da lista (.hist) vem de componentes.css. */
+.bloco.historico { max-width: none; margin-top: 14px; }
+.bloco.historico .hist { margin: 0; }
+.bloco.historico .hist li { overflow-wrap: anywhere; }
