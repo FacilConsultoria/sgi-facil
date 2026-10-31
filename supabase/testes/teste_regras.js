@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL09 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL10 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -50,6 +50,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL07);
     await db.exec(window.SQL08);
     await db.exec(window.SQL09);
+    await db.exec(window.SQL10);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -496,6 +497,41 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       recusada.test(await tenta(MEL, `update pontuacao_pessoas set pontos = 99`)),
       recusada.test(await tenta(MEL, `delete from lancamentos_visiveis`)),
     ], [true, true]);
+
+    // presenças (10)
+    const frequencia = email => como(email, `select nome, convocacoes, presencas, justificadas, faltas from frequencia() order by nome`);
+    const linhaDe = (linhas, nome) => linhas.find(l => l.nome === nome);
+    const antes = await frequencia(MEL);
+    await valor(JOAO, `select criar_reuniao('Alinhamento ainda aberto', privado.hoje(), '09:00', 'area', 'proj', 'Pauta')`);
+    confere('Reunião ainda aberta não entra na frequência', await frequencia(MEL), antes);
+    const rFrequencia = await valor(JOAO, `select criar_reuniao('Frequência do trimestre', privado.hoje(), '10:00', 'area', 'proj', 'Pauta')`);
+    await permite('Presenças da reunião de frequência', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rFrequencia, JSON.stringify({ [iAna]: 'presente', [iLucas]: 'justificada', [iJoao]: 'falta', [iVictor]: 'presente' })]);
+    await permite('Encerra a reunião de frequência', JOAO, `select encerrar_reuniao($1)`, [rFrequencia]);
+    const depois = await frequencia(MEL);
+    const variacao = nome => { const a = linhaDe(antes, nome), d = linhaDe(depois, nome); return [d.convocacoes - a.convocacoes, d.presencas - a.presencas, d.justificadas - a.justificadas, d.faltas - a.faltas]; };
+    confere('Reunião encerrada soma convocação, presença, justificada e falta', {
+      ana: variacao('Ana'), lucas: variacao('Lucas'), joao: variacao('João'), victor: variacao('Victor'), camila: variacao('Camila'),
+    }, { ana: [1, 1, 0, 0], lucas: [1, 0, 1, 0], joao: [1, 0, 0, 1], victor: [1, 1, 0, 0], camila: [0, 0, 0, 0] });
+    confere('Frequência: quem aparece para cada perfil', {
+      ana: await nomesDe(ANA, `select nome from frequencia() order by nome`),
+      camila: await nomesDe(CAMILA, `select nome from frequencia() order by nome`),
+      pedro: await nomesDe(PEDRO, `select nome from frequencia() order by nome`),
+      mel: (await frequencia(MEL)).length, maju: (await frequencia(MAJU)).length,
+    }, { ana: ['Ana'], camila: ['Camila'], pedro: ['Pedro'], mel: 11, maju: 11 });
+    confere('Diretoria vê a área que conduz; gerência, só o núcleo', {
+      joaoVeCamila: (await nomesDe(JOAO, `select nome from frequencia()`)).includes('Camila'),
+      victorVeCamila: (await nomesDe(VICTOR, `select nome from frequencia()`)).includes('Camila'),
+      victorVeAna: (await nomesDe(VICTOR, `select nome from frequencia()`)).includes('Ana'),
+    }, { joaoVeCamila: true, victorVeCamila: false, victorVeAna: true });
+    const mesmaListaDaPontuacao = [];
+    for (const email of [MEL, LUIS, MAJU, JOAO, DUDA, VICTOR, ANA, PEDRO]) {
+      mesmaListaDaPontuacao.push(await valor(email, `select (select array_agg(pessoa_id order by pessoa_id) from frequencia()) is not distinct from (select array_agg(id order by id) from pontuacao_pessoas)`));
+    }
+    confere('A lista de frequência é a mesma da pontuação detalhada', mesmaListaDaPontuacao.every(Boolean), true);
+    confere('Frequência fechada ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from frequencia()`)).startsWith('permission denied'),
+      (await como('sem-cadastro@facil.test', `select * from frequencia()`)).length,
+    ], [true, 0]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
