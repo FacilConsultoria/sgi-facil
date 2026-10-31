@@ -153,11 +153,18 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - **Método de teste (pedido do usuário):** a partir daqui testo só o que a entrega tocou: testes do banco (rápidos, completos), tipos e testes do site, simulação da tela nova e leitura das telas afetadas no site real. O que depende de uso real fica com o usuário, e escrita no banco real só com autorização.
   - Site: tipos ok, 113/113 testes e simulação da tela (diretor, membro e lista vazia).
 
+- **Estrutura e equipe (30/10/2026):** duas abas. **Organograma** (para todos): Presidência no topo (titular e núcleos, como a Assessoria), diretorias por nome, cada núcleo com liderança e membros, "Vaga · coberta por Fulano" quando a área não tem titular. **Cadastro** (só para quem cadastra: Presidência com Assessoria, Gente e Gestão): lista com e-mail, cargo, curso e situação, busca, "mostrar desativadas", **cadastrar** e **alterar** pessoa. A Presidência também **define titular e cobertura** de cada área (botão no organograma).
+  - **Decisão que difere do protótipo:** o protótipo mostrava os membros "conforme o escopo". O banco já tinha decidido (01) que o diretório de pessoas (nome, cargo, área) é aberto a quem tem cadastro, porque as reuniões gerais já listam todo mundo; o organograma segue isso e mostra todos. Fácil de restringir se preferirem.
+  - **Brecha fechada (migração `11_modulo_equipe.sql`):** como a Assessoria de Presidência tem acesso de Presidência, a Gente e Gestão podia cadastrar uma "assessora" na área da Presidência e dar a ela esse acesso. Agora cadastrar ou mover alguém para a Presidência, ou para Presidente, Vice e diretoria, exige a Presidência.
+  - **Regras novas no banco:** ninguém altera o próprio cadastro; núcleo obrigatório para gerência, assessoria e membro; Presidente e Vice só na Presidência; e-mail válido; quem conduz uma área (titular ou cobertura) não é desativado nem muda de cargo antes de a área ter outro responsável; titular e cobertura são Presidente, Vice ou diretoria ativa e diferentes entre si.
+  - **Atenção (não alterado):** qualquer pessoa logada consegue ler a tabela `pessoas` pela API, inclusive a coluna `email` (o 01 abriu o diretório). A tela só mostra o e-mail a quem cadastra, mas a proteção real exigiria restringir a coluna, o que mexe em `meu_perfil` e em outras visões. Proposta para uma próxima rodada.
+  - Banco 245/245; site: tipos ok, 128/128 testes e simulação da tela (Presidente e membro).
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking e Presenças também feitos; próximo: estrutura e cadastro de pessoas (depois histórico, regras e projetos).
+4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking , Presenças e Estrutura e equipe também feitos; próximo: histórico completo (depois regras e projetos).
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
