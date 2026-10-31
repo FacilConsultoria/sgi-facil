@@ -176,14 +176,18 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
 
 - **Projetos (31/10/2026), o último módulo do protótipo:** cartões dos projetos que a pessoa enxerga, com origem (área · núcleo), cliente, barra de andamento, "N de M demandas concluídas", atrasadas e botão "Ver demandas", que abre Demandas já filtrada pelo projeto (vale só para essa abertura). Selos: "Restrito à Presidência", "Exceção" (liberação do projeto inteiro), "Parcial" (só as demandas em que atua) e "Encerrado". Criar projeto continua em Demandas ("Novo projeto").
   - **Banco:** a migração `14_modulo_projetos.sql` cria a visão `projetos_painel` (somente leitura), com `acesso` ('integral', 'excecao' ou 'parcial') e os números calculados sobre as demandas que a pessoa enxerga. Quais projetos aparecem continua sendo a regra de leitura de projetos. Os testes conferem os números contra as demandas visíveis de 10 pessoas, os três tipos de acesso, o atraso e o bloqueio de gravação. Banco 271/271.
-  - Tela Inicial: o texto passou a dizer que todos os módulos do protótipo estão disponíveis; os números do painel da Tela Inicial ainda não foram migrados.
   - Site: tipos ok, 161/161 testes e simulação da tela (Presidente, membro e sem projetos, e o atalho para Demandas filtrada).
+
+- **Tela Inicial (31/10/2026), a última peça do protótipo:** saudação com o escopo, quatro números (seus pontos e posição no ranking, demandas abertas e em revisão, atrasadas, próxima reunião) e cinco listas: "Suas próximas entregas", "Aguardando sua validação" (só quem não é membro; usa `pode_gerir` da visão), "Próximas reuniões", "Seus últimos lançamentos" (sem os desconsiderados) e "Pedidos de acesso para decidir" (só aparece quando há). Cada item leva à tela do módulo; uma entrega abre Demandas já com o painel da demanda aberto (valia só para essa abertura). Saiu a faixa "O SGI está chegando por partes".
+  - **Sem migração de banco:** a tela só lê o que os outros módulos já expõem (`demandas_visiveis`, `reunioes_visiveis`, `escopos_de_reuniao`, `ranking()`, `lancamentos_visiveis`, `solicitacoes_visiveis`); nada é calculado de permissão no site. Banco continua 271/271.
+  - Fora do painel por ora: o bloco "Regras rápidas" do menu lateral do protótipo (os valores estão na tela Regras).
+  - Site: tipos ok, 172/172 testes e simulação da tela (membro, diretoria com validação e pedidos, e sem dados; os atalhos para Demandas, Autorizações e Reuniões).
 
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking , Presenças e Estrutura e equipe também feitos Histórico completo, Regras e Projetos também feitos: todos os módulos do protótipo foram migrados. Próximo: números do painel da Tela Inicial.
+4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking , Presenças e Estrutura e equipe também feitos Histórico completo, Regras e Projetos também feitos: todos os módulos do protótipo e a Tela Inicial foram migrados. Próximo: usar com a equipe e corrigir o que aparecer; pendências abaixo.
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
