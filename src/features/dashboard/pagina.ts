@@ -19,7 +19,7 @@ export function paginaDashboard(destino: HTMLElement, contexto: ContextoDaSessao
         el('p', { class: 'sub' }, descreverEscopo(perfil, tituloDaArea)))),
     el('section', { class: 'bloco' },
       el('h2', {}, 'O SGI está chegando por partes'),
-      el('p', {}, 'Os módulos estão sendo trazidos do protótipo para a versão online. Demandas, Reuniões e atas, Presenças, Pontuação e ranking, Estrutura e equipe, Histórico completo e Autorizações já estão disponíveis; os itens marcados como “em breve” no menu ainda não.'),
+      el('p', {}, 'Os módulos estão sendo trazidos do protótipo para a versão online. Demandas, Reuniões e atas, Presenças, Pontuação e ranking, Estrutura e equipe, Histórico completo, Regras e Autorizações já estão disponíveis; os itens marcados como “em breve” no menu ainda não.'),
       permissoes.length
         ? el('p', { class: 'meta' }, `Seu perfil também permite ${permissoes.join(', ')}.`)
         : null),
