@@ -297,6 +297,56 @@ export interface ConfigDePontuacao {
   ranking_publico: boolean;
 }
 
+/** Linha da visão public.equipe_pessoas (supabase/11_modulo_equipe.sql). E-mail e pessoas desativadas só vêm para quem cadastra. */
+export interface PessoaDaEquipe {
+  id: string;
+  nome: string;
+  papel: Papel;
+  area_id: string;
+  nucleo_id: string | null;
+  curso: string | null;
+  ativo: boolean;
+  email: string | null;
+  /** Quem consulta pode alterar este cadastro. */
+  pode_editar: boolean;
+}
+
+/** Linha da visão public.areas_da_estrutura: Presidência e diretorias, com titular e cobertura (ids de pessoas). */
+export interface AreaDaEstrutura {
+  id: string;
+  titulo: string;
+  sigla: string;
+  titular: string | null;
+  /** Quem responde enquanto a área está sem titular. */
+  cobertura: string | null;
+  nota: string | null;
+  pode_definir_lideranca: boolean;
+  area_da_presidencia: boolean;
+}
+
+/** Linha da tabela public.nucleos. */
+export interface NucleoDaEstrutura {
+  id: string;
+  area_id: string;
+  nome: string;
+  /** Liderança do núcleo em aberto. */
+  vaga: boolean;
+  nota: string | null;
+}
+
+/** Linha da visão public.areas_cadastraveis: áreas em que quem consulta pode cadastrar pessoas. */
+export interface AreaCadastravel {
+  id: string;
+  titulo: string;
+}
+
+/** Linha da visão public.candidatos_a_lideranca: quem pode ser titular ou cobertura de uma área. */
+export interface CandidatoALideranca {
+  id: string;
+  nome: string;
+  papel: Papel;
+}
+
 /** Linha da visão public.meu_perfil: quem está logado e o que pode fazer. */
 export interface Perfil {
   id: string;
