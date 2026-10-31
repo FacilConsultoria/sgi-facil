@@ -48,6 +48,26 @@ export interface ProjetoVisivel {
   pode_criar_demanda: boolean;
 }
 
+/** Como a pessoa enxerga um projeto: pela hierarquia, por exceção do projeto inteiro ou só pelas demandas em que atua. */
+export type AcessoAoProjeto = 'integral' | 'excecao' | 'parcial';
+
+/** Linha da visão public.projetos_painel (supabase/14_modulo_projetos.sql). Os números contam só as demandas que a pessoa enxerga. */
+export interface ProjetoDoPainel {
+  id: string;
+  nome: string;
+  cliente: string;
+  nucleo_id: string;
+  nucleo_nome: string;
+  area_id: string;
+  area_titulo: string;
+  restrito: boolean;
+  ativo: boolean;
+  acesso: AcessoAoProjeto;
+  total_demandas: number;
+  concluidas: number;
+  atrasadas: number;
+}
+
 /** Linha da visão public.nucleos_visiveis. */
 export interface NucleoVisivel {
   id: string;
