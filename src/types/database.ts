@@ -347,6 +347,17 @@ export interface CandidatoALideranca {
   papel: Papel;
 }
 
+/** Linha da visão public.historico_visivel (supabase/12_modulo_historico.sql): um registro de auditoria que quem consulta pode ver. */
+export interface RegistroDoHistorico {
+  id: number;
+  em: string;
+  /** Nulo = integração automática. */
+  ator: string | null;
+  ator_nome: string | null;
+  acao: string;
+  detalhe: string;
+}
+
 /** Linha da visão public.meu_perfil: quem está logado e o que pode fazer. */
 export interface Perfil {
   id: string;
