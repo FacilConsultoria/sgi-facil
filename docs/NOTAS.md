@@ -147,11 +147,17 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - Código novo reutilizável: `ui/abas.ts` (página com abas; Autorizações passou a usá-la) e `ui/recarregavel.ts` (carregar, "Tentar de novo" e redesenhar).
   - Banco 204/204; site: tipos ok, 106/106 testes e simulação das telas no Edge (Presidente, Assessoria e membro).
 
+- **Presenças (30/10/2026):** relatório de frequência, somente leitura (marcar presença continua dentro de Reuniões e atas). Tabela com convocações, presenças, justificadas, faltas e taxa (presenças ÷ convocações, arredondada; "–" sem convocação), das menores taxas para as maiores. Só entram reuniões **encerradas**.
+  - **Quem aparece:** a mesma regra da pontuação detalhada (`pode_ver_pontuacao`: a própria pessoa, Presidência com Assessoria, Gente e Gestão, diretoria da área, gerência do núcleo). Decisão minha, por coerência: a falta já aparece na pontuação. A função só devolve números, sem título de reunião.
+  - Banco: migração `10_modulo_presencas.sql` (função `public.frequencia()`, security definer porque a regra de cada reunião esconderia as reuniões de outros núcleos). Banco 212/212.
+  - **Método de teste (pedido do usuário):** a partir daqui testo só o que a entrega tocou: testes do banco (rápidos, completos), tipos e testes do site, simulação da tela nova e leitura das telas afetadas no site real. O que depende de uso real fica com o usuário, e escrita no banco real só com autorização.
+  - Site: tipos ok, 113/113 testes e simulação da tela (diretor, membro e lista vazia).
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) e Pontuação e ranking também feitos; próximo: presenças (depois estrutura e cadastro de pessoas, histórico, regras e projetos).
+4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking e Presenças também feitos; próximo: estrutura e cadastro de pessoas (depois histórico, regras e projetos).
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
