@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10, 11 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL11 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL12 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -52,6 +52,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL09);
     await db.exec(window.SQL10);
     await db.exec(window.SQL11);
+    await db.exec(window.SQL12);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -615,6 +616,29 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       await valor('sem-cadastro@facil.test', `select count(*)::int from equipe_pessoas`),
       await valor('sem-cadastro@facil.test', `select count(*)::int from papeis_cadastraveis`),
     ], [true, true, 0, 0]);
+
+    // histórico completo (12)
+    const mesmosRegistros = {};
+    for (const email of [MEL, LUIS, MAJU, JOAO, VICTOR, DUDA, GINA, ANA, CAMILA, PEDRO]) {
+      mesmosRegistros[email] = await valor(email, `select (select array_agg(id order by id) from historico_visivel) is not distinct from (select array_agg(id order by id) from auditoria)`);
+    }
+    confere('O histórico mostra exatamente os registros que a regra da auditoria deixa ver', Object.values(mesmosRegistros).every(Boolean), true);
+    const totalDeRegistros = (await db.query(`select count(*)::int as n from auditoria`)).rows[0].n;
+    const registros = {};
+    for (const n of ['mel', 'maju', 'joao', 'camila']) registros[n] = await valor(`${n}@facil.test`, `select count(*)::int from historico_visivel`);
+    confere('Presidência e Assessoria veem tudo; os demais, só o seu escopo', [registros.mel === totalDeRegistros, registros.maju === totalDeRegistros, registros.joao < totalDeRegistros, registros.camila > 0 && registros.camila < registros.joao], [true, true, true, true]);
+    confere('Cada registro traz o nome de quem fez', [
+      await valor(MEL, `select ator_nome from historico_visivel where acao = 'Cadastrou pessoa' and detalhe like 'Gina%'`),
+      await valor(MEL, `select count(*)::int from historico_visivel where ator is not null and ator_nome is null`),
+    ], ['Mel', 0]);
+    confere('Histórico fechado ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from historico_visivel`)).startsWith('permission denied'),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from historico_visivel`),
+    ], [true, 0]);
+    confere('Histórico não aceita gravação direta', [
+      recusada.test(await tenta(MEL, `delete from historico_visivel`)),
+      recusada.test(await tenta(MEL, `update historico_visivel set acao = 'x'`)),
+    ], [true, true]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
