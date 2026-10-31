@@ -13,11 +13,19 @@ import {
   demandasDaEtapa, filtrarDemandas, FILTROS_VAZIOS, resumir, STATUS, type Filtros,
 } from './regras';
 
+// projeto escolhido em "Ver demandas" na tela Projetos; vale só para a próxima abertura desta tela
+let projetoPedido = '';
+
+export function pedirDemandasDoProjeto(projetoId: string): void {
+  projetoPedido = projetoId;
+}
+
 export function paginaDemandas(destino: HTMLElement, sessao: ContextoDaSessao): void {
   const pagina = el('div', { class: 'pagina-demandas' });
   substituir(destino, pagina);
   // filtros sobrevivem às recargas feitas depois de salvar, mas não à troca de tela
-  let filtros: Filtros = { ...FILTROS_VAZIOS };
+  let filtros: Filtros = { ...FILTROS_VAZIOS, projeto: projetoPedido };
+  projetoPedido = '';
 
   const recarregar = async (): Promise<ContextoDeDemandas | null> => {
     try {
