@@ -1,9 +1,9 @@
 // Testes de integração das regras do banco do SGI.
-// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12 e 02 num Postgres real (PGlite, no navegador) com as partes do
+// Roda os scripts 01, 03, 04, 05, 06, 07, 08, 09, 10, 11, 12, 13 e 02 num Postgres real (PGlite, no navegador) com as partes do
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL12 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL13 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -53,6 +53,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL10);
     await db.exec(window.SQL11);
     await db.exec(window.SQL12);
+    await db.exec(window.SQL13);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -639,6 +640,44 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       recusada.test(await tenta(MEL, `delete from historico_visivel`)),
       recusada.test(await tenta(MEL, `update historico_visivel set acao = 'x'`)),
     ], [true, true]);
+
+    // regras (13)
+    const ativasNoFim = (await db.query(`select count(*)::int as n from pessoas where ativo`)).rows[0].n;
+    confere('Simulação de visibilidade: só a Presidência recebe linhas', {
+      mel: (await como(MEL, `select 1 from simulacao_de_visibilidade()`)).length,
+      luis: (await como(LUIS, `select 1 from simulacao_de_visibilidade()`)).length,
+      maju: (await como(MAJU, `select 1 from simulacao_de_visibilidade()`)).length,
+      joao: (await como(JOAO, `select 1 from simulacao_de_visibilidade()`)).length,
+      gina: (await como(GINA, `select 1 from simulacao_de_visibilidade()`)).length,
+      ana: (await como(ANA, `select 1 from simulacao_de_visibilidade()`)).length,
+    }, { mel: ativasNoFim, luis: ativasNoFim, maju: ativasNoFim, joao: 0, gina: 0, ana: 0 });
+    // uma liberação por exceção ativa: Camila passa a ver a demanda do projeto financeiro, só por exceção
+    await permite('Diretoria pede acesso por exceção para Camila', JOAO, `select solicitar_acesso($1,'projeto',$2,null,'Vai apoiar o orçamento do projeto financeiro neste mês.',privado.hoje() + 10)`, [iCamila, pFin]);
+    const pedidoDaSimulacao = await valor(MEL, `select id from solicitacoes where beneficiario = $1 and projeto_id = $2 and status = 'pendente'`, [iCamila, pFin]);
+    await permite('Presidente aprova a exceção', MEL, `select decidir_solicitacao($1,true,'')`, [pedidoDaSimulacao]);
+    const simulacao = await como(MEL, `select pessoa_id, nome, demandas_visiveis, por_excecao, pontuacoes_visiveis, total_demandas from simulacao_de_visibilidade()`);
+    const dePessoa = nome => simulacao.find(l => l.nome === nome);
+    const totalDeDemandas = await valor(MEL, `select count(*)::int from demandas`);
+    confere('Simulação: Presidente vê todas as demandas e nenhuma por exceção; o total confere', [dePessoa('Mel').demandas_visiveis, dePessoa('Mel').por_excecao, simulacao.every(l => l.total_demandas === totalDeDemandas)], [totalDeDemandas, 0, true]);
+    confere('Simulação: as demandas liberadas a Camila por exceção (e que ela não executa) são contadas à parte', dePessoa('Camila').por_excecao, await valor(MEL,
+      `select count(*)::int from demandas d where not exists (select 1 from demanda_executores e where e.demanda_id = d.id and e.pessoa_id = $1)
+          and exists (select 1 from solicitacoes s where s.beneficiario = $1 and s.status = 'aprovada' and s.valido_ate >= privado.hoje() and (s.demanda_id = d.id or s.projeto_id = d.projeto_id))`, [iCamila]));
+    confere('Simulação: a exceção de Camila inclui o projeto financeiro', (await como(CAMILA, `select count(*)::int as n from demandas where projeto_id = $1`, [pFin]))[0].n >= 1, true);
+    const confrontos = {};
+    for (const [nome, email] of [['Mel', MEL], ['Luis', LUIS], ['Maju', MAJU], ['João', JOAO], ['Victor', VICTOR], ['Duda', DUDA], ['Gina', GINA], ['Ana', ANA], ['Camila', CAMILA], ['Pedro', PEDRO]]) {
+      const linha = dePessoa(nome);
+      confrontos[nome] = [linha.demandas_visiveis === await valor(email, `select count(*)::int from demandas`), linha.pontuacoes_visiveis === await valor(email, `select count(*)::int from pontuacao_pessoas`)];
+    }
+    confere('A simulação bate com o que cada pessoa realmente enxerga (demandas e pontuações)', Object.values(confrontos).every(par => par[0] && par[1]), true);
+    confere('Simulação fechada ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from simulacao_de_visibilidade()`)).startsWith('permission denied'),
+      (await como('sem-cadastro@facil.test', `select * from simulacao_de_visibilidade()`)).length,
+    ], [true, 0]);
+    confere('Valores de pontuação são lidos por qualquer pessoa com cadastro', (await como(ANA, `select pontos_iniciais, ranking_publico from config`)).length, 1);
+    await permite('Assessoria salva as regras de pontuação (acesso de Presidência)', MAJU, `select salvar_config(12,2,1,-2,0,true)`);
+    await bloqueia('Valor fora de −50 a 50 é recusado', MEL, `select salvar_config(12,60,1,-2,0,true)`, [], 'Use números inteiros entre −50 e 50.');
+    await bloqueia('Gerência de outra área não salva regras', DUDA, `select salvar_config(12,2,1,-2,0,true)`, [], 'Só a Presidência e a Diretoria Administrativa alteram as regras.');
+    confere('Salvar as regras fica no histórico', await valor(MEL, `select count(*)::int from historico_visivel where acao = 'Alterou regras de pontuação'`) >= 1, true);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
