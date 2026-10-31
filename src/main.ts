@@ -9,6 +9,7 @@ import './styles/avais.css';
 import './styles/pontuacao.css';
 import './styles/equipe.css';
 import './styles/historico.css';
+import './styles/regras.css';
 
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { montarLayout, type Layout } from './app/layout';
