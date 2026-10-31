@@ -1,7 +1,7 @@
 // Organograma deste ano: poucos cargos, em árvore, da Presidência para baixo. A tabela abaixo diz quais cargos
-// aparecem, quem se reporta a quem e de onde vêm a pessoa e o texto da função; a montagem só junta isso com
-// os dados do banco. Funções puras, sem acesso a dados.
-import type { AreaDaEstrutura, NucleoDaEstrutura, Papel, PessoaDaEquipe } from '../../types/database';
+// aparecem, quem se reporta a quem e de onde vem a pessoa; a montagem só junta isso com os dados do banco.
+// Também calcula as posições para o desenho em níveis das telas estreitas. Funções puras, sem acesso a dados.
+import type { AreaDaEstrutura, Papel, PessoaDaEquipe } from '../../types/database';
 
 /** De onde sai a pessoa do cargo. */
 export type SeletorDePessoa =
@@ -12,14 +12,12 @@ export type SeletorDePessoa =
   /** Gerência ou assessoria de um núcleo (ids dos núcleos: "com-mkt"…). */
   | { liderDe: string };
 
-/** De onde sai o texto da função: a nota da área ou do núcleo, que se edita no banco. */
-export type OrigemDaFuncao = { area: string } | { nucleo: string };
-
 export interface CargoDoOrganograma {
   id: string;
   titulo: string;
   pessoa: SeletorDePessoa;
-  funcao: OrigemDaFuncao;
+  /** Texto da função do cargo; vazio até o usuário definir. */
+  funcao?: string;
   /** Cargos que se reportam a este. */
   filhos?: readonly CargoDoOrganograma[];
 }
@@ -29,18 +27,17 @@ export const ORGANOGRAMA_DESTE_ANO: CargoDoOrganograma = {
   id: 'presidencia',
   titulo: 'Presidência',
   pessoa: { titularDe: 'pres' },
-  funcao: { area: 'pres' },
   filhos: [
-    { id: 'vice', titulo: 'Vice-presidência', pessoa: { papel: 'vice' }, funcao: { area: 'fin' } },
-    { id: 'assessoria', titulo: 'Assessoria de Presidência', pessoa: { liderDe: 'pres-ass' }, funcao: { nucleo: 'pres-ass' } },
+    { id: 'vice', titulo: 'Vice-presidência', pessoa: { papel: 'vice' } },
+    { id: 'assessoria', titulo: 'Assessoria de Presidência', pessoa: { liderDe: 'pres-ass' } },
     {
       id: 'comercial',
       titulo: 'Diretor Comercial',
       pessoa: { titularDe: 'com' },
-      funcao: { area: 'com' },
       filhos: [
-        { id: 'gerente-comercial', titulo: 'Gerente Comercial', pessoa: { liderDe: 'com-cap' }, funcao: { nucleo: 'com-cap' } },
-        { id: 'marketing', titulo: 'Marketing', pessoa: { liderDe: 'com-mkt' }, funcao: { nucleo: 'com-mkt' } },
+        { id: 'gerente-comercial-captacao', titulo: 'Gerente Comercial', pessoa: { liderDe: 'com-cap' } },
+        { id: 'gerente-comercial-entregas', titulo: 'Gerente Comercial', pessoa: { liderDe: 'proj-cli' } },
+        { id: 'marketing', titulo: 'Marketing', pessoa: { liderDe: 'com-mkt' } },
       ],
     },
   ],
@@ -58,11 +55,10 @@ export interface NoDoOrganograma {
   filhos: NoDoOrganograma[];
 }
 
-/** Junta a tabela de cargos com as áreas, os núcleos e as pessoas ativas. */
+/** Junta a tabela de cargos com as áreas e as pessoas ativas. */
 export function montarOrganograma(
   cargo: CargoDoOrganograma,
   areas: readonly AreaDaEstrutura[],
-  nucleos: readonly NucleoDaEstrutura[],
   pessoas: readonly PessoaDaEquipe[],
 ): NoDoOrganograma {
   const ativas = pessoas.filter((p) => p.ativo).sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
@@ -78,29 +74,71 @@ export function montarOrganograma(
   } else {
     pessoa = ativas.find((p) => p.nucleo_id === seletor.liderDe && (p.papel === 'gerente' || p.papel === 'assessor')) ?? null;
   }
-
-  const origem = cargo.funcao;
-  const nota = 'area' in origem
-    ? areas.find((a) => a.id === origem.area)?.nota
-    : nucleos.find((n) => n.id === origem.nucleo)?.nota;
-
   return {
     id: cargo.id,
     titulo: cargo.titulo,
     pessoa,
-    funcao: nota?.trim() || null,
+    funcao: cargo.funcao?.trim() || null,
     area,
-    filhos: (cargo.filhos ?? []).map((filho) => montarOrganograma(filho, areas, nucleos, pessoas)),
+    filhos: (cargo.filhos ?? []).map((filho) => montarOrganograma(filho, areas, pessoas)),
   };
 }
 
-/** Texto da janela de um cargo: a função, ou o aviso de que ainda não foi descrita. */
+/** Texto da janela de um cargo: a função, ou "A definir" enquanto não há texto. */
 export function descreverFuncao(no: Pick<NoDoOrganograma, 'funcao'>): string {
-  return no.funcao ?? 'A função deste cargo ainda não foi descrita.';
+  return no.funcao ?? 'A definir.';
 }
 
 /** Nome a mostrar no retângulo: a pessoa ou "A definir". */
 export function nomeNoRetangulo(no: Pick<NoDoOrganograma, 'pessoa'>, meuId: string): string {
   if (!no.pessoa) return 'A definir';
   return no.pessoa.id === meuId ? `${no.pessoa.nome} (você)` : no.pessoa.nome;
+}
+
+export type LugarNaLinha = 'unico' | 'primeiro' | 'meio' | 'ultimo';
+
+export interface PosicaoNoDesenho {
+  /** Linha do desenho em níveis: 1 é a Presidência. */
+  nivel: number;
+  /** Coluna do desenho em níveis (a partir de 1). */
+  coluna: number;
+  lugar: LugarNaLinha;
+  temFilhos: boolean;
+}
+
+export interface MedidasDoOrganograma {
+  /** Cargos sem ninguém abaixo: decidem a largura de cada retângulo na árvore. */
+  folhas: number;
+  /** Maior número de cargos num mesmo nível: colunas do desenho em níveis. */
+  colunas: number;
+  posicoes: ReadonlyMap<string, PosicaoNoDesenho>;
+}
+
+/**
+ * Mede a árvore. Na árvore, a largura de cada retângulo depende do número de folhas; nas telas estreitas
+ * os cargos se alinham por nível, em colunas, e um nível com um cargo só fica na coluna do meio.
+ */
+export function medirOrganograma(raiz: NoDoOrganograma): MedidasDoOrganograma {
+  const niveis: NoDoOrganograma[][] = [];
+  const subir = (no: NoDoOrganograma, nivel: number): void => {
+    (niveis[nivel] ??= []).push(no);
+    for (const filho of no.filhos) subir(filho, nivel + 1);
+  };
+  subir(raiz, 0);
+
+  const colunas = Math.max(1, ...niveis.map((n) => n.length));
+  const posicoes = new Map<string, PosicaoNoDesenho>();
+  niveis.forEach((nos, indice) => {
+    nos.forEach((no, i) => {
+      const lugar: LugarNaLinha = nos.length === 1 ? 'unico' : i === 0 ? 'primeiro' : i === nos.length - 1 ? 'ultimo' : 'meio';
+      posicoes.set(no.id, {
+        nivel: indice + 1,
+        coluna: nos.length === 1 ? Math.ceil(colunas / 2) : i + 1,
+        lugar,
+        temFilhos: no.filhos.length > 0,
+      });
+    });
+  });
+  const contarFolhas = (no: NoDoOrganograma): number => (no.filhos.length ? no.filhos.reduce((soma, f) => soma + contarFolhas(f), 0) : 1);
+  return { folhas: contarFolhas(raiz), colunas, posicoes };
 }

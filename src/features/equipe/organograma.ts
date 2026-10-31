@@ -1,14 +1,17 @@
 // Aba Organograma: os cargos deste ano em árvore, da Presidência para baixo, todos em retângulos do mesmo
-// tamanho. Clicar num retângulo abre a função do cargo. O diretório de pessoas é aberto a quem tem cadastro
-// (decisão do banco, supabase/01); só a Presidência vê "Definir liderança" (indicador de areas_da_estrutura).
+// tamanho e sem rolagem. Em telas estreitas os mesmos retângulos se alinham por nível, em colunas.
+// Clicar num retângulo abre a janela do cargo. O diretório de pessoas é aberto a quem tem cadastro (decisão do
+// banco, supabase/01); só a Presidência vê "Definir liderança" (indicador de areas_da_estrutura).
 import type { ContextoDaSessao } from '../../app/sessao';
 import type { AreaDaEstrutura } from '../../types/database';
+import { abrirCamada } from '../../ui/camada';
 import { el } from '../../ui/dom';
 import { botaoFechar } from '../../ui/formulario';
-import { abrirCamada } from '../../ui/camada';
 import type { DadosDaEstrutura } from './dados';
 import { abrirDefinirLideranca } from './lideranca';
-import { descreverFuncao, montarOrganograma, nomeNoRetangulo, ORGANOGRAMA_DESTE_ANO, type NoDoOrganograma } from './organograma-regras';
+import {
+  descreverFuncao, medirOrganograma, montarOrganograma, nomeNoRetangulo, ORGANOGRAMA_DESTE_ANO, type NoDoOrganograma,
+} from './organograma-regras';
 import { iniciais } from './regras';
 
 export interface ContextoDoOrganograma {
@@ -20,15 +23,22 @@ export interface ContextoDoOrganograma {
 }
 
 export function desenharOrganograma(contexto: ContextoDoOrganograma): HTMLElement[] {
-  const { areas, nucleos, pessoas } = contexto.dados;
-  const raiz = montarOrganograma(ORGANOGRAMA_DESTE_ANO, areas, nucleos, pessoas);
+  const raiz = montarOrganograma(ORGANOGRAMA_DESTE_ANO, contexto.dados.areas, contexto.dados.pessoas);
+  const medidas = medirOrganograma(raiz);
   const meuId = contexto.sessao.perfil.id;
 
   const retangulo = (no: NoDoOrganograma): HTMLButtonElement => {
     const nome = nomeNoRetangulo(no, meuId);
-    const botao = el('button', { type: 'button', class: no.pessoa ? 'no' : 'no vago', 'aria-haspopup': 'dialog' },
-      el('span', { class: 'av', 'aria-hidden': 'true' }, no.pessoa ? iniciais(no.pessoa.nome) : '?'),
-      el('span', { class: 'no-txt' }, el('b', {}, no.titulo), el('span', { title: nome }, nome)));
+    const posicao = medidas.posicoes.get(no.id);
+    const botao = el('button', {
+      type: 'button',
+      class: no.pessoa ? 'no' : 'no vago',
+      'aria-haspopup': 'dialog',
+      'data-lugar': posicao?.lugar,
+      'data-filhos': posicao?.temFilhos ? 'sim' : undefined,
+      // posição no desenho em níveis das telas estreitas
+      style: posicao ? `--nivel: ${posicao.nivel}; --coluna: ${posicao.coluna}` : undefined,
+    }, el('b', {}, no.titulo), el('span', { title: nome }, nome));
     botao.addEventListener('click', () => abrirFuncao(contexto, no));
     return botao;
   };
@@ -36,12 +46,13 @@ export function desenharOrganograma(contexto: ContextoDoOrganograma): HTMLElemen
     el('li', {}, retangulo(no), no.filhos.length ? el('ul', {}, ...no.filhos.map(item)) : null);
 
   return [
-    el('p', { class: 'dica' }, 'Clique em um cargo para ver a função.'),
-    el('div', { class: 'arvore' }, el('ul', {}, item(raiz))),
+    el('p', { class: 'dica' }, 'Clique em um cargo para ver os detalhes.'),
+    el('div', { class: 'arvore-caixa' },
+      el('div', { class: 'arvore', style: `--folhas: ${medidas.folhas}; --colunas: ${medidas.colunas}` }, el('ul', {}, item(raiz)))),
   ];
 }
 
-/** Janela do cargo: quem é, a função e, para a Presidência, o atalho de definir titular e cobertura. */
+/** Janela do cargo: quem é, a função (por enquanto "A definir") e, para a Presidência, o atalho de definir titular e cobertura. */
 function abrirFuncao(contexto: ContextoDoOrganograma, no: NoDoOrganograma): void {
   abrirCamada(contexto.pagina, {
     tipo: 'modal',
