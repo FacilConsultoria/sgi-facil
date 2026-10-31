@@ -3,6 +3,7 @@ import { paginaAutorizacoes } from '../features/autorizacoes/pagina';
 import { paginaDashboard } from '../features/dashboard/pagina';
 import { paginaDemandas } from '../features/demandas/pagina';
 import { paginaEmMigracao } from '../features/em-migracao/pagina';
+import { paginaEquipe } from '../features/equipe/pagina';
 import { paginaPontuacao } from '../features/pontuacao/pagina';
 import { paginaPresencas } from '../features/presencas/pagina';
 import { paginaReunioes } from '../features/reunioes/pagina';
@@ -22,6 +23,9 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
       return;
     case 'autorizacoes':
       paginaAutorizacoes(destino);
+      return;
+    case 'estrutura':
+      paginaEquipe(destino, contexto);
       return;
     case 'presencas':
       paginaPresencas(destino, contexto);
