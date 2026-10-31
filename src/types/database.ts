@@ -279,6 +279,18 @@ export interface LinhaDoRanking {
   faltas: number;
 }
 
+/** Linha da função public.frequencia() (supabase/10_modulo_presencas.sql): presença nas reuniões encerradas, por pessoa. */
+export interface FrequenciaDaPessoa {
+  pessoa_id: string;
+  nome: string;
+  setor: string;
+  /** Reuniões encerradas que convocaram a pessoa. */
+  convocacoes: number;
+  presencas: number;
+  justificadas: number;
+  faltas: number;
+}
+
 /** Parte da tabela public.config que a tela de pontuação mostra. */
 export interface ConfigDePontuacao {
   pontos_iniciais: number;
