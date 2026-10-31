@@ -16,6 +16,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 | `09_modulo_pontuacao.sql` | Para a tela de Pontuação e ranking: as pessoas cuja pontuação cada um pode ver (com saldo, entregas, faltas e projetos ativos), a linha do tempo de lançamentos e quem pode ajustar ou pedir aval. |
 | `10_modulo_presencas.sql` | Para a tela de Presenças: quantas reuniões encerradas convocaram cada pessoa que você acompanha e como ficou a presença (presente, justificada, falta). |
 | `11_modulo_equipe.sql` | Para a tela Estrutura e equipe: pessoas da equipe (o e-mail só aparece para quem cadastra), quem pode editar cada uma, cargos e áreas disponíveis no cadastro e quem define titulares e coberturas. Também fecha uma brecha: só a Presidência cadastra ou move pessoas para a área da Presidência. |
+| `12_modulo_historico.sql` | Para a tela Histórico completo: uma visão dos registros de auditoria com o nome de quem fez cada ação. Quem vê cada registro continua sendo decidido pela regra de leitura da auditoria. |
 | `07_assessoria_aval_publico_exclusao.sql` | Assessoria de Presidência com acesso de Presidência, avais (pedidos que a Presidente ou a Vice aprovam), reunião para pessoas escolhidas, diretorias agendando para todos e exclusão de reuniões. |
 | `functions/receber-transcricao/index.ts` | Endereço que vai receber as transcrições do Meet quando a automação estiver pronta. Pode ficar para depois. |
 
@@ -37,7 +38,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 4. Clique em **Run**. Se esquecer algum e-mail, o script avisa e não grava nada.
 5. Abra mais uma query, cole `03_visoes_interface.sql` e clique em **Run**.
 6. Repita com `04_modulo_demandas.sql` e depois com `05_modulo_reunioes.sql`.
-7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql` e, depois, o `08_modulo_acessos.sql`, o `09_modulo_pontuacao.sql`, o `10_modulo_presencas.sql` e o `11_modulo_equipe.sql`. O Supabase pode avisar de "operações destrutivas" no 07 (ele troca funções e políticas antigas, sem apagar dados).
+7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql` e, depois, o `08_modulo_acessos.sql`, o `09_modulo_pontuacao.sql`, o `10_modulo_presencas.sql`, o `11_modulo_equipe.sql` e o `12_modulo_historico.sql`. O Supabase pode avisar de "operações destrutivas" no 07 (ele troca funções e políticas antigas, sem apagar dados).
 
 Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `areas` deve ter 5.
 
@@ -78,7 +79,7 @@ A função recebe `titulo`, `inicio` (data e hora com fuso) e `texto`, e vincula
 
 ## Como as regras foram testadas
 
-Os onze scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 245 verificações por perfil (inclui Assessoria, avais, público por pessoas, exclusão de reuniões, arquivos órfãos, as visões de pontuação, a frequência e o cadastro de pessoas): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
+Os doze scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 250 verificações por perfil (inclui Assessoria, avais, público por pessoas, exclusão de reuniões, arquivos órfãos, as visões de pontuação, a frequência, o cadastro de pessoas e o histórico): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
 
 Para repetir os testes em qualquer computador Windows com Edge e internet, a partir da pasta do projeto:
 
