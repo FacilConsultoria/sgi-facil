@@ -20,6 +20,19 @@ export function pedirDemandasDoProjeto(projetoId: string): void {
   projetoPedido = projetoId;
 }
 
+// demanda escolhida na Tela Inicial; o painel dela abre assim que o quadro carrega
+let demandaPedida = '';
+
+export function pedirPainelDaDemanda(demandaId: string): void {
+  demandaPedida = demandaId;
+}
+
+function abrirDemandaPedida(contexto: ContextoDeDemandas): void {
+  const demanda = contexto.dados.demandas.find((d) => d.id === demandaPedida);
+  demandaPedida = '';
+  if (demanda) abrirPainelDaDemanda(contexto, demanda);
+}
+
 export function paginaDemandas(destino: HTMLElement, sessao: ContextoDaSessao): void {
   const pagina = el('div', { class: 'pagina-demandas' });
   substituir(destino, pagina);
@@ -34,6 +47,7 @@ export function paginaDemandas(destino: HTMLElement, sessao: ContextoDaSessao): 
       if (!pagina.isConnected) return null;
       const contexto = montarContexto(dados);
       desenhar(contexto);
+      abrirDemandaPedida(contexto);
       return contexto;
     } catch (erro: unknown) {
       registrarErro('Carregar demandas', erro);
