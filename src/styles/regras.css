@@ -1,0 +1,14 @@
+/* Tela Regras: quadro de permissões em cartões, valores de pontuação e simulação. */
+.regras-secao { max-width: none; margin-top: 14px; }
+.regras-secao h2 { font-size: 1.05rem; }
+.cartoes-regra { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 4px; }
+.cartao-regra { border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; background: var(--bg); min-width: 0; }
+.cartao-regra h3 { font-size: 0.95rem; margin-bottom: 6px; }
+.cartao-regra dl { margin: 0; display: grid; gap: 6px; }
+.cartao-regra dt { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-3); font-weight: 600; }
+.cartao-regra dd { margin: 0; font-size: 0.88rem; overflow-wrap: anywhere; }
+.regras-form { max-width: 560px; }
+.regras-campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
+.regras-campos input { width: 100%; }
+.passos-da-excecao { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.regras-secao .tab-wrap { margin-top: 4px; }
