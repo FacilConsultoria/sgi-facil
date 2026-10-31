@@ -11,6 +11,7 @@ import './styles/equipe.css';
 import './styles/historico.css';
 import './styles/regras.css';
 import './styles/projetos.css';
+import './styles/inicio.css';
 
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { montarLayout, type Layout } from './app/layout';
