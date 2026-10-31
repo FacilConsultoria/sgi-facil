@@ -358,6 +358,29 @@ export interface RegistroDoHistorico {
   detalhe: string;
 }
 
+/** Linha da tabela public.config: valores de pontuação e visibilidade do ranking (a parte que a tela Regras edita). */
+export interface RegrasDePontuacao {
+  pontos_iniciais: number;
+  entrega_no_prazo: number;
+  entrega_atrasada: number;
+  falta: number;
+  falta_justificada: number;
+  ranking_publico: boolean;
+}
+
+/** Linha da função public.simulacao_de_visibilidade() (supabase/13_modulo_regras.sql); só a Presidência recebe linhas. */
+export interface LinhaDaSimulacao {
+  pessoa_id: string;
+  nome: string;
+  papel: Papel;
+  setor: string;
+  demandas_visiveis: number;
+  /** Demandas que a pessoa só vê por uma liberação de acesso ativa. */
+  por_excecao: number;
+  pontuacoes_visiveis: number;
+  total_demandas: number;
+}
+
 /** Linha da visão public.meu_perfil: quem está logado e o que pode fazer. */
 export interface Perfil {
   id: string;
