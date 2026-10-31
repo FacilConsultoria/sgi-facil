@@ -160,11 +160,16 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - **Atenção (não alterado):** qualquer pessoa logada consegue ler a tabela `pessoas` pela API, inclusive a coluna `email` (o 01 abriu o diretório). A tela só mostra o e-mail a quem cadastra, mas a proteção real exigiria restringir a coluna, o que mexe em `meu_perfil` e em outras visões. Proposta para uma próxima rodada.
   - Banco 245/245; site: tipos ok, 128/128 testes e simulação da tela (Presidente e membro).
 
+- **Histórico completo (30/10/2026):** lista somente leitura de tudo o que foi registrado (criação, edição, pontos, reuniões, decisões de acesso, cadastros), do mais recente para o mais antigo, com hora, quem fez, ação e detalhe. **Busca no banco** (em tudo o que a pessoa vê, não só no que já carregou) por ação, detalhe ou nome de quem fez, e **"Carregar mais"** de 100 em 100.
+  - **Quem vê o quê não mudou:** a regra de leitura da auditoria (01) já decide (Presidência com Assessoria vê tudo; os demais veem o que fizeram, o que os envolve e o escopo deles). A migração `12_modulo_historico.sql` só cria a visão `historico_visivel` (com `ator_nome`). Os testes conferem que a visão mostra exatamente os mesmos registros da regra para 10 perfis. Banco 250/250.
+  - Registros sem pessoa (integração automática) aparecem como "Integração automática".
+  - Site: tipos ok, 135/135 testes e simulação da tela (paginação de 230 registros, busca, erro).
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
 3. Conectar a Vercel ao repositório com `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY`; no Supabase Auth, Site URL e Redirect URLs com o endereço da Vercel.
-4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking , Presenças e Estrutura e equipe também feitos; próximo: histórico completo (depois regras e projetos).
+4. Migrar os módulos na ordem do ADR: Demandas e Reuniões e atas feitos; Autorizações (Acessos + Avais) , Pontuação e ranking , Presenças e Estrutura e equipe também feitos e Histórico completo também feitos; próximo: Regras (depois Projetos).
 5. Integração Meet: testar Tactiq x Fathom em reuniões reais; depois Apps Script (Drive → Edge Function). A ata é gerada como rascunho no SGI a partir da transcrição.
 6. Pendente de autorização: `@electric-sql/pglite` (desenvolvimento) para rodar os testes do banco também no CI.
 
