@@ -33,7 +33,7 @@ export function paginaEquipe(destino: HTMLElement, sessao: ContextoDaSessao): vo
 
   montarPaginaComAbas<IdDaAba>(destino, {
     titulo: 'Estrutura e equipe',
-    subtitulo: 'Organograma da Fácil: Presidência, diretorias, núcleos e pessoas.',
+    subtitulo: 'Quem é quem na Fácil neste ano e a quem cada cargo se reporta.',
     abas,
     inicial: abas.some((aba) => aba.id === abaAtual) ? abaAtual : 'organograma',
     aoEscolher: (id) => { abaAtual = id; },

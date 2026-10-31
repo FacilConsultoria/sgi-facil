@@ -1,12 +1,15 @@
-// Aba Organograma: Presidência no topo e, abaixo, cada diretoria com os seus núcleos e pessoas.
-// O diretório de pessoas é aberto a quem tem cadastro (decisão do banco, supabase/01); só a Presidência vê
-// o botão de definir titular e cobertura (o indicador vem de areas_da_estrutura).
+// Aba Organograma: os cargos deste ano em árvore, da Presidência para baixo, todos em retângulos do mesmo
+// tamanho. Clicar num retângulo abre a função do cargo. O diretório de pessoas é aberto a quem tem cadastro
+// (decisão do banco, supabase/01); só a Presidência vê "Definir liderança" (indicador de areas_da_estrutura).
 import type { ContextoDaSessao } from '../../app/sessao';
+import type { AreaDaEstrutura } from '../../types/database';
 import { el } from '../../ui/dom';
-import type { PessoaDaEquipe } from '../../types/database';
+import { botaoFechar } from '../../ui/formulario';
+import { abrirCamada } from '../../ui/camada';
 import type { DadosDaEstrutura } from './dados';
 import { abrirDefinirLideranca } from './lideranca';
-import { descreverResponsavel, iniciais, montarOrganograma, type AreaNoOrganograma, type NucleoNoOrganograma } from './regras';
+import { descreverFuncao, montarOrganograma, nomeNoRetangulo, ORGANOGRAMA_DESTE_ANO, type NoDoOrganograma } from './organograma-regras';
+import { iniciais } from './regras';
 
 export interface ContextoDoOrganograma {
   /** Onde as janelas são montadas (fora do conteúdo, que é redesenhado). */
@@ -18,57 +21,54 @@ export interface ContextoDoOrganograma {
 
 export function desenharOrganograma(contexto: ContextoDoOrganograma): HTMLElement[] {
   const { areas, nucleos, pessoas } = contexto.dados;
-  const organograma = montarOrganograma(areas, nucleos, pessoas);
+  const raiz = montarOrganograma(ORGANOGRAMA_DESTE_ANO, areas, nucleos, pessoas);
   const meuId = contexto.sessao.perfil.id;
 
-  const avatar = (nome: string): HTMLElement => el('span', { class: 'av', 'aria-hidden': 'true' }, iniciais(nome));
-  const voce = (pessoa: PessoaDaEquipe): string => (pessoa.id === meuId ? ' (você)' : '');
-
-  const no = (titulo: string, pessoa: PessoaDaEquipe | null, vago: string, classe = ''): HTMLElement =>
-    pessoa
-      ? el('div', { class: `no ${classe}`.trim() },
-        avatar(pessoa.nome),
-        el('div', { class: 'no-txt' }, el('b', {}, titulo), el('span', {}, `${pessoa.nome}${voce(pessoa)}`)))
-      : el('div', { class: `no vago ${classe}`.trim() },
-        el('div', { class: 'no-txt' }, el('b', {}, titulo), el('span', {}, vago)));
-
-  const nucleo = (item: NucleoNoOrganograma, dono: AreaNoOrganograma): HTMLElement => {
-    const gente = [...item.lideres, ...item.membros];
-    return el('section', { class: 'grupo-org' },
-      el('h3', {}, item.nucleo.nome, item.nucleo.vaga ? el('span', { class: 'chip vaga' }, 'Vaga') : null),
-      gente.length
-        ? el('ul', { class: 'gente' }, ...gente.map((pessoa) =>
-          el('li', {}, avatar(pessoa.nome),
-            el('span', {}, `${pessoa.nome}${voce(pessoa)}`, item.lideres.includes(pessoa) ? el('small', {}, ' · liderança') : null))))
-        : el('p', { class: 'meta' }, `Conduzido por ${dono.titular?.nome ?? dono.cobertura?.nome ?? 'a Presidência'}`));
+  const retangulo = (no: NoDoOrganograma): HTMLButtonElement => {
+    const nome = nomeNoRetangulo(no, meuId);
+    const botao = el('button', { type: 'button', class: no.pessoa ? 'no' : 'no vago', 'aria-haspopup': 'dialog' },
+      el('span', { class: 'av', 'aria-hidden': 'true' }, no.pessoa ? iniciais(no.pessoa.nome) : '?'),
+      el('span', { class: 'no-txt' }, el('b', {}, no.titulo), el('span', { title: nome }, nome)));
+    botao.addEventListener('click', () => abrirFuncao(contexto, no));
+    return botao;
   };
+  const item = (no: NoDoOrganograma): HTMLElement =>
+    el('li', {}, retangulo(no), no.filhos.length ? el('ul', {}, ...no.filhos.map(item)) : null);
 
-  const ramo = (item: AreaNoOrganograma): HTMLElement => {
-    const definir = el('button', { type: 'button', class: 'btn peq' }, 'Definir liderança');
-    definir.addEventListener('click', () => abrirDefinirLideranca(contexto, item));
-    return el('div', { class: 'ramo' },
-      no(item.area.titulo, item.titular, descreverResponsavel(item)),
-      item.area.pode_definir_lideranca ? el('div', { class: 'acao-do-ramo' }, definir) : null,
-      ...item.nucleos.map((n) => nucleo(n, item)));
-  };
-
-  const { presidencia, diretorias } = organograma;
   return [
-    el('div', { class: 'legenda' }, el('span', {}, el('span', { class: 'chip vaga' }, 'Vaga'), ' Liderança em aberto')),
-    el('div', { class: 'orgchart' },
-      presidencia
-        ? el('div', { class: 'topo-org' },
-          no(presidencia.area.titulo, presidencia.titular, descreverResponsavel(presidencia), 'raiz'),
-          el('div', { class: 'staff' },
-            ...presidencia.nucleos.map((n) => nucleo(n, presidencia)),
-            presidencia.area.pode_definir_lideranca
-              ? (() => {
-                const definir = el('button', { type: 'button', class: 'btn peq' }, 'Definir liderança');
-                definir.addEventListener('click', () => abrirDefinirLideranca(contexto, presidencia));
-                return definir;
-              })()
-              : null))
-        : null,
-      el('div', { class: 'ramos' }, ...diretorias.map(ramo))),
+    el('p', { class: 'dica' }, 'Clique em um cargo para ver a função.'),
+    el('div', { class: 'arvore' }, el('ul', {}, item(raiz))),
   ];
+}
+
+/** Janela do cargo: quem é, a função e, para a Presidência, o atalho de definir titular e cobertura. */
+function abrirFuncao(contexto: ContextoDoOrganograma, no: NoDoOrganograma): void {
+  abrirCamada(contexto.pagina, {
+    tipo: 'modal',
+    idDoTitulo: 'funcao-titulo',
+    montar: (fechar) => {
+      const fecharJanela = el('button', { type: 'button', class: 'btn' }, 'Fechar');
+      fecharJanela.addEventListener('click', fechar);
+      const botaoDeLideranca = (area: AreaDaEstrutura): HTMLButtonElement => {
+        const definir = el('button', { type: 'button', class: 'btn' }, 'Definir liderança');
+        definir.addEventListener('click', () => {
+          fechar();
+          abrirDefinirLideranca({ pagina: contexto.pagina, candidatos: contexto.dados.candidatos, recarregar: contexto.recarregar }, area);
+        });
+        return definir;
+      };
+      const definir = no.area?.pode_definir_lideranca ? botaoDeLideranca(no.area) : null;
+      return [
+        el('div', { class: 'form-janela' },
+          el('div', { class: 'painel-cab' }, el('h2', { id: 'funcao-titulo' }, no.titulo), botaoFechar(fechar)),
+          el('div', { class: 'painel-corpo' },
+            el('div', { class: 'no-pessoa' },
+              el('span', { class: 'av', 'aria-hidden': 'true' }, no.pessoa ? iniciais(no.pessoa.nome) : '?'),
+              el('b', {}, nomeNoRetangulo(no, contexto.sessao.perfil.id))),
+            el('h3', {}, 'Função'),
+            el('p', { class: 'texto-da-funcao' }, descreverFuncao(no))),
+          el('div', { class: 'modal-pe' }, definir, fecharJanela)),
+      ];
+    },
+  });
 }

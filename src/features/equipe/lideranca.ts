@@ -1,22 +1,27 @@
 // Janela "Definir liderança": titular e cobertura de uma área. Só a Presidência chega aqui (o botão depende
 // do indicador pode_definir_lideranca) e o banco confere de novo.
+import { tituloDoPapel } from '../../lib/perfil';
+import type { AreaDaEstrutura, CandidatoALideranca } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el } from '../../ui/dom';
 import { abrirJanela, campo, ligarEnvio, linhaDeErro, rodapeDaJanela } from '../../ui/formulario';
-import { tituloDoPapel } from '../../lib/perfil';
 import { definirLideranca } from './dados';
-import type { ContextoDoOrganograma } from './organograma';
-import type { AreaNoOrganograma } from './regras';
 
-export function abrirDefinirLideranca(contexto: ContextoDoOrganograma, no: AreaNoOrganograma): void {
-  const { candidatos } = contexto.dados;
-  abrirJanela(contexto.pagina, 'lideranca-titulo', `Liderança: ${no.area.titulo}`, (fechar) => {
+export interface ContextoDaLideranca {
+  /** Onde as janelas são montadas (fora do conteúdo, que é redesenhado). */
+  pagina: HTMLElement;
+  candidatos: readonly CandidatoALideranca[];
+  recarregar: () => Promise<void>;
+}
+
+export function abrirDefinirLideranca(contexto: ContextoDaLideranca, area: AreaDaEstrutura): void {
+  abrirJanela(contexto.pagina, 'lideranca-titulo', `Liderança: ${area.titulo}`, (fechar) => {
     const opcoes = (atual: string | null, vazio: string): HTMLOptionElement[] => [
       el('option', { value: '' }, vazio),
-      ...candidatos.map((c) => el('option', { value: c.id, selected: c.id === atual }, `${c.nome} · ${tituloDoPapel(c.papel)}`)),
+      ...contexto.candidatos.map((c) => el('option', { value: c.id, selected: c.id === atual }, `${c.nome} · ${tituloDoPapel(c.papel)}`)),
     ];
-    const titular = el('select', { id: 'ld-titular' }, ...opcoes(no.area.titular, 'Vaga (sem titular)'));
-    const cobertura = el('select', { id: 'ld-cobertura' }, ...opcoes(no.area.cobertura, 'Sem cobertura'));
+    const titular = el('select', { id: 'ld-titular' }, ...opcoes(area.titular, 'Sem titular'));
+    const cobertura = el('select', { id: 'ld-cobertura' }, ...opcoes(area.cobertura, 'Sem cobertura'));
     const botao = el('button', { type: 'submit', class: 'btn prim' }, 'Salvar');
     const erro = linhaDeErro();
 
@@ -30,7 +35,7 @@ export function abrirDefinirLideranca(contexto: ContextoDoOrganograma, no: AreaN
     ligarEnvio({
       formulario, botao, erro,
       operacao: 'Definir liderança da área',
-      acao: () => definirLideranca(no.area.id, titular.value || null, cobertura.value || null),
+      acao: () => definirLideranca(area.id, titular.value || null, cobertura.value || null),
       depois: async () => {
         fechar();
         mostrarAviso('Liderança atualizada');

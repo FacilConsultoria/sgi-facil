@@ -15,64 +15,6 @@ export function iniciais(nome: string): string {
   return (primeira.charAt(0) + ultima.charAt(0)).toUpperCase();
 }
 
-export interface NucleoNoOrganograma {
-  nucleo: NucleoDaEstrutura;
-  /** Gerência e assessoria do núcleo. */
-  lideres: PessoaDaEquipe[];
-  membros: PessoaDaEquipe[];
-}
-
-export interface AreaNoOrganograma {
-  area: AreaDaEstrutura;
-  titular: PessoaDaEquipe | null;
-  /** Quem responde pela área enquanto ela está sem titular. */
-  cobertura: PessoaDaEquipe | null;
-  nucleos: NucleoNoOrganograma[];
-}
-
-export interface Organograma {
-  presidencia: AreaNoOrganograma | null;
-  diretorias: AreaNoOrganograma[];
-}
-
-/** Junta áreas, núcleos e pessoas ativas no desenho do organograma (a Presidência no topo, as diretorias por nome). */
-export function montarOrganograma(
-  areas: readonly AreaDaEstrutura[],
-  nucleos: readonly NucleoDaEstrutura[],
-  pessoas: readonly PessoaDaEquipe[],
-): Organograma {
-  const ativas = pessoas.filter((p) => p.ativo);
-  const pessoaPorId = new Map(ativas.map((p) => [p.id, p]));
-  const noDaArea = (area: AreaDaEstrutura): AreaNoOrganograma => ({
-    area,
-    titular: (area.titular && pessoaPorId.get(area.titular)) || null,
-    cobertura: (area.cobertura && pessoaPorId.get(area.cobertura)) || null,
-    nucleos: nucleos
-      .filter((n) => n.area_id === area.id)
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'))
-      .map((nucleo) => {
-        const doNucleo = ativas.filter((p) => p.nucleo_id === nucleo.id).sort(porNome);
-        return {
-          nucleo,
-          lideres: doNucleo.filter((p) => p.papel === 'gerente' || p.papel === 'assessor'),
-          membros: doNucleo.filter((p) => p.papel === 'membro'),
-        };
-      }),
-  });
-  const ordenadas = [...areas].sort((a, b) => a.titulo.localeCompare(b.titulo, 'pt-BR'));
-  const raiz = ordenadas.find((a) => a.area_da_presidencia);
-  return {
-    presidencia: raiz ? noDaArea(raiz) : null,
-    diretorias: ordenadas.filter((a) => !a.area_da_presidencia).map(noDaArea),
-  };
-}
-
-/** Quem responde pela área: o titular, ou "Vaga · coberta por Fulano", ou só "Vaga". */
-export function descreverResponsavel(no: Pick<AreaNoOrganograma, 'titular' | 'cobertura'>): string {
-  if (no.titular) return no.titular.nome;
-  return no.cobertura ? `Vaga · coberta por ${no.cobertura.nome}` : 'Vaga';
-}
-
 /** Cargos que não têm núcleo: Presidente, Vice-Presidente e diretoria. */
 export function precisaDeNucleo(papel: Papel): boolean {
   return papel === 'gerente' || papel === 'assessor' || papel === 'membro';
