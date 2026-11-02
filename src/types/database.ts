@@ -419,4 +419,21 @@ export interface Perfil {
   pode_ajustar_pontos: boolean;
   pode_cadastrar_pessoas: boolean;
   pode_editar_regras: boolean;
+  /** A pessoa ainda não preencheu os dados pessoais (supabase/15_dados_pessoais.sql). */
+  dados_pendentes: boolean;
+}
+
+export type GeneroInformado = 'feminino' | 'masculino' | 'outro' | 'nao_informar';
+
+/** Linha da tabela public.dados_pessoais: só a própria pessoa e a Presidente leem. CPF e RGA vêm sem pontuação. */
+export interface DadosPessoais {
+  pessoa_id: string;
+  nome_completo: string;
+  rga: string;
+  cpf: string;
+  /** AAAA-MM-DD. */
+  nascimento: string;
+  genero: GeneroInformado;
+  criado_em: string;
+  atualizado_em: string;
 }
