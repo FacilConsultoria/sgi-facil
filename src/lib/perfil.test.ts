@@ -16,7 +16,7 @@ function perfil(campos: Partial<Perfil>): Perfil {
     id: '1', nome: 'Pessoa', email: 'pessoa@facil.test', papel: 'membro',
     area_id: 'com', area_titulo: 'Diretoria Comercial', nucleo_id: null, nucleo_nome: null,
     areas_que_conduz: [], eh_presidencia: false, eh_presidente: false, pode_ajustar_pontos: false,
-    pode_cadastrar_pessoas: false, pode_editar_regras: false,
+    pode_cadastrar_pessoas: false, pode_editar_regras: false, dados_pendentes: false,
     ...campos,
   };
 }
