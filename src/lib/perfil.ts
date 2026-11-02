@@ -1,5 +1,6 @@
 // Textos derivados do perfil de quem está logado. Funções puras, sem acesso a dados.
 import type { Perfil } from '../types/database';
+import { presidenteOuVice } from './tratamento';
 
 const TITULO_DO_PAPEL: Record<Perfil['papel'], string> = {
   presidente: 'Presidência',
@@ -38,7 +39,7 @@ export function descreverEscopo(perfil: Perfil, tituloDaArea: (id: string) => st
       return `Vê todos os núcleos de: ${perfil.areas_que_conduz.map(tituloDaArea).join(' e ') || perfil.area_titulo}.`;
     case 'assessor':
       return perfil.eh_presidencia
-        ? 'Mesmo acesso da Presidência. Ajustar a própria pontuação e aprovar acessos por exceção dependem de aval da Presidente ou da Vice.'
+        ? `Mesmo acesso da Presidência. Ajustar a própria pontuação e aprovar acessos por exceção dependem de aval ${presidenteOuVice('de')}.`
         : 'Organiza agenda e atas das reuniões gerais e da Presidência.';
     case 'gerente':
       return `Vê as demandas e as pessoas de ${perfil.nucleo_nome ?? perfil.area_titulo}.`;
