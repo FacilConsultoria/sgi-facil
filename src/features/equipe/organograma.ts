@@ -7,6 +7,7 @@ import type { AreaDaEstrutura } from '../../types/database';
 import { abrirCamada } from '../../ui/camada';
 import { el } from '../../ui/dom';
 import { botaoFechar } from '../../ui/formulario';
+import { abrirDadosDaPessoa } from '../dadospessoais/visualizacao';
 import type { DadosDaEstrutura } from './dados';
 import { abrirDefinirLideranca } from './lideranca';
 import {
@@ -69,6 +70,13 @@ function abrirFuncao(contexto: ContextoDoOrganograma, no: NoDoOrganograma): void
         return definir;
       };
       const definir = no.area?.pode_definir_lideranca ? botaoDeLideranca(no.area) : null;
+      // dados pessoais: só a Presidente (indicador eh_presidente do perfil); o banco devolve linha só a ela e à própria pessoa
+      const pessoa = no.pessoa;
+      const dadosPessoais = contexto.sessao.perfil.eh_presidente && pessoa ? el('button', { type: 'button', class: 'btn' }, 'Dados pessoais') : null;
+      dadosPessoais?.addEventListener('click', () => {
+        fechar();
+        if (pessoa) void abrirDadosDaPessoa(contexto.pagina, pessoa);
+      });
       return [
         el('div', { class: 'form-janela' },
           el('div', { class: 'painel-cab' }, el('h2', { id: 'funcao-titulo' }, no.titulo), botaoFechar(fechar)),
@@ -78,7 +86,7 @@ function abrirFuncao(contexto: ContextoDoOrganograma, no: NoDoOrganograma): void
               el('b', {}, nomeNoRetangulo(no, contexto.sessao.perfil.id))),
             el('h3', {}, 'Função'),
             el('p', { class: 'texto-da-funcao' }, descreverFuncao(no))),
-          el('div', { class: 'modal-pe' }, definir, fecharJanela)),
+          el('div', { class: 'modal-pe' }, dadosPessoais, definir, fecharJanela)),
       ];
     },
   });

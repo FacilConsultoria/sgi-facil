@@ -28,7 +28,7 @@ export function paginaEquipe(destino: HTMLElement, sessao: ContextoDaSessao): vo
   ];
   // o cadastro é de quem cadastra pessoas; o banco confere de novo cada gravação
   if (sessao.perfil.pode_cadastrar_pessoas) {
-    abas.push({ id: 'cadastro', titulo: 'Cadastro', montar: montar('Carregar cadastro', 'Carregando cadastro…', desenharCadastro) });
+    abas.push({ id: 'cadastro', titulo: 'Cadastro', montar: montar('Carregar cadastro', 'Carregando cadastro…', (contexto) => desenharCadastro({ ...contexto, sessao })) });
   }
 
   montarPaginaComAbas<IdDaAba>(destino, {

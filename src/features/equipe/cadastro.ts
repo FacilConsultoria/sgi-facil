@@ -1,7 +1,9 @@
 // Aba Cadastro: lista de pessoas (com e-mail e situação) para quem cadastra, com cadastrar e alterar.
 // Quem pode alterar cada pessoa vem de pode_editar, calculado pelo banco.
+import type { ContextoDaSessao } from '../../app/sessao';
 import { plural } from '../../lib/texto';
 import { el, substituir } from '../../ui/dom';
+import { abrirDadosDaPessoa } from '../dadospessoais/visualizacao';
 import type { DadosDaEstrutura } from './dados';
 import { abrirFormularioDePessoa } from './formulario-pessoa';
 import { descreverCargoDaPessoa, filtrarEquipe } from './regras';
@@ -10,6 +12,7 @@ export interface ContextoDoCadastro {
   /** Onde as janelas são montadas (fora do conteúdo, que é redesenhado). */
   pagina: HTMLElement;
   dados: DadosDaEstrutura;
+  sessao: ContextoDaSessao;
   recarregar: () => Promise<void>;
 }
 
@@ -34,12 +37,15 @@ export function desenharCadastro(contexto: ContextoDoCadastro): HTMLElement[] {
     const linhas = pessoas.map((pessoa) => {
       const editar = el('button', { type: 'button', class: 'btn peq' }, 'Editar');
       editar.addEventListener('click', () => abrirFormularioDePessoa(contexto, pessoa));
+      // dados pessoais: só a Presidente (o banco devolve linha só a ela e à própria pessoa)
+      const dadosPessoais = contexto.sessao.perfil.eh_presidente ? el('button', { type: 'button', class: 'btn peq' }, 'Dados pessoais') : null;
+      dadosPessoais?.addEventListener('click', () => void abrirDadosDaPessoa(contexto.pagina, pessoa));
       return el('tr', { class: pessoa.ativo ? undefined : 'desativada' },
         el('td', {}, pessoa.nome, el('br', {}), el('span', { class: 'meta' }, pessoa.email ?? '')),
         el('td', {}, descreverCargoDaPessoa(pessoa, dados.areas, dados.nucleos)),
         el('td', {}, pessoa.curso ?? '–'),
         el('td', {}, el('span', { class: pessoa.ativo ? 'chip ok' : 'chip' }, pessoa.ativo ? 'Ativa' : 'Desativada')),
-        el('td', { class: 'acoes-da-linha' }, pessoa.pode_editar ? editar : null));
+        el('td', { class: 'acoes-da-linha' }, dadosPessoais, pessoa.pode_editar ? editar : null));
     });
     substituir(lista,
       el('div', { class: 'tab-wrap' },
