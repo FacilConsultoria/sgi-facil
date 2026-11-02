@@ -3,7 +3,7 @@
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL14 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL15 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -55,6 +55,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL12);
     await db.exec(window.SQL13);
     await db.exec(window.SQL14);
+    await db.exec(window.SQL15);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -569,13 +570,13 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
 
     const emails = email => como(email, `select count(*) filter (where email is not null)::int as com_email, count(*)::int as total, count(*) filter (where not ativo)::int as inativas from equipe_pessoas`);
     const totalDePessoas = await valor(MEL, `select count(*)::int from pessoas`);
-    confere('Equipe: e-mail e pessoas desativadas só para quem cadastra', {
+    confere('Equipe: e-mail de todas e pessoas desativadas só para quem cadastra (as demais veem só o próprio e-mail)', {
       mel: await emails(MEL), gina: await emails(GINA), ana: await emails(ANA), duda: await emails(DUDA),
     }, {
       mel: [{ com_email: totalDePessoas, total: totalDePessoas, inativas: 2 }],
       gina: [{ com_email: totalDePessoas, total: totalDePessoas, inativas: 2 }],
-      ana: [{ com_email: 0, total: totalDePessoas - 2, inativas: 0 }],
-      duda: [{ com_email: 0, total: totalDePessoas - 2, inativas: 0 }],
+      ana: [{ com_email: 1, total: totalDePessoas - 2, inativas: 0 }],
+      duda: [{ com_email: 1, total: totalDePessoas - 2, inativas: 0 }],
     });
     const edita = (email, nome) => como(email, `select pode_editar from equipe_pessoas where nome = $1`, [nome]);
     confere('Quem pode editar quem', {
@@ -721,6 +722,67 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       recusada.test(await tenta(MEL, `delete from projetos_painel`)),
       recusada.test(await tenta(MEL, `update projetos_painel set nome = 'x'`)),
     ], [true, true]);
+
+    // dados pessoais (15)
+    const pessoasNoBanco = (await db.query(`select count(*)::int as n from pessoas`)).rows[0].n;
+    confere('E-mail: a leitura direta de pessoas não inclui o e-mail nem o vínculo de login', [
+      (await tenta(ANA, `select email from pessoas`)).startsWith('permission denied'),
+      (await tenta(ANA, `select * from pessoas`)).startsWith('permission denied'),
+      (await tenta(ANA, `select auth_user_id from pessoas`)).startsWith('permission denied'),
+      (await como(ANA, `select id, nome, papel from pessoas`)).length,
+    ], [true, true, true, pessoasNoBanco]);
+    confere('E-mail: cada pessoa vê o próprio; só quem cadastra pessoas vê o de todas', {
+      ana: await valor(ANA, `select email from meu_perfil`),
+      anaNaEquipe: (await como(ANA, `select count(email)::int as n from equipe_pessoas`))[0].n,
+      camilaNaEquipe: (await como(CAMILA, `select count(email)::int as n from equipe_pessoas`))[0].n,
+      mel: (await como(MEL, `select count(email)::int as n, count(*)::int as total from equipe_pessoas`))[0],
+    }, { ana: ANA, anaNaEquipe: 1, camilaNaEquipe: 1, mel: { n: pessoasNoBanco, total: pessoasNoBanco } });
+    const cpfValido = async cpf => (await db.query(`select privado.cpf_valido($1) as v`, [cpf])).rows[0].v;
+    confere('CPF: valida os dígitos verificadores', [await cpfValido('52998224725'), await cpfValido('11144477735'), await cpfValido('52998224726'), await cpfValido('11111111111'), await cpfValido('123')], [true, true, false, false, false]);
+    confere('Dados pendentes até a pessoa preencher', [await valor(ANA, `select dados_pendentes from meu_perfil`), await valor(MEL, `select dados_pendentes from meu_perfil`)], [true, true]);
+    const gravar = (email, nome, rga, cpf, nascimento, genero) => como(email, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, [nome, rga, cpf, nascimento, genero]);
+    await bloqueia('Nome sem sobrenome é recusado', ANA, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana', 'AB1234567890', '52998224725', '2003-04-09', 'feminino'], 'Informe o nome completo, com nome e sobrenome.');
+    await bloqueia('RGA com tamanho errado é recusado', ANA, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana Ferraz', 'AB123', '52998224725', '2003-04-09', 'feminino'], 'O RGA tem 12 caracteres (letras e números).');
+    await bloqueia('CPF inválido é recusado', ANA, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana Ferraz', 'AB1234567890', '52998224726', '2003-04-09', 'feminino'], 'CPF inválido. Confira os 11 números.');
+    await bloqueia('Data no futuro é recusada', ANA, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana Ferraz', 'AB1234567890', '52998224725', '2999-01-01', 'feminino'], 'Informe uma data de nascimento válida.');
+    await bloqueia('Gênero fora da lista é recusado', ANA, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana Ferraz', 'AB1234567890', '52998224725', '2003-04-09', 'x'], 'Escolha uma opção de gênero.');
+    await bloqueia('Login sem cadastro não grava dados', 'sem-cadastro@facil.test', `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana Ferraz', 'AB1234567890', '52998224725', '2003-04-09', 'feminino'], 'Seu e-mail não tem cadastro ativo no SGI.');
+    await bloqueia('Visitante sem login não grava dados', null, `select salvar_meus_dados($1,$2,$3,$4::date,$5)`, ['Ana Ferraz', 'AB1234567890', '52998224725', '2003-04-09', 'feminino'], 'permission denied for function salvar_meus_dados');
+    await gravar(ANA, 'Ana  Ferraz de Souza', 'ab12.34 56789-0', '529.982.247-25', '2003-04-09', 'feminino');
+    await gravar(MEL, 'Melissa Santos Lima', '123456789012', '11144477735', '1999-12-31', 'feminino');
+    confere('Dados gravados já normalizados (nome sem espaços extras, RGA em maiúsculas, CPF só com números)',
+      (await db.query(`select nome_completo, rga, cpf, to_char(nascimento, 'YYYY-MM-DD') as nasc, genero from dados_pessoais where pessoa_id = $1`, [iAna])).rows[0],
+      { nome_completo: 'Ana Ferraz de Souza', rga: 'AB1234567890', cpf: '52998224725', nasc: '2003-04-09', genero: 'feminino' });
+    confere('Pendência some só para quem preencheu', [await valor(ANA, `select dados_pendentes from meu_perfil`), await valor(MEL, `select dados_pendentes from meu_perfil`), await valor(CAMILA, `select dados_pendentes from meu_perfil`)], [false, false, true]);
+    const leituras = {};
+    for (const [nome, email] of [['mel', MEL], ['ana', ANA], ['maju', MAJU], ['luis', LUIS], ['joao', JOAO], ['gina', GINA], ['camila', CAMILA]]) {
+      leituras[nome] = await valor(email, `select count(*)::int from dados_pessoais`);
+    }
+    confere('Lê os dados só a dona ou o dono e a Presidente (Assessoria, Vice, diretoria e gerência não)', leituras, { mel: 2, ana: 1, maju: 0, luis: 0, joao: 0, gina: 0, camila: 0 });
+    confere('A Presidente consegue ler os dados de uma pessoa; a Assessoria não', [
+      await valor(MEL, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna]),
+      (await como(MAJU, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna])).length,
+    ], ['52998224725', 0]);
+    confere('Dados pessoais fechados ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from dados_pessoais`)).startsWith('permission denied'),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from dados_pessoais`),
+    ], [true, 0]);
+    confere('Ninguém escreve nos dados pessoais diretamente, nem a Presidente', [
+      (await tenta(ANA, `update dados_pessoais set cpf = '11144477735'`)).startsWith('permission denied'),
+      (await tenta(MEL, `update dados_pessoais set cpf = '11144477735' where pessoa_id = $1`, [iAna])).startsWith('permission denied'),
+      (await tenta(MEL, `delete from dados_pessoais where pessoa_id = $1`, [iAna])).startsWith('permission denied'),
+      (await tenta(ANA, `insert into dados_pessoais(pessoa_id, nome_completo, rga, cpf, nascimento, genero) values ($1,'Fulana de Tal','AB1234567890','52998224725','2000-01-01','outro')`, [iAna])).startsWith('permission denied'),
+    ], [true, true, true, true]);
+    await gravar(ANA, 'Ana Ferraz de Souza', 'AB1234567890', '52998224725', '2003-04-09', 'outro');
+    confere('A dona dos dados altera os próprios dados (um único registro) e a Presidente continua com o dela', [
+      (await db.query(`select count(*)::int as n from dados_pessoais where pessoa_id = $1`, [iAna])).rows[0].n,
+      (await db.query(`select genero from dados_pessoais where pessoa_id = $1`, [iAna])).rows[0].genero,
+      (await db.query(`select cpf from dados_pessoais where pessoa_id = (select id from pessoas where nome = 'Mel')`)).rows[0].cpf,
+    ], [1, 'outro', '11144477735']);
+    confere('A auditoria registra a atualização sem guardar os valores', [
+      (await db.query(`select count(*)::int as n from auditoria where acao = 'Atualizou dados pessoais'`)).rows[0].n >= 3,
+      (await db.query(`select count(*)::int as n from auditoria where detalhe ~ '(52998224725|11144477735|AB1234567890|2003-04-09)'`)).rows[0].n,
+    ], [true, 0]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
