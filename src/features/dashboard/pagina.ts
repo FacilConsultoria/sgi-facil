@@ -5,7 +5,9 @@ import { descreverEscopo, primeiroNome } from '../../lib/perfil';
 import { hojeEmSaoPaulo } from '../../lib/datas';
 import type { DemandaVisivel, LancamentoVisivel, ReuniaoVisivel, SolicitacaoVisivel } from '../../types/database';
 import { el, substituir } from '../../ui/dom';
+import { iconeDePendencia } from '../../ui/pendencia';
 import { montarRecarregavel } from '../../ui/recarregavel';
+import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../dadospessoais/janela';
 import { pedirPainelDaDemanda } from '../demandas/pagina';
 import { estaAtrasada } from '../demandas/regras';
 import { comSinal, descreverLancamento, NOME_DO_TIPO_DE_LANCAMENTO } from '../pontuacao/regras';
@@ -30,11 +32,29 @@ export function paginaDashboard(destino: HTMLElement, contexto: ContextoDaSessao
     carregar: () => carregarInicio(perfil.id),
     operacao: 'Carregar a Tela Inicial',
     textoDeCarregando: 'Carregando seu painel…',
-    desenhar: (dados) => desenharInicio(dados, contexto, hojeEmSaoPaulo()),
+    desenhar: (dados) => desenharInicio(dados, contexto, hojeEmSaoPaulo(), destino),
   });
 }
 
-function desenharInicio(dados: DadosDoInicio, contexto: ContextoDaSessao, hoje: string): HTMLElement[] {
+/** Aviso de dados pessoais pendentes; some sozinho quando a pessoa salva (pela janela do aviso ou do menu). */
+function avisoDeDadosPendentes(contexto: ContextoDaSessao, pai: HTMLElement): HTMLElement {
+  const preencher = el('button', { type: 'button', class: 'btn prim' }, 'Preencher agora');
+  preencher.addEventListener('click', () => void abrirMeusDados(pai, contexto.perfil));
+  const aviso = el('section', { class: 'aviso-dados' },
+    iconeDePendencia('proximo', 'Dados pessoais pendentes'),
+    el('div', {},
+      el('b', {}, 'Seus dados pessoais estão pendentes'),
+      el('p', { class: 'dica' }, 'Nome completo, RGA, CPF, data de nascimento e gênero. Leva um minuto e evita pedirmos de novo.')),
+    preencher);
+  const aoSalvar = (): void => {
+    window.removeEventListener(EVENTO_DADOS_SALVOS, aoSalvar);
+    aviso.remove();
+  };
+  window.addEventListener(EVENTO_DADOS_SALVOS, aoSalvar);
+  return aviso;
+}
+
+function desenharInicio(dados: DadosDoInicio, contexto: ContextoDaSessao, hoje: string, pai: HTMLElement): HTMLElement[] {
   const { perfil } = contexto;
   const minhas = minhasDemandasAbertas(dados.demandas, perfil.id);
   const proximas = proximasReunioes(dados.reunioes, hoje);
@@ -50,6 +70,7 @@ function desenharInicio(dados: DadosDoInicio, contexto: ContextoDaSessao, hoje: 
   ].filter((item): item is string => Boolean(item));
 
   return [
+    ...(perfil.dados_pendentes ? [avisoDeDadosPendentes(contexto, pai)] : []),
     el('div', { class: 'kpis' }, ...indicadores.map((i) =>
       el('div', { class: i.alerta ? 'kpi alerta' : 'kpi' }, el('span', {}, i.titulo), el('b', {}, i.valor), el('small', {}, i.detalhe)))),
     el('div', { class: 'duas' },
