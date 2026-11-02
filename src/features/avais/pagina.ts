@@ -1,8 +1,9 @@
-// Avais: pedidos que dependem da Presidente ou da Vice-Presidência. Quem pediu acompanha o
-// andamento; a Presidente e a Vice aprovam ou negam (o indicador pode_decidir vem do banco).
+// Avais: pedidos que dependem da Presidência ou da Vice-Presidência. Quem pediu acompanha o
+// andamento; a Presidência e a Vice-Presidência aprovam ou negam (o indicador pode_decidir vem do banco).
 import { dataEHora } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
 import { plural } from '../../lib/texto';
+import { presidenteOuVice } from '../../lib/tratamento';
 import type { AvalVisivel } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el, substituir } from '../../ui/dom';
@@ -40,7 +41,7 @@ function desenhar(dados: DadosDosAvais, recarregar: () => Promise<void>): HTMLEl
       ? el('div', { class: 'lista' }, ...avais.map((aval) => cartaoDoAval(aval, dados.nomeDe, recarregar)))
       : el('p', { class: 'vazio' }, vazio);
   return [
-    el('p', { class: 'dica' }, 'Pedidos que dependem da Presidente ou da Vice-Presidência. Ao aprovar, o sistema executa a ação; ao negar, nada muda.'),
+    el('p', { class: 'dica' }, `Pedidos que dependem ${presidenteOuVice('de')}. Ao aprovar, o sistema executa a ação; ao negar, nada muda.`),
     el('section', { class: 'secao' },
       el('h2', {}, `Aguardando decisão · ${plural(pendentes.length, 'pedido', 'pedidos')}`),
       lista(pendentes, 'Nenhum pedido aguardando decisão.')),
