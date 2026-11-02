@@ -2,6 +2,7 @@
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { CHAVE_SENHA_DEFINIDA } from '../features/auth/regras';
 import { supabase } from '../lib/supabase';
+import { definirTratamentos } from '../lib/tratamento';
 import type { Perfil } from '../types/database';
 
 export interface ContextoDaSessao {
@@ -11,13 +12,17 @@ export interface ContextoDaSessao {
 
 /** Devolve null quando o login existe mas o e-mail não tem cadastro ativo no SGI. */
 export async function carregarContexto(): Promise<ContextoDaSessao | null> {
-  const [perfilResposta, areasResposta] = await Promise.all([
+  const [perfilResposta, areasResposta, cargosResposta] = await Promise.all([
     supabase.from('meu_perfil').select('*').maybeSingle(),
     supabase.from('areas').select('id, titulo'),
+    // tratamento (feminino, masculino ou neutro) de quem ocupa a Presidência e a Vice-Presidência, para os textos
+    supabase.from('pessoas').select('papel, tratamento, ativo'),
   ]);
   if (perfilResposta.error) throw perfilResposta.error;
   if (areasResposta.error) throw areasResposta.error;
   if (!perfilResposta.data) return null;
+  // sem essa leitura os textos usam o nome do cargo, sem gênero; não impede a entrada
+  definirTratamentos(cargosResposta.error ? [] : (cargosResposta.data ?? []) as { papel: string; tratamento: string; ativo: boolean }[]);
 
   const titulos = new Map<string, string>();
   for (const area of areasResposta.data as { id: string; titulo: string }[]) titulos.set(area.id, area.titulo);
