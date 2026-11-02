@@ -1,4 +1,5 @@
-// Janela para pedir à Presidente ou à Vice que aceitem justificar a falta de um diretor.
+// Janela para pedir à Presidência ou à Vice-Presidência que aceitem justificar a falta de diretoria.
+import { presidenteOuVice } from '../../lib/tratamento';
 import { mostrarAviso } from '../../ui/aviso';
 import { el } from '../../ui/dom';
 import { abrirJanela, campo, ligarEnvio, linhaDeErro, rodapeDaJanela } from '../../ui/formulario';
@@ -20,7 +21,7 @@ export function abrirPedidoDeAval(
     const formulario = el('form', { class: 'form-janela', novalidate: true },
       el('div', { class: 'painel-corpo form' },
         el('p', { class: 'dica' },
-          `A falta de diretoria só vira justificada com o aval da Presidente ou da Vice-Presidência. O pedido de ${nome} na reunião “${reuniao.titulo}” fica registrado até eles decidirem; enquanto isso a reunião não pode ser encerrada.`),
+          `A falta de diretoria só vira justificada com o aval ${presidenteOuVice('de')}. O pedido de ${nome} na reunião “${reuniao.titulo}” fica registrado até a decisão; enquanto isso a reunião não pode ser encerrada.`),
         campo('Motivo', motivo),
         erro.elemento),
       rodapeDaJanela(fechar, botao));

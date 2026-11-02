@@ -1,7 +1,8 @@
 // Lista de presença da reunião: quem organiza marca e encerra (as faltas viram lançamentos de pontos);
 // os demais convocados só consultam a lista depois do encerramento. A falta de diretoria só vira
-// "justificada" com o aval da Presidente ou da Vice: quem organiza pede o aval daqui.
+// "justificada" com o aval da Presidência ou da Vice-Presidência: quem organiza pede o aval daqui.
 import { plural } from '../../lib/texto';
+import { comInicialMaiuscula, presidenteOuVice } from '../../lib/tratamento';
 import type { AvalVisivel, ConvocadoDaReuniao, Presenca, ReuniaoVisivel } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el, substituir } from '../../ui/dom';
@@ -84,7 +85,7 @@ function formularioDePresenca(
     const aval = avalDaPessoa(avais, convocado.pessoa_id);
     const nota: HTMLElement[] = [];
     if (aval?.status === 'pendente') {
-      nota.push(el('span', { class: 'chip s-revisao' }, 'Aval pendente'), el('span', { class: 'dica' }, 'A Presidente ou a Vice ainda vão decidir.'));
+      nota.push(el('span', { class: 'chip s-revisao' }, 'Aval pendente'), el('span', { class: 'dica' }, `${comInicialMaiuscula(presidenteOuVice())} ainda vão decidir.`));
     } else {
       if (aval?.status === 'negado') nota.push(el('span', { class: 'chip ruim' }, 'Aval negado'), el('span', { class: 'dica' }, aval.nota ?? ''));
       if (podePedirAvalDeJustificativa(ehDiretor, reuniao.pode_justificar_diretoria, convocado.presenca)) {
