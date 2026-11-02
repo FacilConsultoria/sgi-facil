@@ -11,7 +11,7 @@ import { campo, ligarEnvio, linhaDeErro } from '../../ui/formulario';
 import { montarRecarregavel } from '../../ui/recarregavel';
 import { carregarRegras, salvarRegras, type DadosDasRegras } from './dados';
 import {
-  CAMPOS_DE_PONTOS, descreverQuantidade, introducaoDaSimulacao, LIMITE_DOS_VALORES, PASSOS_DA_EXCECAO, PERFIS_DE_ACESSO,
+  CAMPOS_DE_PONTOS, descreverQuantidade, introducaoDaSimulacao, LIMITE_DOS_VALORES, passosDaExcecao, perfisDeAcesso,
   ROTULOS_DO_QUADRO, situacaoDasAreas, validarRegrasDePontos, valoresParaOsCampos, type ChaveDePontos, type PerfilDeAcesso,
 } from './regras';
 
@@ -51,7 +51,7 @@ function secaoDoQuadro(): HTMLElement {
       ])));
   return secao('Quem pode o quê',
     el('p', { class: 'dica' }, 'A hierarquia vale em todo o sistema e é conferida pelo banco de dados. Esconder um botão nunca substitui essa conferência.'),
-    el('div', { class: 'cartoes-regra' }, ...PERFIS_DE_ACESSO.map(cartao)));
+    el('div', { class: 'cartoes-regra' }, ...perfisDeAcesso().map(cartao)));
 }
 
 function secaoDasAreas(dados: DadosDasRegras): HTMLElement {
@@ -129,7 +129,7 @@ function secaoDaExcecao(): HTMLElement {
   return secao('Como funciona a exceção de acesso',
     el('p', { class: 'dica' }, 'Quem precisa ver algo fora do seu alcance pede acesso. Não existe liberação informal.'),
     el('ul', { class: 'passos-da-excecao' },
-      ...PASSOS_DA_EXCECAO.map((passo) => el('li', {}, el('b', {}, passo.destaque), ` ${passo.texto}`))));
+      ...passosDaExcecao().map((passo) => el('li', {}, el('b', {}, passo.destaque), ` ${passo.texto}`))));
 }
 
 function secaoDaSimulacao(linhas: readonly LinhaDaSimulacao[]): HTMLElement {

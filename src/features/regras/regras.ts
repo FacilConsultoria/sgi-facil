@@ -1,6 +1,7 @@
 // Regras de apresentação do módulo Regras. Funções puras, sem acesso a dados.
 // O que cada perfil pode fazer (quadro abaixo) é texto de apoio, escrito conforme as regras que o banco aplica
 // (supabase/01 a 12); quem pode salvar os valores de pontuação vem do indicador pode_editar_regras do perfil.
+import { cargo, presidenteOuVice } from '../../lib/tratamento';
 import type { AreaDaEstrutura, LinhaDaSimulacao, RegrasDePontuacao } from '../../types/database';
 
 export const LIMITE_DOS_VALORES = 50;
@@ -59,7 +60,8 @@ export const ROTULOS_DO_QUADRO: Readonly<Record<Exclude<keyof PerfilDeAcesso, 'p
   aprovarExcecoes: 'Aprovar exceções de acesso',
 };
 
-export const PERFIS_DE_ACESSO: readonly PerfilDeAcesso[] = [
+/** Função, e não constante, porque os textos citam quem ocupa a Presidência e a Vice-Presidência (lib/tratamento). */
+export const perfisDeAcesso = (): readonly PerfilDeAcesso[] => [
   {
     perfil: 'Presidente',
     demandas: 'Todas',
@@ -84,8 +86,8 @@ export const PERFIS_DE_ACESSO: readonly PerfilDeAcesso[] = [
     pontuacao: 'Todas as pessoas',
     restritos: 'Sim',
     criarEValidar: 'Qualquer projeto',
-    ajustarPontos: 'Sim; na própria pontuação, só com aval da Presidente ou da Vice',
-    aprovarExcecoes: 'Só com aval da Presidente ou da Vice',
+    ajustarPontos: `Sim; na própria pontuação, só com aval ${presidenteOuVice('de')}`,
+    aprovarExcecoes: `Só com aval ${presidenteOuVice('de')}`,
   },
   {
     perfil: 'Diretoria',
@@ -116,10 +118,10 @@ export const PERFIS_DE_ACESSO: readonly PerfilDeAcesso[] = [
   },
 ];
 
-export const PASSOS_DA_EXCECAO: readonly { destaque: string; texto: string }[] = [
+export const passosDaExcecao = (): readonly { destaque: string; texto: string }[] => [
   { destaque: 'Pedido formal prévio', texto: 'feito pela pessoa ou pela sua liderança, com justificativa.' },
   { destaque: 'Escopo pontual', texto: 'um projeto inteiro ou uma única demanda, identificada pelo código.' },
-  { destaque: 'Aprovação expressa', texto: 'da Presidente ou da diretoria que conduz a área. Itens restritos só a Presidente aprova. Ninguém aprova o próprio pedido.' },
+  { destaque: 'Aprovação expressa', texto: `da Presidência ou da diretoria que conduz a área. Itens restritos só ${cargo('presidente')} aprova. Ninguém aprova o próprio pedido.` },
   { destaque: 'Prazo de até 90 dias', texto: 'com expiração automática. A liberação é só para consulta e pode ser revogada.' },
   { destaque: 'Atribuição formal', texto: 'ser executor de uma demanda sempre dá acesso a ela.' },
 ];

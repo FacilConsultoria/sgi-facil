@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { AreaDaEstrutura, LinhaDaSimulacao } from '../../types/database';
 import {
-  descreverQuantidade, introducaoDaSimulacao, PASSOS_DA_EXCECAO, PERFIS_DE_ACESSO, situacaoDasAreas,
+  descreverQuantidade, introducaoDaSimulacao, passosDaExcecao, perfisDeAcesso, situacaoDasAreas,
   validarRegrasDePontos, valoresParaOsCampos, type ValoresDigitados,
 } from './regras';
 
@@ -36,16 +36,16 @@ describe('valoresParaOsCampos', () => {
 
 describe('quadro de permissões', () => {
   it('tem os seis perfis, do mais amplo ao mais restrito, sem campo vazio', () => {
-    expect(PERFIS_DE_ACESSO.map((perfil) => perfil.perfil)).toEqual([
+    expect(perfisDeAcesso().map((perfil) => perfil.perfil)).toEqual([
       'Presidente', 'Vice-Presidente', 'Assessoria de Presidência', 'Diretoria', 'Gerência', 'Membro',
     ]);
-    for (const perfil of PERFIS_DE_ACESSO) {
+    for (const perfil of perfisDeAcesso()) {
       for (const texto of Object.values(perfil)) expect(texto.trim() === '').toBe(false);
     }
   });
 
   it('descreve a exceção em cinco passos', () => {
-    expect(PASSOS_DA_EXCECAO.length).toBe(5);
+    expect(passosDaExcecao().length).toBe(5);
   });
 });
 
