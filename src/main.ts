@@ -12,6 +12,7 @@ import './styles/historico.css';
 import './styles/regras.css';
 import './styles/projetos.css';
 import './styles/inicio.css';
+import './styles/dadospessoais.css';
 
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { montarLayout, type Layout } from './app/layout';
@@ -23,6 +24,8 @@ import {
 } from './app/sessao';
 import { mostrarConfiguracaoAusente, mostrarFalhaAoCarregar, mostrarSemCadastro } from './app/telas-de-acesso';
 import { paginaDefinirSenha } from './features/auth/definir-senha';
+import { salvarMeusDados } from './features/dadospessoais/dados';
+import type { DadosParaSalvar } from './features/dadospessoais/regras';
 import { paginaLogin, type AcoesDeLogin } from './features/auth/pagina';
 import { senhaJaDefinida } from './features/auth/regras';
 import { mensagemParaUsuario, registrarErro } from './lib/erros';
@@ -64,7 +67,9 @@ function mostrarRotaAtual(): void {
 }
 
 /** Grava a senha e segue para o sistema com a sessão já atualizada. Erros voltam para a tela de criar senha. */
-async function salvarNovaSenha(destino: HTMLElement, senha: string): Promise<void> {
+async function salvarNovaSenha(destino: HTMLElement, senha: string, dados: DadosParaSalvar | null): Promise<void> {
+  // no primeiro acesso os dados pessoais vão primeiro; se falharem (ex.: e-mail sem cadastro), a senha não é criada
+  if (dados) await salvarMeusDados(dados);
   await definirSenha(senha);
   recuperandoSenha = false;
   mostrandoCriarSenha = false;
@@ -98,7 +103,7 @@ async function aoTrocarSessao(destino: HTMLElement, sessao: Session | null, even
     paginaDefinirSenha(destino, {
       email: sessao.user.email ?? '',
       recuperacao: recuperandoSenha,
-      salvar: (senha) => salvarNovaSenha(destino, senha),
+      salvar: (senha, dados) => salvarNovaSenha(destino, senha, dados),
       aoSair: encerrarSessao,
     });
     return;
