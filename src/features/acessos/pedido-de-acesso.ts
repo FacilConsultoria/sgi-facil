@@ -1,6 +1,7 @@
 // Janelas do módulo de Acessos: pedir acesso por exceção e, na Assessoria de Presidência,
-// pedir aval da Presidente ou da Vice para decidir um pedido.
+// pedir aval da Presidência ou da Vice-Presidência para decidir um pedido.
 import { hojeEmSaoPaulo } from '../../lib/datas';
+import { cargo, presidenteOuVice } from '../../lib/tratamento';
 import { mostrarAviso } from '../../ui/aviso';
 import { el, substituir } from '../../ui/dom';
 import { abrirJanela, campo, ligarEnvio, linhaDeErro, rodapeDaJanela } from '../../ui/formulario';
@@ -79,7 +80,7 @@ export function abrirPedidoDeAcesso(contexto: ContextoDosAcessos): void {
         blocoDoProjeto, blocoDaDemanda,
         campo('Justificativa', justificativa),
         campo('Válido até', validade),
-        el('p', { class: 'dica' }, 'O acesso é só para consulta e vale no máximo 90 dias. Quem decide é a diretoria da área ou a Presidência; itens restritos só a Presidente aprova.'),
+        el('p', { class: 'dica' }, `O acesso é só para consulta e vale no máximo 90 dias. Quem decide é a diretoria da área ou a Presidência; itens restritos só ${cargo('presidente')} aprova.`),
         erro.elemento),
       rodapeDaJanela(fechar, botao));
 
@@ -124,7 +125,7 @@ export function abrirPedidoDeAvalDeDecisao(contexto: ContextoDosAcessos, solicit
     const formulario = el('form', { class: 'form-janela', novalidate: true },
       el('div', { class: 'painel-corpo form' },
         el('p', { class: 'dica' },
-          `Você ${aprovar ? 'aprovaria' : 'negaria'} o acesso de ${beneficiario} a ${solicitacao.alvo_nome}. Como Assessoria de Presidência, a decisão só vale depois que a Presidente ou a Vice aprovarem este pedido na aba Avais.`),
+          `Você ${aprovar ? 'aprovaria' : 'negaria'} o acesso de ${beneficiario} a ${solicitacao.alvo_nome}. Como Assessoria de Presidência, a decisão só vale depois que ${presidenteOuVice()} aprovar este pedido na aba Avais.`),
         campo('Observação', nota),
         erro.elemento),
       rodapeDaJanela(fechar, botao));

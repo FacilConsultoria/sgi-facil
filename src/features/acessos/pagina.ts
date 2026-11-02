@@ -3,6 +3,7 @@
 import { dataEHora } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
 import { plural } from '../../lib/texto';
+import { presidenteOuVice } from '../../lib/tratamento';
 import type { SolicitacaoVisivel } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el, substituir } from '../../ui/dom';
@@ -113,7 +114,7 @@ function areaDeAval(solicitacao: SolicitacaoVisivel, contexto: ContextoDosAcesso
   aprovar.addEventListener('click', () => abrirPedidoDeAvalDeDecisao(contexto, solicitacao, true));
   negar.addEventListener('click', () => abrirPedidoDeAvalDeDecisao(contexto, solicitacao, false));
   return el('div', { class: 'form' },
-    el('p', { class: 'dica' }, 'Como Assessoria de Presidência, a sua decisão sobre acessos por exceção depende do aval da Presidente ou da Vice.'),
+    el('p', { class: 'dica' }, `Como Assessoria de Presidência, a sua decisão sobre acessos por exceção depende do aval ${presidenteOuVice('de')}.`),
     el('div', { class: 'linha' }, aprovar, negar));
 }
 
