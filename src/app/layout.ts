@@ -1,7 +1,9 @@
 // Moldura da aplicação: menu lateral (marca, pessoa logada, navegação) e área de conteúdo.
+import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../features/dadospessoais/janela';
 import { descreverCargo } from '../lib/perfil';
 import { el, substituir } from '../ui/dom';
 import { criarSimbolo } from '../ui/logo';
+import { iconeDePendencia } from '../ui/pendencia';
 import { ROTAS, type Rota } from './rotas';
 import type { ContextoDaSessao } from './sessao';
 
@@ -19,6 +21,11 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
       rota.disponivel ? null : el('span', { class: 'nav-selo' }, 'em breve')),
   );
 
+  // ícone de pendência enquanto os dados pessoais não foram preenchidos (indicador dados_pendentes do perfil)
+  const pendencia = perfil.dados_pendentes ? iconeDePendencia('proximo', 'Seus dados pessoais estão pendentes') : null;
+  const nomeDaPessoa = el('div', { class: 'quem-nome' }, el('strong', {}, perfil.nome), pendencia);
+  const meusDados = el('button', { type: 'button', class: 'meus-dados' }, perfil.dados_pendentes ? 'Preencher meus dados' : 'Meus dados');
+
   const lateral = el('aside', { class: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' },
     el('div', { class: 'marca' },
       criarSimbolo(),
@@ -27,8 +34,9 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
         el('span', { class: 'consultoria' }, 'CONSULTORIA'),
         el('small', {}, 'Sistema de Gestão Interna'))),
     el('div', { class: 'quem' },
-      el('strong', {}, perfil.nome),
-      el('span', {}, descreverCargo(perfil, tituloDaArea))),
+      nomeDaPessoa,
+      el('span', {}, descreverCargo(perfil, tituloDaArea)),
+      meusDados),
     el('nav', { class: 'nav' }, ...botoesDaNavegacao),
     el('button', { type: 'button', class: 'sair' }, 'Sair'),
   );
@@ -49,6 +57,20 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
     if (evento.target instanceof Element && evento.target.closest('.nav-item')) alternarMenu(false);
   });
   lateral.querySelector('.sair')?.addEventListener('click', aoSair);
+  meusDados.addEventListener('click', () => {
+    alternarMenu(false);
+    void abrirMeusDados(app, perfil);
+  });
+  const aoSalvarDados = (): void => {
+    // a janela do layout de uma sessão antiga já saiu da página: o ouvinte se remove
+    if (!app.isConnected) {
+      window.removeEventListener(EVENTO_DADOS_SALVOS, aoSalvarDados);
+      return;
+    }
+    pendencia?.remove();
+    meusDados.textContent = 'Meus dados';
+  };
+  window.addEventListener(EVENTO_DADOS_SALVOS, aoSalvarDados);
 
   substituir(raiz, app);
 
