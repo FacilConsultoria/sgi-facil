@@ -16,7 +16,9 @@ function no(tag: string, atributos: Record<string, string>): SVGElement {
 /** `titulo` é lido por leitores de tela e aparece ao passar o mouse. */
 export function iconeDePendencia(estado: EstadoDePendencia, titulo: string): SVGSVGElement {
   const svg = document.createElementNS(NS, 'svg');
-  svg.setAttribute('viewBox', '0 0 48 48');
+  // desenho em 100 × 100: balão de contorno grosso (aberto no alto, com a ponta embaixo à esquerda) e um triângulo
+  // grande de cantos arredondados no meio, com a exclamação em creme, como no desenho de referência
+  svg.setAttribute('viewBox', '0 6 100 82');
   svg.setAttribute('class', `pendencia pendencia-${estado}`);
   svg.setAttribute('role', 'img');
   svg.setAttribute('aria-label', titulo);
@@ -24,10 +26,10 @@ export function iconeDePendencia(estado: EstadoDePendencia, titulo: string): SVG
   nomeDoIcone.textContent = titulo;
   svg.append(
     nomeDoIcone,
-    no('path', { class: 'balao', d: 'M17 6H12a6 6 0 0 0-6 6v17a6 6 0 0 0 6 6h26a6 6 0 0 0 6-6V12a6 6 0 0 0-6-6h-5M7 35v7l8-7', fill: 'none', 'stroke-width': '3.5', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
-    no('path', { class: 'triangulo', d: 'M24 13.5 33.5 30h-19z', 'stroke-width': '3', 'stroke-linejoin': 'round' }),
-    no('path', { class: 'exclamacao', d: 'M24 19.5v5', 'stroke-width': '2.6', 'stroke-linecap': 'round' }),
-    no('circle', { class: 'ponto', cx: '24', cy: '27.6', r: '1.5' }),
+    no('path', { class: 'balao', d: 'M50 12H80a12 12 0 0 1 12 12V58a12 12 0 0 1-12 12H32L8 80V24a12 12 0 0 1 12-12H30', fill: 'none', 'stroke-width': '8', 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }),
+    no('path', { class: 'triangulo', d: 'M50 22 68 56H32z', 'stroke-width': '7', 'stroke-linejoin': 'round' }),
+    no('path', { class: 'exclamacao', d: 'M50 33v12', 'stroke-width': '5.5', 'stroke-linecap': 'round' }),
+    no('circle', { class: 'ponto', cx: '50', cy: '51.5', r: '3.4' }),
   );
   return svg;
 }
