@@ -423,6 +423,49 @@ export interface Perfil {
   dados_pendentes: boolean;
 }
 
+export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado';
+
+/** Linha da visão public.minhas_notificacoes (supabase/18_recados_e_notificacoes.sql): o que o sino mostra. */
+export interface Notificacao {
+  /** Identifica a linha na lista; as de atraso não têm id gravado. */
+  chave: string;
+  /** Só as gravadas (atribuição e recado) têm id e podem ser marcadas como lidas. */
+  id: string | null;
+  tipo: TipoDeNotificacao;
+  /** Título da demanda ou do recado. */
+  titulo: string;
+  codigo: string | null;
+  prazo: string | null;
+  autor_nome: string | null;
+  demanda_id: string | null;
+  recado_id: string | null;
+  em: string;
+}
+
+export type EscopoDeRecado = 'todos' | 'area' | 'nucleo';
+
+/** Linha da visão public.recados_painel. */
+export interface RecadoDoPainel {
+  id: string;
+  titulo: string;
+  texto: string;
+  escopo: EscopoDeRecado;
+  escopo_id: string | null;
+  autor_id: string;
+  autor_nome: string;
+  publico: string;
+  criado_em: string;
+  pode_retirar: boolean;
+}
+
+/** Linha da visão public.destinos_de_recado: para quem a pessoa pode publicar. */
+export interface DestinoDeRecado {
+  escopo: EscopoDeRecado;
+  escopo_id: string | null;
+  nome: string;
+  ordem: number;
+}
+
 /** Linha da tabela public.disponibilidade_semanal (supabase/17_disponibilidade.sql). Horário = dia * 24 + hora (segunda = dia 0). */
 export interface DisponibilidadeSemanal {
   pessoa_id: string;
