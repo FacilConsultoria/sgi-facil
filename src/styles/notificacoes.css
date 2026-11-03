@@ -33,3 +33,14 @@
 .recado-topo > div { min-width: 0; }
 .recado-topo .btn { flex: none; }
 .recado-texto { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.recado.pendente { border-left-color: var(--accent); }
+.recado.recusado { border-left-color: var(--line); }
+.recado-motivo { margin: 6px 0 0; color: var(--ink-2); font-size: 0.85rem; }
+.recados-grupo { display: flex; flex-direction: column; gap: 8px; }
+.recados-grupo h3 { margin: 4px 0 0; font-size: 0.9rem; color: var(--ink-2); }
+.recado-topo .linha { flex: none; gap: 6px; }
+.selo-recado { display: inline-block; margin-left: 4px; padding: 1px 8px; border-radius: 999px; font-size: 0.72rem; font-weight: 600; vertical-align: middle; }
+.selo-recado.pendente { background: var(--accent-soft); color: var(--accent-text); }
+.selo-recado.recusado { background: var(--surface-2); color: var(--ink-2); }
+.aviso-autorizacao[hidden] { display: none; }
+.notificacoes .lado.tipo-autorizacao { color: var(--accent-text); }
