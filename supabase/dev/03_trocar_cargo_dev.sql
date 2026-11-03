@@ -26,6 +26,8 @@ create table privado.ambiente_dev (
   conta     uuid not null references public.pessoas(id),
   titulares jsonb not null
 );
+-- fechada a todos: só a função abaixo (security definer) lê; o RLS sem políticas é uma trava a mais
+alter table privado.ambiente_dev enable row level security;
 revoke all on privado.ambiente_dev from public, anon, authenticated;
 
 insert into privado.ambiente_dev (conta, titulares)
