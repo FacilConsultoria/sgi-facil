@@ -14,6 +14,15 @@ export function somarDias(data: string, dias: number): string {
   return resultado.toISOString().slice(0, 10);
 }
 
+/** Quantos dias faltam de `de` até `ate` (AAAA-MM-DD); negativo se `ate` já passou. */
+export function diasAte(de: string, ate: string): number {
+  const dia = (data: string): number => {
+    const [ano, mes, d] = data.split('-').map(Number);
+    return Date.UTC(ano ?? 1970, (mes ?? 1) - 1, d ?? 1);
+  };
+  return Math.round((dia(ate) - dia(de)) / 86_400_000);
+}
+
 /** "2026-11-05" → "05/11". */
 export function dataCurta(data: string): string {
   const [, mes, dia] = data.split('-');
