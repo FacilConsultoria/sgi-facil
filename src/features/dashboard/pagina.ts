@@ -12,6 +12,7 @@ import { estaAtrasada } from '../demandas/regras';
 import { comSinal, descreverLancamento, NOME_DO_TIPO_DE_LANCAMENTO } from '../pontuacao/regras';
 import { nomeDoPublico } from '../reunioes/regras';
 import { carregarInicio, type DadosDoInicio } from './dados';
+import { blocoDeRecados } from './recados';
 import {
   aguardandoValidacao, descreverPrazo, descreverQuando, descreverValidadeDoPedido, indicadoresDoInicio, LIMITE_DE_ENTREGAS,
   LIMITE_DE_REUNIOES, minhasDemandasAbertas, pedidosParaDecidir, proximasReunioes, ultimosLancamentos,
@@ -31,7 +32,7 @@ export function paginaDashboard(destino: HTMLElement, contexto: ContextoDaSessao
     carregar: () => carregarInicio(perfil.id),
     operacao: 'Carregar a Tela Inicial',
     textoDeCarregando: 'Carregando seu painel…',
-    desenhar: (dados) => desenharInicio(dados, contexto, hojeEmSaoPaulo(), destino),
+    desenhar: (dados, recarregar) => desenharInicio(dados, contexto, hojeEmSaoPaulo(), destino, recarregar),
   });
 }
 
@@ -52,13 +53,16 @@ function avisoDeDadosPendentes(contexto: ContextoDaSessao, pai: HTMLElement): HT
   return aviso;
 }
 
-function desenharInicio(dados: DadosDoInicio, contexto: ContextoDaSessao, hoje: string, pai: HTMLElement): HTMLElement[] {
+function desenharInicio(
+  dados: DadosDoInicio, contexto: ContextoDaSessao, hoje: string, pai: HTMLElement, recarregar: () => Promise<void>,
+): HTMLElement[] {
   const { perfil } = contexto;
   const minhas = minhasDemandasAbertas(dados.demandas, perfil.id);
   const proximas = proximasReunioes(dados.reunioes, hoje);
   const validar = aguardandoValidacao(dados.demandas);
   const lancamentos = ultimosLancamentos(dados.lancamentos);
   const pedidos = pedidosParaDecidir(dados.solicitacoes);
+  const recados = blocoDeRecados(dados, pai, recarregar);
 
   const indicadores = indicadoresDoInicio({ minhas, ranking: dados.ranking, proximas, meuId: perfil.id, hoje });
   const permissoes = [
@@ -69,6 +73,7 @@ function desenharInicio(dados: DadosDoInicio, contexto: ContextoDaSessao, hoje: 
 
   return [
     ...(perfil.dados_pendentes ? [avisoDeDadosPendentes(contexto, pai)] : []),
+    ...(recados ? [recados] : []),
     el('div', { class: 'kpis' }, ...indicadores.map((i) =>
       el('div', { class: i.alerta ? 'kpi alerta' : 'kpi' }, el('span', {}, i.titulo), el('b', {}, i.valor), el('small', {}, i.detalhe)))),
     el('div', { class: 'duas' },

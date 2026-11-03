@@ -1,8 +1,9 @@
-// Acesso a dados da Tela Inicial: só leituras pelas visões e funções que os outros módulos já usam
-// (já filtradas pelas regras de cada pessoa). Nada é gravado aqui.
+// Acesso a dados da Tela Inicial: leituras pelas visões e funções que os outros módulos já usam
+// (já filtradas pelas regras de cada pessoa) e, só para os recados internos, publicar e retirar (rpc).
 import { supabase } from '../../lib/supabase';
 import type {
-  DemandaVisivel, LancamentoVisivel, LinhaDoRanking, PublicoDeReuniao, ReuniaoVisivel, SolicitacaoVisivel,
+  DemandaVisivel, DestinoDeRecado, EscopoDeRecado, LancamentoVisivel, LinhaDoRanking, PublicoDeReuniao, RecadoDoPainel, ReuniaoVisivel,
+  SolicitacaoVisivel,
 } from '../../types/database';
 
 export interface DadosDoInicio {
@@ -12,18 +13,23 @@ export interface DadosDoInicio {
   ranking: LinhaDoRanking[];
   lancamentos: LancamentoVisivel[];
   solicitacoes: SolicitacaoVisivel[];
+  recados: RecadoDoPainel[];
+  /** Para quem a pessoa pode publicar recados; vazio = não publica. */
+  destinosDeRecado: DestinoDeRecado[];
 }
 
 export async function carregarInicio(meuId: string): Promise<DadosDoInicio> {
-  const [demandas, reunioes, publicos, ranking, lancamentos, solicitacoes] = await Promise.all([
+  const [demandas, reunioes, publicos, ranking, lancamentos, solicitacoes, recados, destinos] = await Promise.all([
     supabase.from('demandas_visiveis').select('*'),
     supabase.from('reunioes_visiveis').select('*'),
     supabase.from('escopos_de_reuniao').select('*'),
     supabase.rpc('ranking'),
     supabase.from('lancamentos_visiveis').select('*').eq('pessoa_id', meuId),
     supabase.from('solicitacoes_visiveis').select('*'),
+    supabase.from('recados_painel').select('*'),
+    supabase.from('destinos_de_recado').select('*').order('ordem').order('nome'),
   ]);
-  for (const resposta of [demandas, reunioes, publicos, ranking, lancamentos, solicitacoes]) {
+  for (const resposta of [demandas, reunioes, publicos, ranking, lancamentos, solicitacoes, recados, destinos]) {
     if (resposta.error) throw resposta.error;
   }
   return {
@@ -33,5 +39,22 @@ export async function carregarInicio(meuId: string): Promise<DadosDoInicio> {
     ranking: (ranking.data ?? []) as LinhaDoRanking[],
     lancamentos: (lancamentos.data ?? []) as LancamentoVisivel[],
     solicitacoes: (solicitacoes.data ?? []) as SolicitacaoVisivel[],
+    recados: (recados.data ?? []) as RecadoDoPainel[],
+    destinosDeRecado: (destinos.data ?? []) as DestinoDeRecado[],
   };
+}
+
+export async function publicarRecado(recado: { titulo: string; texto: string; escopo: EscopoDeRecado; escopoId: string | null }): Promise<void> {
+  const { error } = await supabase.rpc('publicar_recado', {
+    p_titulo: recado.titulo,
+    p_texto: recado.texto,
+    p_escopo: recado.escopo,
+    p_escopo_id: recado.escopoId,
+  });
+  if (error) throw error;
+}
+
+export async function retirarRecado(recadoId: string): Promise<void> {
+  const { error } = await supabase.rpc('retirar_recado', { p_id: recadoId });
+  if (error) throw error;
 }

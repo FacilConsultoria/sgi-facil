@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import type { DemandaVisivel, LancamentoVisivel, LinhaDoRanking, ReuniaoVisivel, SolicitacaoVisivel } from '../../types/database';
+import type {
+  DemandaVisivel, LancamentoVisivel, LinhaDoRanking, RecadoDoPainel, ReuniaoVisivel, SolicitacaoVisivel,
+} from '../../types/database';
 import {
-  aguardandoValidacao, descreverPrazo, descreverQuando, descreverValidadeDoPedido, indicadoresDoInicio, minhasDemandasAbertas,
-  pedidosParaDecidir, proximasReunioes, ultimosLancamentos,
+  aguardandoValidacao, descreverPrazo, descreverQuando, descreverRecado, descreverValidadeDoPedido, indicadoresDoInicio, lerDestino,
+  minhasDemandasAbertas, pedidosParaDecidir, proximasReunioes, recadosRecentes, rotuloDoDestino, ultimosLancamentos, validarRecado, valorDoDestino,
 } from './regras';
 
 const HOJE = '2026-11-10';
@@ -135,5 +137,71 @@ describe('indicadoresDoInicio', () => {
     expect([pontos?.valor, pontos?.detalhe]).toEqual(['–', 'Fora do ranking visível']);
     expect([abertas?.valor, atrasadas?.valor, atrasadas?.alerta]).toEqual(['0', '0', false]);
     expect([proxima?.valor, proxima?.detalhe]).toEqual(['–', 'Nenhuma agendada']);
+  });
+});
+
+const recado = (alteracao: Partial<RecadoDoPainel>): RecadoDoPainel => ({
+  id: 'r', titulo: 'Aviso', texto: 'Texto', escopo: 'todos', escopo_id: null, autor_id: 'x', autor_nome: 'Mel', publico: 'Toda a equipe',
+  criado_em: '2026-11-09T15:00:00Z', pode_retirar: false, ...alteracao,
+});
+
+describe('recadosRecentes', () => {
+  it('mostra os dos últimos 30 dias, do mais novo para o mais antigo, até o limite', () => {
+    const lista = [
+      recado({ id: 'velho', criado_em: '2026-09-01T12:00:00Z' }),
+      recado({ id: 'a', criado_em: '2026-11-01T12:00:00Z' }),
+      recado({ id: 'b', criado_em: '2026-11-09T12:00:00Z' }),
+      recado({ id: 'c', criado_em: '2026-10-20T12:00:00Z' }),
+    ];
+    expect(recadosRecentes(lista, HOJE).map((r) => r.id)).toEqual(['b', 'a', 'c']);
+    expect(recadosRecentes(lista, HOJE, 2).map((r) => r.id)).toEqual(['b', 'a']);
+  });
+
+  it('inclui o recado de hoje (no horário de São Paulo)', () => {
+    expect(recadosRecentes([recado({ id: 'hoje', criado_em: '2026-11-10T12:30:00Z' })], HOJE).map((r) => r.id)).toEqual(['hoje']);
+  });
+});
+
+describe('descreverRecado', () => {
+  it('junta autor, público e dia', () => {
+    expect(descreverRecado(recado({}))).toBe('Mel · Toda a equipe · 09/11');
+  });
+});
+
+describe('destino do recado', () => {
+  it('dá nome e valor a cada destino', () => {
+    expect(rotuloDoDestino({ escopo: 'todos', nome: 'Toda a equipe' })).toBe('Toda a equipe');
+    expect(rotuloDoDestino({ escopo: 'area', nome: 'Diretoria Comercial' })).toBe('Área · Diretoria Comercial');
+    expect(rotuloDoDestino({ escopo: 'nucleo', nome: 'Marketing' })).toBe('Núcleo · Marketing');
+    expect(valorDoDestino({ escopo: 'todos', escopo_id: null })).toBe('todos:');
+    expect(valorDoDestino({ escopo: 'nucleo', escopo_id: 'com-mkt' })).toBe('nucleo:com-mkt');
+  });
+
+  it('lê o valor de volta e recusa o que não faz sentido', () => {
+    expect(lerDestino('todos:')).toEqual({ escopo: 'todos', escopoId: null });
+    expect(lerDestino('area:com')).toEqual({ escopo: 'area', escopoId: 'com' });
+    expect(lerDestino('area:')).toBe(null);
+    expect(lerDestino('geral:')).toBe(null);
+    expect(lerDestino('')).toBe(null);
+  });
+});
+
+describe('validarRecado', () => {
+  const certo = { titulo: 'Reunião adiada', texto: 'Passou para sexta.', destino: 'todos:' };
+
+  it('aceita um recado completo', () => {
+    expect(validarRecado(certo)).toBe(null);
+  });
+
+  it('pede público, título e texto, nesta ordem', () => {
+    expect(validarRecado({ ...certo, destino: '' })).toBe('Escolha para quem é o recado.');
+    expect(validarRecado({ ...certo, titulo: '   ' })).toBe('Dê um título ao recado.');
+    expect(validarRecado({ ...certo, texto: '  ' })).toBe('Escreva o recado.');
+  });
+
+  it('respeita os limites de tamanho', () => {
+    expect(validarRecado({ ...certo, titulo: 'x'.repeat(81) })).toBe('O título pode ter até 80 caracteres.');
+    expect(validarRecado({ ...certo, titulo: 'x'.repeat(80) })).toBe(null);
+    expect(validarRecado({ ...certo, texto: 'x'.repeat(1001) })).toBe('O recado pode ter até 1000 caracteres.');
   });
 });

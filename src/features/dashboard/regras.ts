@@ -1,8 +1,10 @@
 // Regras de apresentação da Tela Inicial. Funções puras, sem acesso a dados.
 // Permissões não são calculadas aqui: pode_gerir (demandas) e pode_aprovar (pedidos de acesso) chegam prontos
 // das visões do banco; o que a pessoa enxerga já vem filtrado pela RLS.
-import { dataCurta, horaCurta } from '../../lib/datas';
-import type { DemandaVisivel, LancamentoVisivel, LinhaDoRanking, ReuniaoVisivel, SolicitacaoVisivel } from '../../types/database';
+import { dataCurta, diasAte, horaCurta, hojeEmSaoPaulo } from '../../lib/datas';
+import type {
+  DemandaVisivel, DestinoDeRecado, EscopoDeRecado, LancamentoVisivel, LinhaDoRanking, RecadoDoPainel, ReuniaoVisivel, SolicitacaoVisivel,
+} from '../../types/database';
 import { separarSolicitacoes } from '../acessos/regras';
 import { estaAtrasada } from '../demandas/regras';
 import { posicaoNoRanking } from '../pontuacao/regras';
@@ -57,6 +59,62 @@ export function pedidosParaDecidir(solicitacoes: readonly SolicitacaoVisivel[]):
 /** "até 05/11", para o pedido de acesso. */
 export function descreverValidadeDoPedido(solicitacao: Pick<SolicitacaoVisivel, 'valido_ate'>): string {
   return `até ${dataCurta(solicitacao.valido_ate)}`;
+}
+
+export const LIMITE_DE_RECADOS = 5;
+export const DIAS_DE_RECADO_NA_TELA = 30;
+export const LIMITE_DO_TITULO_DO_RECADO = 80;
+export const LIMITE_DO_TEXTO_DO_RECADO = 1000;
+
+/** Recados dos últimos 30 dias, do mais novo para o mais antigo (os mais velhos continuam no banco, só saem da tela). */
+export function recadosRecentes(recados: readonly RecadoDoPainel[], hoje: string, limite = LIMITE_DE_RECADOS): RecadoDoPainel[] {
+  return recados
+    .filter((r) => diasAte(hojeEmSaoPaulo(new Date(r.criado_em)), hoje) <= DIAS_DE_RECADO_NA_TELA)
+    .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
+    .slice(0, limite);
+}
+
+/** "Mel · Toda a equipe · 05/11". */
+export function descreverRecado(recado: Pick<RecadoDoPainel, 'autor_nome' | 'publico' | 'criado_em'>): string {
+  return `${recado.autor_nome} · ${recado.publico} · ${dataCurta(hojeEmSaoPaulo(new Date(recado.criado_em)))}`;
+}
+
+/** Nome do destino na lista de escolha: "Toda a equipe", "Área · Diretoria Comercial" ou "Núcleo · Marketing". */
+export function rotuloDoDestino(destino: Pick<DestinoDeRecado, 'escopo' | 'nome'>): string {
+  if (destino.escopo === 'area') return `Área · ${destino.nome}`;
+  if (destino.escopo === 'nucleo') return `Núcleo · ${destino.nome}`;
+  return destino.nome;
+}
+
+/** Valor da opção na lista de escolha: "todos:", "area:com" ou "nucleo:com-mkt". */
+export function valorDoDestino(destino: Pick<DestinoDeRecado, 'escopo' | 'escopo_id'>): string {
+  return `${destino.escopo}:${destino.escopo_id ?? ''}`;
+}
+
+export function lerDestino(valor: string): { escopo: EscopoDeRecado; escopoId: string | null } | null {
+  const [escopo, ...resto] = valor.split(':');
+  if (escopo !== 'todos' && escopo !== 'area' && escopo !== 'nucleo') return null;
+  const escopoId = resto.join(':');
+  if (escopo !== 'todos' && escopoId === '') return null;
+  return { escopo, escopoId: escopo === 'todos' ? null : escopoId };
+}
+
+export interface RecadoDigitado {
+  titulo: string;
+  texto: string;
+  destino: string;
+}
+
+/** Mensagem do primeiro problema do recado, ou null se pode enviar. As mesmas regras valem no banco. */
+export function validarRecado(recado: RecadoDigitado): string | null {
+  if (lerDestino(recado.destino) === null) return 'Escolha para quem é o recado.';
+  const titulo = recado.titulo.trim();
+  if (titulo === '') return 'Dê um título ao recado.';
+  if (titulo.length > LIMITE_DO_TITULO_DO_RECADO) return `O título pode ter até ${LIMITE_DO_TITULO_DO_RECADO} caracteres.`;
+  const texto = recado.texto.trim();
+  if (texto === '') return 'Escreva o recado.';
+  if (texto.length > LIMITE_DO_TEXTO_DO_RECADO) return `O recado pode ter até ${LIMITE_DO_TEXTO_DO_RECADO} caracteres.`;
+  return null;
 }
 
 export interface Indicador {
