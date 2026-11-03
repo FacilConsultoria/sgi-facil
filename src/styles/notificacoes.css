@@ -4,15 +4,15 @@
 .quem-linha strong { min-width: 0; overflow-wrap: anywhere; }
 
 .sino {
-  appearance: none; flex: none; display: inline-flex; align-items: center; gap: 6px; margin: -3px -4px -3px 0; padding: 3px 5px;
-  background: none; border: 0; border-radius: 9px; color: var(--sino); font: inherit; cursor: pointer;
+  appearance: none; flex: none; display: inline-flex; align-items: center; gap: 4px; margin: -2px -4px -2px 0; padding: 2px 4px;
+  background: none; border: 0; border-radius: 8px; color: var(--sino); font: inherit; cursor: pointer;
 }
 .sino:hover { background: var(--side-hover); }
 .sino:focus-visible { outline: 2px solid var(--sino); outline-offset: 2px; }
-.sino-desenho { display: block; width: 24px; height: 24px; fill: var(--sino); }
+.sino-desenho { display: block; width: 17px; height: 17px; fill: var(--sino); }
 .sino .sino-num {
-  display: none; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--sino); color: var(--sino-ink);
-  font-size: 0.78rem; font-weight: 700; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums;
+  display: none; min-width: 16px; height: 16px; padding: 0 5px; border-radius: 999px; background: var(--sino); color: var(--sino-ink);
+  font-size: 0.66rem; font-weight: 700; line-height: 16px; text-align: center; font-variant-numeric: tabular-nums;
 }
 .sino.com-novas .sino-num { display: inline-block; }
 .barra-movel .sino { margin: 0 0 0 auto; }
