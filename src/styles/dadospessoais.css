@@ -1,7 +1,6 @@
-/* Ícones de pendência (dados pessoais e prazo das entregas), atalho "Meus dados" no menu, aviso na Tela Inicial e janela da Presidente. */
-.pendencia { height: 34px; width: auto; flex: none; color: currentColor; vertical-align: middle; }
-.pendencia.pequeno { height: 28px; width: auto; }
-.pendencia .balao { stroke: currentColor; }
+/* Ícone de pendência (dados pessoais e prazo das entregas), atalho "Meus dados" no menu, aviso na Tela Inicial e janela da Presidente. */
+.pendencia { height: 30px; width: auto; flex: none; vertical-align: middle; }
+.pendencia.pequeno { height: 22px; width: auto; }
 .pendencia .exclamacao { stroke: #fdf3e0; fill: none; }
 .pendencia .ponto { fill: #fdf3e0; }
 .pendencia-ok .triangulo { fill: #17b45f; stroke: #17b45f; }
@@ -10,11 +9,9 @@
 
 /* ícone ao lado do prazo (cartão, painel, Tela Inicial) e a legenda do quadro */
 .prazo-com-icone { display: inline-flex; align-items: center; gap: 6px; }
-.prazo-com-icone:not(.atrasada) .pendencia { color: var(--ink); }
 .legenda-prazo { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 12px; color: var(--ink-3); font-size: 0.78rem; }
 
 .quem .quem-nome { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.quem .quem-nome .pendencia { color: var(--side-ink-2); }
 .quem .meus-dados {
   appearance: none; align-self: flex-start; margin-top: 6px; padding: 0; background: none; border: 0;
   color: var(--side-ink-2); font: inherit; font-size: 0.78rem; text-decoration: underline; cursor: pointer;
@@ -26,7 +23,7 @@
   display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; padding: 12px 14px;
   background: var(--surface); border: 1px solid var(--warn); border-radius: var(--r);
 }
-.aviso-dados .pendencia { height: 54px; width: auto; color: var(--ink); }
+.aviso-dados .pendencia { height: 44px; width: auto; }
 .aviso-dados div { flex: 1 1 260px; min-width: 0; }
 .aviso-dados b { display: block; }
 .aviso-dados .dica { margin: 2px 0 0; }
