@@ -1,11 +1,16 @@
-/* Dados pessoais: ícone de pendência, atalho "Meus dados" no menu, aviso na Tela Inicial e janela da Presidente. */
+/* Ícones de pendência (dados pessoais e prazo das entregas), atalho "Meus dados" no menu, aviso na Tela Inicial e janela da Presidente. */
 .pendencia { width: 22px; height: 22px; flex: none; color: currentColor; vertical-align: middle; }
+.pendencia.pequeno { width: 18px; height: 18px; }
 .pendencia .balao { stroke: currentColor; }
 .pendencia .exclamacao { stroke: #fdf3e0; fill: none; }
 .pendencia .ponto { fill: #fdf3e0; }
 .pendencia-ok .triangulo { fill: #17b45f; stroke: #17b45f; }
 .pendencia-proximo .triangulo { fill: #f8b333; stroke: #f8b333; }
 .pendencia-atrasado .triangulo { fill: #ec3f4d; stroke: #ec3f4d; }
+
+/* ícone ao lado do prazo (cartão, painel, Tela Inicial) e a legenda do quadro */
+.prazo-com-icone { display: inline-flex; align-items: center; gap: 4px; }
+.legenda-prazo { display: flex; flex-wrap: wrap; gap: 4px 16px; margin: 0 0 12px; color: var(--ink-3); font-size: 0.78rem; }
 
 .quem .quem-nome { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 .quem .quem-nome .pendencia { color: var(--side-ink-2); }
