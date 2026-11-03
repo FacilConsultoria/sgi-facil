@@ -1,5 +1,6 @@
 // Moldura da aplicação: menu lateral (marca, pessoa logada, navegação) e área de conteúdo.
 import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../features/dadospessoais/janela';
+import { criarControleDoSino } from '../features/notificacoes/sino';
 import { descreverCargo } from '../lib/perfil';
 import { el, substituir } from '../ui/dom';
 import { criarSimbolo } from '../ui/logo';
@@ -22,6 +23,8 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
 
   // enquanto os dados pessoais não foram preenchidos (indicador dados_pendentes do perfil), o atalho pede para preencher
   const nomeDaPessoa = el('strong', {}, perfil.nome);
+  // o sino (amarelo, com o número de notificações) fica na linha do nome; no celular também aparece na barra de cima
+  const sino = criarControleDoSino(() => app);
   const meusDados = el('button', { type: 'button', class: 'meus-dados' }, perfil.dados_pendentes ? 'Preencher meus dados' : 'Meus dados');
 
   const lateral = el('aside', { class: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' },
@@ -32,7 +35,7 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
         el('span', { class: 'consultoria' }, 'CONSULTORIA'),
         el('small', {}, 'Sistema de Gestão Interna'))),
     el('div', { class: 'quem' },
-      nomeDaPessoa,
+      el('div', { class: 'quem-linha' }, nomeDaPessoa, sino.criarBotao()),
       el('span', {}, descreverCargo(perfil, tituloDaArea)),
       meusDados),
     el('nav', { class: 'nav' }, ...botoesDaNavegacao),
@@ -44,7 +47,7 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
   const tituloMovel = el('strong', {}, 'SGI');
   const app = el('div', { class: 'app' },
     lateral,
-    el('div', { class: 'coluna-conteudo' }, el('div', { class: 'barra-movel' }, botaoMenu, tituloMovel), conteudo));
+    el('div', { class: 'coluna-conteudo' }, el('div', { class: 'barra-movel' }, botaoMenu, tituloMovel, sino.criarBotao()), conteudo));
 
   const alternarMenu = (aberto: boolean): void => {
     app.classList.toggle('menu-aberto', aberto);
@@ -80,6 +83,8 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
         else botao.removeAttribute('aria-current');
       }
       tituloMovel.textContent = rota.titulo;
+      // trocar de tela é um bom momento para conferir o que mudou (atividade nova, conclusão, recado)
+      void sino.atualizar();
     },
   };
 }
