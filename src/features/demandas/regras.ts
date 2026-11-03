@@ -1,7 +1,7 @@
 // Regras de apresentação do módulo de Demandas. Funções puras, sem acesso a dados.
 // Permissões não são calculadas aqui: chegam prontas das visões do banco
 // (pode_gerir, pode_mudar_status, pode_criar_demanda) e só são lidas.
-import { dataCompleta } from '../../lib/datas';
+import { dataCompleta, diasAte } from '../../lib/datas';
 import type { DemandaVisivel, MotivoAcesso, PessoaAtribuivel, Prioridade, StatusDemanda } from '../../types/database';
 
 export const STATUS: readonly { id: StatusDemanda; nome: string }[] = [
@@ -38,6 +38,32 @@ export const NOME_DO_MOTIVO: Record<MotivoAcesso, string> = {
 
 export function estaAtrasada(demanda: Pick<DemandaVisivel, 'status' | 'prazo'>, hoje: string): boolean {
   return demanda.status !== 'concluida' && demanda.prazo < hoje;
+}
+
+/** Estado do prazo de uma entrega aberta: dentro do prazo, perto de vencer ou vencido. */
+export type EstadoDoPrazo = 'ok' | 'proximo' | 'atrasado';
+
+/** Dias antes do prazo em que a entrega passa a "próxima" (48 h). O prazo é um dia: vale até o fim dele. */
+export const DIAS_DE_AVISO_DO_PRAZO = 2;
+
+export const NOME_DO_ESTADO_DO_PRAZO: Record<EstadoDoPrazo, string> = {
+  ok: 'Dentro do prazo',
+  proximo: 'Próximo da entrega',
+  atrasado: 'Atrasado',
+};
+
+/** Nulo para demanda concluída (já entregue, não há o que acompanhar). */
+export function estadoDoPrazo(demanda: Pick<DemandaVisivel, 'status' | 'prazo'>, hoje: string): EstadoDoPrazo | null {
+  if (demanda.status === 'concluida') return null;
+  if (demanda.prazo < hoje) return 'atrasado';
+  return diasAte(hoje, demanda.prazo) <= DIAS_DE_AVISO_DO_PRAZO ? 'proximo' : 'ok';
+}
+
+/** "05/11/2026", "05/11/2026 · próximo da entrega" ou "05/11/2026 · atrasada". */
+export function descreverPrazoCompleto(demanda: Pick<DemandaVisivel, 'status' | 'prazo'>, hoje: string): string {
+  const estado = estadoDoPrazo(demanda, hoje);
+  const complemento = estado === 'atrasado' ? ' · atrasada' : estado === 'proximo' ? ' · próximo da entrega' : '';
+  return `${dataCompleta(demanda.prazo)}${complemento}`;
 }
 
 // ---------- textos ----------

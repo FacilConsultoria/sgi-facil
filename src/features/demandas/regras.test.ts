@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import type { DemandaVisivel, PessoaAtribuivel } from '../../types/database';
 import {
-  agruparExecutores, demandasDaEtapa, estaAtrasada, explicarAcesso, filtrarDemandas,
-  FILTROS_VAZIOS, iniciais, resumir, statusPermitidos, validarDemanda,
+  agruparExecutores, demandasDaEtapa, descreverPrazoCompleto, estaAtrasada, estadoDoPrazo, explicarAcesso, filtrarDemandas,
+  FILTROS_VAZIOS, iniciais, NOME_DO_ESTADO_DO_PRAZO, resumir, statusPermitidos, validarDemanda,
 } from './regras';
 
 function demanda(campos: Partial<DemandaVisivel>): DemandaVisivel {
@@ -25,6 +25,44 @@ describe('estaAtrasada', () => {
     expect(estaAtrasada({ status: 'andamento', prazo: '2026-10-29' }, '2026-10-30')).toBe(true);
     expect(estaAtrasada({ status: 'andamento', prazo: '2026-10-30' }, '2026-10-30')).toBe(false);
     expect(estaAtrasada({ status: 'concluida', prazo: '2026-10-01' }, '2026-10-30')).toBe(false);
+  });
+});
+
+describe('estadoDoPrazo', () => {
+  const hoje = '2026-10-30';
+
+  it('atrasado depois do prazo; o próprio dia do prazo ainda não está atrasado', () => {
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2026-10-29' }, hoje)).toBe('atrasado');
+    expect(estadoDoPrazo({ status: 'afazer', prazo: '2026-09-01' }, hoje)).toBe('atrasado');
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2026-10-30' }, hoje)).toBe('proximo');
+  });
+
+  it('próximo da entrega a até 2 dias (48 h) do prazo; fora disso, dentro do prazo', () => {
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2026-10-31' }, hoje)).toBe('proximo');
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2026-11-01' }, hoje)).toBe('proximo');
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2026-11-02' }, hoje)).toBe('ok');
+    expect(estadoDoPrazo({ status: 'revisao', prazo: '2027-03-01' }, hoje)).toBe('ok');
+  });
+
+  it('atravessa a virada de mês e de ano', () => {
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2027-01-01' }, '2026-12-30')).toBe('proximo');
+    expect(estadoDoPrazo({ status: 'andamento', prazo: '2027-01-02' }, '2026-12-30')).toBe('ok');
+  });
+
+  it('demanda concluída não tem estado de prazo', () => {
+    expect(estadoDoPrazo({ status: 'concluida', prazo: '2026-10-01' }, hoje)).toBe(null);
+    expect(estadoDoPrazo({ status: 'concluida', prazo: '2026-10-31' }, hoje)).toBe(null);
+  });
+
+  it('nomeia os estados como no desenho dos ícones', () => {
+    expect(NOME_DO_ESTADO_DO_PRAZO).toEqual({ ok: 'Dentro do prazo', proximo: 'Próximo da entrega', atrasado: 'Atrasado' });
+  });
+
+  it('descreve o prazo completo com o estado', () => {
+    expect(descreverPrazoCompleto({ status: 'andamento', prazo: '2026-10-29' }, hoje)).toBe('29/10/2026 · atrasada');
+    expect(descreverPrazoCompleto({ status: 'andamento', prazo: '2026-11-01' }, hoje)).toBe('01/11/2026 · próximo da entrega');
+    expect(descreverPrazoCompleto({ status: 'andamento', prazo: '2026-12-10' }, hoje)).toBe('10/12/2026');
+    expect(descreverPrazoCompleto({ status: 'concluida', prazo: '2026-10-01' }, hoje)).toBe('01/10/2026');
   });
 });
 

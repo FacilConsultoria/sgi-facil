@@ -2,8 +2,10 @@
 import { dataCurta } from '../../lib/datas';
 import type { DemandaVisivel, Prioridade, StatusDemanda } from '../../types/database';
 import { el } from '../../ui/dom';
+import { iconeDePendencia } from '../../ui/pendencia';
 import {
-  estaAtrasada, iniciais, NOME_DA_PRIORIDADE, NOME_DO_MOTIVO, NOME_DO_STATUS, type GrupoDeExecutores,
+  DIAS_DE_AVISO_DO_PRAZO, estaAtrasada, estadoDoPrazo, iniciais, NOME_DA_PRIORIDADE, NOME_DO_ESTADO_DO_PRAZO, NOME_DO_MOTIVO, NOME_DO_STATUS,
+  type EstadoDoPrazo, type GrupoDeExecutores,
 } from './regras';
 
 export function seloDeStatus(status: StatusDemanda): HTMLElement {
@@ -26,6 +28,30 @@ export function seloDeRestricao(): HTMLElement {
   return el('span', { class: 'chip restrito' }, 'Restrito à Presidência');
 }
 
+/** Ícone do estado do prazo (verde, âmbar ou vermelho, como no desenho); nulo em demanda concluída. */
+export function iconeDoPrazo(demanda: Pick<DemandaVisivel, 'status' | 'prazo'>, hoje: string): SVGSVGElement | null {
+  const estado = estadoDoPrazo(demanda, hoje);
+  if (!estado) return null;
+  const icone = iconeDePendencia(estado, NOME_DO_ESTADO_DO_PRAZO[estado]);
+  icone.classList.add('pequeno');
+  return icone;
+}
+
+/** Legenda dos três ícones, para o quadro de demandas. */
+export function legendaDoPrazo(): HTMLElement {
+  const estados: readonly { estado: EstadoDoPrazo; texto: string }[] = [
+    { estado: 'ok', texto: NOME_DO_ESTADO_DO_PRAZO.ok },
+    { estado: 'proximo', texto: `${NOME_DO_ESTADO_DO_PRAZO.proximo} (até ${DIAS_DE_AVISO_DO_PRAZO} dias)` },
+    { estado: 'atrasado', texto: NOME_DO_ESTADO_DO_PRAZO.atrasado },
+  ];
+  return el('p', { class: 'legenda-prazo', 'aria-label': 'Legenda dos ícones de prazo' },
+    ...estados.map(({ estado, texto }) => {
+      const icone = iconeDePendencia(estado, texto);
+      icone.classList.add('pequeno');
+      return el('span', { class: 'prazo-com-icone' }, icone, texto);
+    }));
+}
+
 function avatares(ids: readonly string[], nomeDe: (id: string) => string): HTMLElement {
   return el('span', { class: 'avatares' },
     ...ids.map((id) => el('span', { class: 'av', title: nomeDe(id) }, iniciais(nomeDe(id)))));
@@ -38,12 +64,13 @@ export function cartaoDaDemanda(
   aoAbrir: (demanda: DemandaVisivel) => void,
 ): HTMLButtonElement {
   const atrasada = estaAtrasada(demanda, hoje);
+  const estado = estadoDoPrazo(demanda, hoje);
   const executores = demanda.executores.map(nomeDe).join(', ');
   const cartao = el('button', {
     type: 'button',
     class: demanda.restrita ? 'card restrita' : 'card',
     'data-demanda': demanda.id,
-    'aria-label': `${demanda.codigo}: ${demanda.titulo}. Prazo ${dataCurta(demanda.prazo)}${atrasada ? ', atrasada' : ''}. Executores: ${executores}.`,
+    'aria-label': `${demanda.codigo}: ${demanda.titulo}. Prazo ${dataCurta(demanda.prazo)}${estado ? `, ${NOME_DO_ESTADO_DO_PRAZO[estado].toLowerCase()}` : ''}. Executores: ${executores}.`,
   },
     el('span', { class: 'card-top' },
       el('span', { class: 'mono' }, demanda.codigo),
@@ -51,7 +78,8 @@ export function cartaoDaDemanda(
     el('span', { class: 'card-tit' }, demanda.titulo),
     el('span', { class: 'card-proj' }, [demanda.projeto_nome, demanda.projeto_cliente].filter(Boolean).join(' · ')),
     el('span', { class: 'card-pe' },
-      el('span', { class: atrasada ? 'prazo atrasada' : 'prazo' }, `${atrasada ? 'Atrasada · ' : ''}${dataCurta(demanda.prazo)}`),
+      el('span', { class: atrasada ? 'prazo prazo-com-icone atrasada' : 'prazo prazo-com-icone' },
+        iconeDoPrazo(demanda, hoje), `${atrasada ? 'Atrasada · ' : ''}${dataCurta(demanda.prazo)}`),
       demanda.motivo_acesso === 'executor' || demanda.motivo_acesso === 'excecao' ? seloDeAcesso(demanda) : null,
       avatares(demanda.executores, nomeDe)));
   cartao.addEventListener('click', () => aoAbrir(demanda));

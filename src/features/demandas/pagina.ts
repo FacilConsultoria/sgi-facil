@@ -4,7 +4,7 @@ import type { ContextoDaSessao } from '../../app/sessao';
 import { hojeEmSaoPaulo } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
 import { el, substituir } from '../../ui/dom';
-import { cartaoDaDemanda } from './componentes';
+import { cartaoDaDemanda, legendaDoPrazo } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { carregarQuadro, type DadosDoQuadro } from './dados';
 import { abrirNovaDemanda, abrirNovoProjeto } from './formularios';
@@ -93,7 +93,7 @@ export function paginaDemandas(destino: HTMLElement, sessao: ContextoDaSessao): 
     };
 
     const conteudo = dados.demandas.length
-      ? [barraDeFiltros(dados, sessao.perfil.id, filtros, (novos) => { filtros = novos; atualizarQuadro(); }), resumo, quadro]
+      ? [barraDeFiltros(dados, sessao.perfil.id, filtros, (novos) => { filtros = novos; atualizarQuadro(); }), resumo, legendaDoPrazo(), quadro]
       : [el('p', { class: 'vazio' }, mensagemSemDemandas(dados))];
     substituir(pagina, cabecalho(contexto), ...conteudo);
     if (dados.demandas.length) atualizarQuadro();
