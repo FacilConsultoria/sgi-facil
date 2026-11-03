@@ -8,6 +8,7 @@ import { el, substituir } from '../../ui/dom';
 import { iconeDePendencia } from '../../ui/pendencia';
 import { montarRecarregavel } from '../../ui/recarregavel';
 import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../dadospessoais/janela';
+import { iconeDoPrazo } from '../demandas/componentes';
 import { pedirPainelDaDemanda } from '../demandas/pagina';
 import { estaAtrasada } from '../demandas/regras';
 import { comSinal, descreverLancamento, NOME_DO_TIPO_DE_LANCAMENTO } from '../pontuacao/regras';
@@ -108,7 +109,8 @@ function itemDeDemanda(demanda: DemandaVisivel, hoje: string): HTMLElement {
   return item(
     demanda.titulo,
     el('span', {}, el('span', { class: 'mono' }, demanda.codigo), ` · ${demanda.projeto_nome}`),
-    el('span', { class: estaAtrasada(demanda, hoje) ? 'lado atrasada' : 'lado' }, descreverPrazo(demanda, hoje)),
+    el('span', { class: estaAtrasada(demanda, hoje) ? 'lado prazo-com-icone atrasada' : 'lado prazo-com-icone' },
+      iconeDoPrazo(demanda, hoje), descreverPrazo(demanda, hoje)),
     () => {
       pedirPainelDaDemanda(demanda.id);
       window.location.hash = '#demandas';
