@@ -58,6 +58,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL15);
     await db.exec(window.SQL16);
     await db.exec(window.SQL17);
+    await db.exec(window.SQL18);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -850,6 +851,117 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       await valor('sem-cadastro@facil.test', `select count(*)::int from disponibilidade_semanal`),
       await valor('sem-cadastro@facil.test', `select count(*)::int from disponibilidade_pessoas`),
     ], [true, true, 0, 0]);
+
+    // recados e notificações (18)
+    const tiposDe = (email, codigo) => como(email, `select tipo from minhas_notificacoes where codigo = $1 order by tipo`, [codigo]).then(r => r.map(l => l.tipo));
+    const dAtrasada = await valor(DUDA, `select criar_demanda($1,'Roteiro do vídeo','',privado.hoje() - 2,'alta',array[$2]::uuid[])`, [pMkt, iCamila]);
+    const codAtrasada = await valor(MEL, `select codigo from demandas where id = $1`, [dAtrasada]);
+    confere('Demanda atribuída com prazo vencido: o sino mostra a atribuição e o atraso', await tiposDe(CAMILA, codAtrasada), ['atraso', 'atribuicao']);
+    confere('A notificação é só de quem recebeu a atividade', [await tiposDe(DUDA, codAtrasada), await tiposDe(MEL, codAtrasada), await tiposDe(ANA, codAtrasada)], [[], [], []]);
+    const dPropria = await valor(LUIS, `select criar_demanda($1,'Conferir extrato','',privado.hoje() + 4,'media',array[$2]::uuid[])`, [pFin, iLuis]);
+    confere('Quem se atribui a si mesma não é avisada', await valor(LUIS, `select count(*)::int from notificacoes where demanda_id = $1`, [dPropria]), 0);
+    const dIndic = await valor(MEL, `select id from demandas where titulo = 'Levantar indicadores'`);
+    confere('Atribuição já feita gerou um aviso para a executora', await valor(ANA, `select count(*)::int from notificacoes where demanda_id = $1 and tipo = 'atribuicao'`, [dIndic]), 1);
+    await permite('Gerência inclui outra executora', VICTOR, `select editar_demanda($1,'Levantar indicadores','','afazer','media',privado.hoje() + 9,array[$2,$3]::uuid[])`, [dIndic, iAna, iLucas]);
+    confere('Editar a demanda avisa só quem entrou, sem repetir o aviso de quem já estava', [
+      await valor('lucas@facil.test', `select count(*)::int from notificacoes where demanda_id = $1`, [dIndic]),
+      await valor(ANA, `select count(*)::int from notificacoes where demanda_id = $1 and tipo = 'atribuicao'`, [dIndic]),
+    ], [1, 1]);
+    const idAviso = await valor(CAMILA, `select id from minhas_notificacoes where tipo = 'atribuicao' and codigo = $1`, [codAtrasada]);
+    await permite('Outra pessoa tenta marcar o aviso de Camila: nada acontece', ANA, `select marcar_notificacoes_lidas(array[$1]::uuid[])`, [idAviso]);
+    confere('O aviso de Camila continua não lido', await tiposDe(CAMILA, codAtrasada), ['atraso', 'atribuicao']);
+    await permite('Camila marca o aviso como lido', CAMILA, `select marcar_notificacoes_lidas(array[$1]::uuid[])`, [idAviso]);
+    confere('Lido sai do sino, mas o atraso continua enquanto não concluir', await tiposDe(CAMILA, codAtrasada), ['atraso']);
+    await permite('Gerência conclui a demanda atrasada', DUDA, `select mudar_status($1,'concluida')`, [dAtrasada]);
+    confere('Concluir tira o atraso do sino', await tiposDe(CAMILA, codAtrasada), []);
+
+    const pessoasAtivas = await valor(MEL, `select count(*)::int from pessoas where ativo`);
+    const pessoasProj = await valor(MEL, `select count(*)::int from pessoas where ativo and area_id = 'proj'`);
+    await bloqueia('Membro não publica recado', ANA, `select publicar_recado('Aviso','Texto','nucleo','proj-cli')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Gerência não publica para toda a equipe', DUDA, `select publicar_recado('Aviso','Texto','todos')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Gerência não publica para a área inteira', DUDA, `select publicar_recado('Aviso','Texto','area','com')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Gerência não publica para o núcleo de outra área', DUDA, `select publicar_recado('Aviso','Texto','nucleo','proj-cli')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Diretoria não publica para outra área', JOAO, `select publicar_recado('Aviso','Texto','area','fin')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Diretoria não publica para núcleo de outra área', JOAO, `select publicar_recado('Aviso','Texto','nucleo','fin-cx')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Diretoria não publica para toda a equipe', JOAO, `select publicar_recado('Aviso','Texto','todos')`, [], 'Você não pode enviar recados para este público.');
+    await bloqueia('Público inexistente', MEL, `select publicar_recado('Aviso','Texto','area','nao-existe')`, [], 'Área não encontrada.');
+    await bloqueia('Escolha de público inválida', MEL, `select publicar_recado('Aviso','Texto','geral')`, [], 'Escolha para quem é o recado.');
+    await bloqueia('Título vazio', MEL, `select publicar_recado('   ','Texto','todos')`, [], 'Dê um título ao recado.');
+    await bloqueia('Texto vazio', MEL, `select publicar_recado('Aviso','  ','todos')`, [], 'Escreva o recado.');
+    await bloqueia('Título longo demais', MEL, `select publicar_recado($1,'Texto','todos')`, ['x'.repeat(81)], 'O título do recado tem no máximo 80 caracteres.');
+    await bloqueia('Texto longo demais', MEL, `select publicar_recado('Aviso',$1,'todos')`, ['x'.repeat(1001)], 'O recado tem no máximo 1000 caracteres.');
+    await bloqueia('Visitante sem login não publica', null, `select publicar_recado('Aviso','Texto','todos')`, [], 'permission denied for function publicar_recado');
+    const rTodos = await valor(MEL, `select publicar_recado('Reunião geral adiada','Passou para sexta, 19h.','todos')`);
+    const rProj = await valor(JOAO, `select publicar_recado('Entrega do cliente','Revisem os fluxos até quarta.','area','proj')`);
+    const rCom = await valor(DUDA, `select publicar_recado('Pauta do Instagram','Mandem as ideias no grupo.','nucleo','com-mkt')`);
+    const avisadas = async recado => (await db.query(`select count(*)::int as n from notificacoes where recado_id = $1`, [recado])).rows[0].n;
+    confere('Recado para toda a equipe avisa todos, menos quem publicou', await avisadas(rTodos), pessoasAtivas - 1);
+    confere('Recado para a área avisa só a área (a diretoria que cobre a vaga publica sem ser do público)', await avisadas(rProj), pessoasProj);
+    const veRecados = {};
+    for (const [nome, email] of [['mel', MEL], ['joao', JOAO], ['ana', ANA], ['victor', VICTOR], ['camila', CAMILA], ['duda', DUDA], ['pedro', PEDRO]]) {
+      veRecados[nome] = (await como(email, `select titulo from recados_painel order by titulo`)).map(l => l.titulo);
+    }
+    confere('Cada pessoa lê os recados do seu público (a Presidência lê todos)', veRecados, {
+      mel: ['Entrega do cliente', 'Pauta do Instagram', 'Reunião geral adiada'],
+      joao: ['Entrega do cliente', 'Pauta do Instagram', 'Reunião geral adiada'],
+      ana: ['Entrega do cliente', 'Reunião geral adiada'],
+      victor: ['Entrega do cliente', 'Reunião geral adiada'],
+      camila: ['Pauta do Instagram', 'Reunião geral adiada'],
+      duda: ['Pauta do Instagram', 'Reunião geral adiada'],
+      pedro: ['Reunião geral adiada'],
+    });
+    confere('A linha do recado traz público e autor', await como(CAMILA, `select publico, autor_nome, pode_retirar from recados_painel where titulo = 'Pauta do Instagram'`), [{ publico: 'Marketing', autor_nome: 'Duda', pode_retirar: false }]);
+    confere('O sino de Ana traz os recados que chegaram', (await como(ANA, `select titulo, autor_nome from minhas_notificacoes where tipo = 'recado' order by titulo`)), [{ titulo: 'Entrega do cliente', autor_nome: 'João' }, { titulo: 'Reunião geral adiada', autor_nome: 'Mel' }]);
+    confere('Quem publicou não recebe aviso do próprio recado', await valor(JOAO, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rProj]), 0);
+    await permite('Ana abre o recado e ele sai do sino', ANA, `select marcar_notificacoes_lidas(array(select id from minhas_notificacoes where recado_id = $1))`, [rTodos]);
+    confere('Só aquele recado saiu do sino de Ana', (await como(ANA, `select titulo from minhas_notificacoes where tipo = 'recado'`)).map(l => l.titulo), ['Entrega do cliente']);
+    confere('O recado lido continua na Tela Inicial dela', await valor(ANA, `select count(*)::int from recados_painel where id = $1`, [rTodos]), 1);
+    await permite('Marcar tudo como lido (sem lista)', ANA, `select marcar_notificacoes_lidas()`);
+    confere('Depois de marcar tudo, o sino de Ana só tem atrasos (nenhum, neste cenário)', await valor(ANA, `select count(*)::int from minhas_notificacoes where tipo <> 'atraso'`), 0);
+
+    const destinos = {};
+    for (const [nome, email] of [['mel', MEL], ['luis', LUIS], ['joao', JOAO], ['duda', DUDA], ['ana', ANA]]) destinos[nome] = await valor(email, `select count(*)::int from destinos_de_recado`);
+    const totais = { areas: await valor(MEL, `select count(*)::int from areas`), nucleos: await valor(MEL, `select count(*)::int from nucleos`), nucleosDoJoao: await valor(MEL, `select count(*)::int from nucleos where area_id in ('com','proj')`) };
+    confere('Destinos de recado: Presidência, diretoria (a sua área e a que cobre), gerência e membro', destinos, {
+      mel: 1 + totais.areas + totais.nucleos, luis: 1 + totais.areas + totais.nucleos, joao: 2 + totais.nucleosDoJoao, duda: 1, ana: 0 });
+    confere('A diretoria publica para as áreas que conduz; a gerência, só para o núcleo', [
+      (await como(JOAO, `select escopo_id from destinos_de_recado where escopo = 'area' order by escopo_id`)).map(l => l.escopo_id),
+      (await como(DUDA, `select escopo, escopo_id from destinos_de_recado`)),
+    ], [['com', 'proj'], [{ escopo: 'nucleo', escopo_id: 'com-mkt' }]]);
+
+    await bloqueia('Membro não retira recado de outra pessoa', ANA, `select retirar_recado($1)`, [rProj], 'Só quem publicou o recado ou a Presidência pode retirá-lo.');
+    await bloqueia('Gerência não retira recado da diretoria', DUDA, `select retirar_recado($1)`, [rTodos], 'Só quem publicou o recado ou a Presidência pode retirá-lo.');
+    await permite('Quem publicou retira o recado', JOAO, `select retirar_recado($1)`, [rProj]);
+    confere('Recado retirado some para todos e do sino', [
+      await valor(MEL, `select count(*)::int from recados_painel where id = $1`, [rProj]),
+      await valor(ANA, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rProj]),
+      await valor(JOAO, `select count(*)::int from recados_painel where id = $1`, [rProj]),
+    ], [0, 0, 0]);
+    await bloqueia('Retirar de novo: já não existe', JOAO, `select retirar_recado($1)`, [rProj], 'Recado não encontrado.');
+    await permite('A Presidência retira o recado de outra pessoa', MEL, `select retirar_recado($1)`, [rCom]);
+    confere('O recado retirado fica guardado no banco', (await db.query(`select count(*)::int as n from recados where retirado_em is not null`)).rows[0].n, 2);
+    confere('Publicar e retirar ficam na auditoria', (await db.query(`select acao from auditoria where acao in ('Publicou recado','Retirou recado') order by acao, detalhe`)).rows.map(l => l.acao),
+      ['Publicou recado', 'Publicou recado', 'Publicou recado', 'Retirou recado', 'Retirou recado']);
+
+    confere('Ninguém lê a notificação de outra pessoa', [
+      await valor(CAMILA, `select count(*)::int from notificacoes where pessoa_id <> $1`, [iCamila]),
+      await valor(MEL, `select count(*)::int from notificacoes where pessoa_id <> $1`, [iMel]),
+    ], [0, 0]);
+    confere('Ninguém escreve em recados nem em notificações diretamente', [
+      (await tenta(MEL, `insert into recados(autor_id, titulo, texto, escopo) values ($1,'x','y','todos')`, [iMel])).startsWith('permission denied'),
+      (await tenta(MEL, `update recados set titulo = 'z'`)).startsWith('permission denied'),
+      (await tenta(ANA, `update notificacoes set lida_em = now()`)).startsWith('permission denied'),
+      (await tenta(ANA, `delete from notificacoes`)).startsWith('permission denied'),
+      (await tenta(MEL, `insert into notificacoes(pessoa_id, tipo, recado_id) values ($1,'recado',$2)`, [iMel, rTodos])).startsWith('permission denied'),
+    ], [true, true, true, true, true]);
+    confere('Fechado ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from recados_painel`)).startsWith('permission denied'),
+      (await tenta(null, `select * from minhas_notificacoes`)).startsWith('permission denied'),
+      (await tenta(null, `select * from destinos_de_recado`)).startsWith('permission denied'),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from recados_painel`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from minhas_notificacoes`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from destinos_de_recado`),
+    ], [true, true, true, 0, 0, 0]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
