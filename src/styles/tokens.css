@@ -20,6 +20,8 @@
   --side-hover: rgba(255, 255, 255, 0.1);
   --side-active: rgba(255, 255, 255, 0.18);
   --side-line: rgba(255, 255, 255, 0.24);
+  --sino: #f6c62b;
+  --sino-ink: #0b3b73;
   --danger: #c02525;
   --warn: #975a06;
   --ok: #18794a;

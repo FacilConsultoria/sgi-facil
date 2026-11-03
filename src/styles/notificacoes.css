@@ -1,0 +1,35 @@
+/* Sino de notificações (amarelo, com o número ao lado), painel da lista e recados internos da Tela Inicial. */
+
+.quem-linha { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-width: 0; }
+.quem-linha strong { min-width: 0; overflow-wrap: anywhere; }
+
+.sino {
+  appearance: none; flex: none; display: inline-flex; align-items: center; gap: 6px; margin: -3px -4px -3px 0; padding: 3px 5px;
+  background: none; border: 0; border-radius: 9px; color: var(--sino); font: inherit; cursor: pointer;
+}
+.sino:hover { background: var(--side-hover); }
+.sino:focus-visible { outline: 2px solid var(--sino); outline-offset: 2px; }
+.sino-desenho { display: block; width: 24px; height: 24px; fill: var(--sino); }
+.sino .sino-num {
+  display: none; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 999px; background: var(--sino); color: var(--sino-ink);
+  font-size: 0.78rem; font-weight: 700; line-height: 22px; text-align: center; font-variant-numeric: tabular-nums;
+}
+.sino.com-novas .sino-num { display: inline-block; }
+.barra-movel .sino { margin: 0 0 0 auto; }
+
+/* painel "Notificações" */
+.notificacoes .lado { font-weight: 600; font-size: 0.78rem; }
+.notificacoes .lado.tipo-atraso { color: var(--danger); }
+.notificacoes .lado.tipo-atribuicao { color: var(--accent-text); }
+.notificacoes .lado.tipo-recado { color: var(--warn); }
+
+/* recados internos na Tela Inicial */
+.bloco.recados { max-width: none; margin-bottom: 14px; }
+.recados-cab { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.recados-cab h2 { margin: 0; }
+.lista-recados { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.recado { background: var(--bg); border: 1px solid var(--line); border-left: 4px solid var(--sino); border-radius: var(--r); padding: 10px 14px; }
+.recado-topo { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.recado-topo > div { min-width: 0; }
+.recado-topo .btn { flex: none; }
+.recado-texto { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
