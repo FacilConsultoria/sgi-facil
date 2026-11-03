@@ -64,6 +64,14 @@ describe('descreverNotificacao', () => {
   });
 });
 
+describe('pedido de autorização no sino', () => {
+  it('título do recado, quem pediu e o rótulo "Autorizar"; sai sozinho (sem id para marcar)', () => {
+    const pedido = notificacao({ tipo: 'autorizacao', titulo: 'Feira de profissões', codigo: null, prazo: null, autor_nome: 'João', recado_id: 'r', demanda_id: null });
+    expect(descreverNotificacao(pedido, HOJE)).toEqual({ titulo: 'Feira de profissões', detalhe: 'Recado para toda a equipe pedido por João' });
+    expect(idsParaMarcar([pedido])).toEqual([]);
+  });
+});
+
 describe('idsParaMarcar', () => {
   it('leva só as que têm id gravado (atrasos não têm)', () => {
     expect(idsParaMarcar([notificacao({ id: null }), notificacao({ id: 'x', tipo: 'recado' }), notificacao({ id: 'y', tipo: 'atribuicao' })])).toEqual(['x', 'y']);

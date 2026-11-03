@@ -1,5 +1,5 @@
-// O sino amarelo ao lado do nome: mostra quantas notificações há (atrasos, atividades atribuídas e recados internos)
-// e abre a lista num painel. Um só controle serve os dois sinos da tela (menu lateral e barra do celular).
+// O sino amarelo ao lado do nome: mostra quantas notificações há (atrasos, atividades atribuídas, recados internos e,
+// para a Presidência, recados aguardando autorização) e abre a lista num painel. Um só controle serve os dois sinos da tela (menu lateral e barra do celular).
 import { hojeEmSaoPaulo } from '../../lib/datas';
 import { registrarErro } from '../../lib/erros';
 import type { Notificacao } from '../../types/database';
@@ -14,6 +14,9 @@ import {
 
 const SVG = 'http://www.w3.org/2000/svg';
 const INTERVALO_DE_ATUALIZACAO = 60_000;
+
+/** Avisado (em window) por quem muda algo que entra no sino; o sino busca de novo na hora. */
+export const EVENTO_NOTIFICACOES_MUDARAM = 'sgi:notificacoes-mudaram';
 
 export interface ControleDoSino {
   /** Um botão novo; todos os botões criados mostram o mesmo número. */
@@ -147,6 +150,12 @@ export function criarControleDoSino(moldura: () => HTMLElement): ControleDoSino 
     else if (!document.hidden) void atualizar();
   };
   document.addEventListener('visibilitychange', aoVoltar);
+  // outras telas avisam quando algo que entra no sino mudou (ex.: recado autorizado)
+  const aoMudarFora = (): void => {
+    if (!moldura().isConnected) window.removeEventListener(EVENTO_NOTIFICACOES_MUDARAM, aoMudarFora);
+    else void atualizar();
+  };
+  window.addEventListener(EVENTO_NOTIFICACOES_MUDARAM, aoMudarFora);
 
   void atualizar();
   return { criarBotao, atualizar };

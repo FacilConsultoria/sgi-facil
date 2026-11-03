@@ -28,6 +28,7 @@ export const NOME_DO_TIPO_DE_NOTIFICACAO: Readonly<Record<TipoDeNotificacao, str
   atraso: 'Atraso',
   atribuicao: 'Nova atividade',
   recado: 'Recado',
+  autorizacao: 'Autorizar',
 };
 
 /** "Venceu ontem · 05/11" ou "Atrasada há 3 dias · 05/11". */
@@ -50,10 +51,15 @@ export function descreverNotificacao(notificacao: Notificacao, hoje: string): Te
       return { titulo: demanda, detalhe: notificacao.prazo ? `Atribuída a você · prazo ${dataCurta(notificacao.prazo)}` : 'Atribuída a você' };
     case 'recado':
       return { titulo: notificacao.titulo, detalhe: notificacao.autor_nome ? `Recado de ${notificacao.autor_nome}` : 'Recado interno' };
+    case 'autorizacao':
+      return {
+        titulo: notificacao.titulo,
+        detalhe: notificacao.autor_nome ? `Recado para toda a equipe pedido por ${notificacao.autor_nome}` : 'Recado para toda a equipe aguardando autorização',
+      };
   }
 }
 
-/** As que podem ser marcadas como lidas (atrasos somem sozinhos quando a demanda é concluída). */
+/** As que podem ser marcadas como lidas (atrasos e pedidos de autorização somem sozinhos quando resolvidos). */
 export function idsParaMarcar(lista: readonly Notificacao[]): string[] {
   return lista.flatMap((n) => (n.id ? [n.id] : []));
 }
