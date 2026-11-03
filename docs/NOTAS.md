@@ -210,6 +210,13 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - **Prazo:** campo "Mostrar até (opcional)" na criação (de hoje até um ano). Passado o dia, o recado some da Tela Inicial e do sino de todos (fica guardado no banco). Sem prazo, fica 30 dias na tela; com prazo, fica até o dia escolhido mesmo depois de 30 dias. Um pedido cujo prazo passa antes da decisão sai da lista de quem autoriza e não pode mais ser autorizado.
   - **Sino:** quem autoriza recebe "Autorizar" para cada pedido; some sozinho quando alguém decide. A Tela Inicial mostra "Aguardando sua autorização" (Recusar / Autorizar) e "Seus pedidos para toda a equipe".
 
+- **Incidente da migração 19 (03/11/2026):** na primeira tentativa eu li um "Success" que era da consulta anterior e dei a migração como aplicada; o Supabase tinha pedido confirmação de operação destrutiva (o script troca uma política e uma função). O site novo ficou no ar com o banco antigo até o usuário rodar o script. **Daqui em diante, toda migração é conferida com uma consulta de leitura** (funções e colunas novas existem) antes de publicar o site.
+
+- **Ambiente de desenvolvimento (03/11/2026), a pedido do usuário:** o usuário pediu uma conta com todas as permissões, sem 2FA, com um e-mail de terceiros (`teste123@gmail.com`) e senha escrita no chat. Recusei criar isso na produção (dados reais de CPF/RGA; o dono daquele e-mail poderia usar "Esqueci minha senha"; senha já exposta) e o usuário aceitou um **ambiente separado**: projeto Supabase `sgi-facil-dev` + projeto Vercel `sgi-facil-dev`, mesmo código, dados fictícios. Roteiro em `supabase/dev/LEIA-ME.md`.
+  - `supabase/dev/02_dados_dev.sql` (no lugar do 02): a conta de teste (criada pelo usuário no painel, com e-mail dele) vira a Presidente, com dados pessoais fictícios e `senha_definida`; pessoas fictícias `@example.com`; projetos, demandas, reunião, lançamento e recado criados pelas funções do sistema (o script define `request.jwt.claim.sub` como a conta de teste). Recusa rodar se o banco já tiver pessoas. Conferido com `teste_dev.js` (`rodar_testes.ps1 -Teste teste_dev.js`).
+  - Site: `VITE_AMBIENTE=desenvolvimento` mostra a faixa "Ambiente de desenvolvimento" e "[DEV]" no título (`src/lib/ambiente.ts`). A produção não define a variável.
+  - O SGI não tem 2FA: o acesso é por e-mail e senha.
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
