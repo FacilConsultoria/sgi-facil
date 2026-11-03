@@ -7,7 +7,7 @@ import { mostrarAviso } from '../../ui/aviso';
 import { abrirCamada } from '../../ui/camada';
 import { el, substituir } from '../../ui/dom';
 import { botaoFechar, campo, ligarEnvio, linhaDeErro, seletor } from '../../ui/formulario';
-import { iconeDoPrazo, seletorDeExecutores, seloDeAcesso, seloDePrioridade, seloDeRestricao, seloDeStatus } from './componentes';
+import { seletorDeExecutores, seloDeAcesso, seloDePrioridade, seloDeRestricao, seloDeStatus } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { carregarHistorico, editarDemanda, mudarStatus } from './dados';
 import {
@@ -40,7 +40,7 @@ export function abrirPainelDaDemanda(contexto: ContextoDeDemandas, demanda: Dema
         el('dl', { class: 'dl' },
           ...item('Projeto', [demanda.projeto_nome, demanda.projeto_cliente].filter(Boolean).join(' · ')),
           ...item('Área', contexto.tituloDaArea(demanda.area_id)),
-          ...item('Prazo', el('span', { class: 'prazo-com-icone' }, iconeDoPrazo(demanda, hoje), descreverPrazoCompleto(demanda, hoje)), atrasada ? 'prazo atrasada' : undefined),
+          ...item('Prazo', descreverPrazoCompleto(demanda, hoje), atrasada ? 'prazo atrasada' : undefined),
           ...(demanda.concluida_em ? item('Concluída em', dataCompleta(demanda.concluida_em)) : []),
           ...item('Executores', demanda.executores.map(dados.nomeDe).join(', ')),
           ...item('Criada por', dados.nomeDe(demanda.criado_por)),
@@ -51,7 +51,7 @@ export function abrirPainelDaDemanda(contexto: ContextoDeDemandas, demanda: Dema
   });
 }
 
-function item(rotulo: string, valor: string | HTMLElement, classe?: string): HTMLElement[] {
+function item(rotulo: string, valor: string, classe?: string): HTMLElement[] {
   return [el('dt', {}, rotulo), el('dd', { class: classe }, valor)];
 }
 
