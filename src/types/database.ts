@@ -423,7 +423,8 @@ export interface Perfil {
   dados_pendentes: boolean;
 }
 
-export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado';
+/** "autorizacao": recado para toda a equipe aguardando a autorização de quem consulta (supabase/19_recados_autorizacao_e_prazo.sql). */
+export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao';
 
 /** Linha da visão public.minhas_notificacoes (supabase/18_recados_e_notificacoes.sql): o que o sino mostra. */
 export interface Notificacao {
@@ -444,7 +445,10 @@ export interface Notificacao {
 
 export type EscopoDeRecado = 'todos' | 'area' | 'nucleo';
 
-/** Linha da visão public.recados_painel. */
+/** Recado para toda a equipe pedido por diretoria fica "pendente" até a Presidência decidir. */
+export type SituacaoDoRecado = 'pendente' | 'publicado' | 'recusado';
+
+/** Linha da visão public.recados_painel (o banco já tira os retirados e os com prazo vencido). */
 export interface RecadoDoPainel {
   id: string;
   titulo: string;
@@ -456,6 +460,13 @@ export interface RecadoDoPainel {
   publico: string;
   criado_em: string;
   pode_retirar: boolean;
+  situacao: SituacaoDoRecado;
+  /** Último dia em que o recado aparece; nulo = sem prazo. */
+  visivel_ate: string | null;
+  publicado_em: string | null;
+  motivo_recusa: string | null;
+  /** Quem consulta pode autorizar ou recusar este pedido. */
+  pode_autorizar: boolean;
 }
 
 /** Linha da visão public.destinos_de_recado: para quem a pessoa pode publicar. */
@@ -464,6 +475,8 @@ export interface DestinoDeRecado {
   escopo_id: string | null;
   nome: string;
   ordem: number;
+  /** O recado vai primeiro para a autorização da Presidência (toda a equipe, pedido por diretoria). */
+  precisa_autorizacao: boolean;
 }
 
 /** Linha da tabela public.disponibilidade_semanal (supabase/17_disponibilidade.sql). Horário = dia * 24 + hora (segunda = dia 0). */
