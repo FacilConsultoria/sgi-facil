@@ -27,6 +27,7 @@ import {
 import { mostrarConfiguracaoAusente, mostrarFalhaAoCarregar, mostrarSemCadastro } from './app/telas-de-acesso';
 import { paginaDefinirSenha } from './features/auth/definir-senha';
 import { salvarMeusDados } from './features/dadospessoais/dados';
+import { montarTrocaDeCargo } from './features/dev/trocar-cargo';
 import type { DadosParaSalvar } from './features/dadospessoais/regras';
 import { paginaLogin, type AcoesDeLogin } from './features/auth/pagina';
 import { senhaJaDefinida } from './features/auth/regras';
@@ -122,6 +123,8 @@ async function aoTrocarSessao(destino: HTMLElement, sessao: Session | null, even
     contextoAtual = contexto;
     layoutAtual = montarLayout(destino, contexto, encerrarSessao);
     mostrarRotaAtual();
+    // só no ambiente de desenvolvimento: seletor "Ver como" na faixa do topo
+    void montarTrocaDeCargo(contexto.perfil);
   } catch (erro: unknown) {
     if (minhaTroca !== trocaAtual) return;
     registrarErro('Carregar perfil', erro);
