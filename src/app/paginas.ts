@@ -2,6 +2,7 @@
 import { paginaAutorizacoes } from '../features/autorizacoes/pagina';
 import { paginaDashboard } from '../features/dashboard/pagina';
 import { paginaDemandas } from '../features/demandas/pagina';
+import { paginaDisponibilidade } from '../features/disponibilidade/pagina';
 import { paginaEmMigracao } from '../features/em-migracao/pagina';
 import { paginaEquipe } from '../features/equipe/pagina';
 import { paginaHistorico } from '../features/historico/pagina';
@@ -41,6 +42,9 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
       return;
     case 'projetos':
       paginaProjetos(destino);
+      return;
+    case 'disponibilidade':
+      paginaDisponibilidade(destino, contexto);
       return;
     case 'regras':
       paginaRegras(destino, contexto);
