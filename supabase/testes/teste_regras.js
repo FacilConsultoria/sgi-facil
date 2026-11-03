@@ -3,7 +3,7 @@
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL15 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL16 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -56,6 +56,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL13);
     await db.exec(window.SQL14);
     await db.exec(window.SQL15);
+    await db.exec(window.SQL16);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -369,8 +370,8 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Diretoria não se justifica sozinha', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rHoje, JSON.stringify({ [iAna]: 'presente', [iJoao]: 'justificada', [iLucas]: 'presente', [iVictor]: 'presente' })], 'A falta de diretoria só é justificada com aval da Presidência ou da Vice-Presidência. Peça o aval pelo sistema.');
     await permite('Falta de quem não é diretoria é justificada normalmente', JOAO, `select salvar_presencas($1, $2::jsonb)`, [rHoje, JSON.stringify({ [iAna]: 'presente', [iJoao]: 'falta', [iLucas]: 'justificada', [iVictor]: 'presente' })]);
     await bloqueia('Quem não organiza não pede aval', ANA, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Viagem a trabalho autorizada pela Presidência')`, [rHoje, iJoao], 'Você não pode pedir aval para esta reunião.');
-    await bloqueia('Aval só para falta de diretor', JOAO, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Pedido que não cabe para um membro')`, [rHoje, iLucas], 'O aval vale para a falta de um diretor já registrada nesta reunião.');
-    await bloqueia('Presidente justifica direto, sem aval', MEL, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Tentativa de pedir aval sendo a Presidente')`, [rHoje, iJoao], 'A Presidente e a Vice justificam a falta diretamente.');
+    await bloqueia('Aval só para falta de diretor', JOAO, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Pedido que não cabe para um membro')`, [rHoje, iLucas], 'O aval vale para a falta de diretoria já registrada nesta reunião.');
+    await bloqueia('Presidente justifica direto, sem aval', MEL, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Tentativa de pedir aval sendo a Presidente')`, [rHoje, iJoao], 'A Presidência e a Vice-Presidência justificam a falta diretamente.');
     const avalFalta = await valor(JOAO, `select solicitar_aval('justificar_falta', jsonb_build_object('reuniao',$1::text,'pessoa',$2::text), 'Viagem a trabalho autorizada pela Presidência')`, [rHoje, iJoao]);
     await bloqueia('Não encerra com aval pendente', JOAO, `select encerrar_reuniao($1)`, [rHoje], 'Há pedido de aval pendente nesta reunião. Aguarde a decisão antes de encerrar.');
     await permite('Vice aprova a justificativa', LUIS, `select decidir_aval($1,true,'')`, [avalFalta]);
@@ -783,6 +784,26 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       (await db.query(`select count(*)::int as n from auditoria where acao = 'Atualizou dados pessoais'`)).rows[0].n >= 3,
       (await db.query(`select count(*)::int as n from auditoria where detalhe ~ '(52998224725|11144477735|AB1234567890|2003-04-09)'`)).rows[0].n,
     ], [true, 0]);
+
+    // tratamento (16)
+    const tratamentoDe = nome => valor(CAMILA, `select tratamento from pessoas where nome = $1`, [nome]);
+    confere('Tratamento: vem do gênero informado e todas as pessoas leem a coluna (feminino, outro e quem não preencheu)', [
+      await tratamentoDe('Mel'), await tratamentoDe('Ana'), await tratamentoDe('Luis'),
+    ], ['feminino', 'neutro', 'neutro']);
+    await gravar(LUIS, 'Luis Fernando Costa', 'ABCDEF123456', '12345678909', '1995-06-15', 'masculino');
+    confere('Tratamento: gênero masculino vira masculino', await tratamentoDe('Luis'), 'masculino');
+    await gravar(ANA, 'Ana Ferraz de Souza', 'AB1234567890', '52998224725', '2003-04-09', 'nao_informar');
+    confere('Tratamento: "prefiro não informar" vira neutro', await tratamentoDe('Ana'), 'neutro');
+    confere('O gênero em si continua privado, mesmo com o tratamento aberto', [
+      (await como(CAMILA, `select genero from dados_pessoais`)).length,
+      (await como(LUIS, `select genero from dados_pessoais`)).map(l => l.genero),
+      (await tenta(CAMILA, `select genero from pessoas`)).startsWith('column "genero" does not exist') || (await tenta(CAMILA, `select genero from pessoas`)).includes('does not exist'),
+    ], [0, ['masculino'], true]);
+    confere('Ninguém altera o tratamento diretamente', [
+      (await tenta(ANA, `update pessoas set tratamento = 'feminino'`)).startsWith('permission denied'),
+      (await tenta(MEL, `update pessoas set tratamento = 'masculino' where nome = 'Luis'`)).startsWith('permission denied'),
+    ], [true, true]);
+    confere('O tratamento de uma pessoa só muda quando ela mesma salva os dados', await tratamentoDe('Mel'), 'feminino');
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
