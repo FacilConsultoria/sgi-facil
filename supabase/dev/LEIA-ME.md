@@ -22,8 +22,12 @@ risco de expor ou estragar os dados reais da equipe. Usa o mesmo código do site
 3. **Authentication → Sign In / Providers → Email**: **Minimum password length** em 10.
 4. **SQL Editor**: rode os scripts da pasta `supabase` na mesma ordem da produção (ver `supabase/LEIA-ME.md`), **menos o
    `02_dados_iniciais.sql`**: `01`, `03`, `04`, `05`, `06` (sozinho), `07` a `19`.
-5. Por último, `supabase/dev/02_dados_dev.sql`, com o e-mail da conta de teste no lugar de `PREENCHER`.
+5. Depois, `supabase/dev/02_dados_dev.sql`, com o e-mail da conta de teste no lugar de `PREENCHER`.
    O script se recusa a rodar se o banco já tiver pessoas (proteção contra rodar na produção por engano).
+6. Por último, `supabase/dev/03_trocar_cargo_dev.sql`: liga o seletor **"Ver como"** da faixa do topo, que troca o
+   cargo da conta de teste (Presidência, Vice, diretoria de cada área, assessoria, gerência ou membro de cada núcleo)
+   para ver a plataforma pela ótica de cada um. Só a conta de teste troca de cargo, e o script se recusa a rodar num
+   banco com pessoas reais.
 
 A conta de teste vira a **Presidente** do ambiente de desenvolvimento: vê tudo, cadastra pessoas, ajusta pontos, edita
 regras e autoriza recados e pedidos de acesso. Já entra com e-mail e senha, sem o formulário de primeiro acesso.
@@ -45,6 +49,8 @@ Os dois sites publicam a partir do mesmo ramo `main`: o código é o mesmo, só 
 ## 3. No dia a dia
 
 - **Migração nova:** rode primeiro no `sgi-facil-dev`, teste no site de desenvolvimento e só depois rode na produção.
-- **Recomeçar do zero:** apague e recrie o projeto `sgi-facil-dev` (ou crie outro) e repita os passos 1.4 e 1.5.
+- **Ver como outro cargo:** escolha na lista "Ver como" da faixa do topo; a página recarrega já no novo cargo. Para
+  voltar a ter todas as permissões, escolha "Presidência".
+- **Recomeçar do zero:** apague e recrie o projeto `sgi-facil-dev` (ou crie outro) e repita os passos 1.4 a 1.6.
 - **Conferir o script de dados fictícios** sem o Supabase, a partir da pasta do projeto:
   `powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1 -Teste teste_dev.js`
