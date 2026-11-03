@@ -1,8 +1,11 @@
 # Roda os testes de regras do banco do SGI (PGlite dentro do Microsoft Edge, sem janela).
 # Uso, a partir da pasta do projeto:
 #   powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
+# Para conferir o script de dados fictícios do ambiente de desenvolvimento (supabase\dev):
+#   powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1 -Teste teste_dev.js
 # Requisitos: Microsoft Edge instalado e acesso à internet (o PGlite vem do cdn.jsdelivr.net).
 # Sai com código 1 se alguma verificação falhar.
+param([string]$Teste = 'teste_regras.js')
 $ErrorActionPreference = 'Stop'
 $aqui = Split-Path -Parent $MyInvocation.MyCommand.Path
 $pastaSupabase = Split-Path -Parent $aqui
@@ -33,7 +36,8 @@ try {
   $sql17 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '17_disponibilidade.sql'))
   $sql18 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '18_recados_e_notificacoes.sql'))
   $sql19 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '19_recados_autorizacao_e_prazo.sql'))
-  $teste = [string](Get-Content -Raw -Encoding utf8 (Join-Path $aqui 'teste_regras.js'))
+  $sqlDev = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase 'dev\02_dados_dev.sql'))
+  $teste = [string](Get-Content -Raw -Encoding utf8 (Join-Path $aqui $Teste))
   $pagina = "<!doctype html><meta charset=utf-8><body><script>window.SQL01=" + (ConvertTo-Json -InputObject $sql01 -Compress) +
             ";window.SQL02=" + (ConvertTo-Json -InputObject $sql02 -Compress) +
             ";window.SQL03=" + (ConvertTo-Json -InputObject $sql03 -Compress) +
@@ -52,7 +56,8 @@ try {
             ";window.SQL16=" + (ConvertTo-Json -InputObject $sql16 -Compress) +
             ";window.SQL17=" + (ConvertTo-Json -InputObject $sql17 -Compress) +
             ";window.SQL18=" + (ConvertTo-Json -InputObject $sql18 -Compress) +
-            ";window.SQL19=" + (ConvertTo-Json -InputObject $sql19 -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
+            ";window.SQL19=" + (ConvertTo-Json -InputObject $sql19 -Compress) +
+            ";window.SQLDEV=" + (ConvertTo-Json -InputObject $sqlDev -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
   [IO.File]::WriteAllText((Join-Path $temp 'teste.html'), $pagina, (New-Object System.Text.UTF8Encoding $false))
 
   $url = 'file:///' + ((Join-Path $temp 'teste.html') -replace '\\', '/')
