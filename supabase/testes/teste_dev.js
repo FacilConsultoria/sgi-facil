@@ -41,6 +41,7 @@ const EMAIL_DEV = 'pessoa+dev@facil.test';
     for (const n of ['01', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19']) await db.exec(window[`SQL${n}`]);
     const tenta = async sql => { try { await db.exec(sql); return 'permitido'; } catch (e) { return e.message; } };
     const comEmail = window.SQLDEV.replace(/(v_email_dev\s+text := )'PREENCHER'/, `$1'${EMAIL_DEV}'`);
+    confere('A troca de cargo não é instalada antes dos dados de desenvolvimento', await tenta(window.SQLDEV3), 'Este script é só para o ambiente de desenvolvimento: rode antes o dev/02_dados_dev.sql.');
 
     confere('Recusa rodar sem o e-mail preenchido', await tenta(window.SQLDEV), 'Preencha o e-mail da conta de teste no início do script antes de rodar.');
     confere('Recusa rodar antes de a conta de teste existir', await tenta(comEmail), `Crie antes a conta ${EMAIL_DEV} em Authentication → Users (com senha e "Auto Confirm User").`);
@@ -85,6 +86,60 @@ const EMAIL_DEV = 'pessoa+dev@facil.test';
     confere('A Presidente pode publicar para toda a equipe sem autorização', (await como(`select precisa_autorizacao from destinos_de_recado where escopo = 'todos'`)), [{ precisa_autorizacao: false }]);
     confere('As ações ficaram na auditoria em nome da conta de teste', (await db.query(`select count(*)::int as n from auditoria a join pessoas p on p.id = a.ator where p.nome = 'Dev'`)).rows[0].n > 5, true);
     confere('Depois do script ninguém fica "logado" na sessão do banco', (await db.query(`select coalesce(current_setting('request.jwt.claim.sub', true), '') as sub`)).rows[0].sub, '');
+
+    // troca de cargo da conta de teste (dev/03_trocar_cargo_dev.sql)
+    await db.query(`insert into pessoas(email, nome, papel, area_id, nucleo_id) values ('real@facil.test', 'Pessoa Real', 'membro', 'com', 'com-mkt')`);
+    confere('A troca de cargo se recusa a ser instalada num banco com pessoas reais', await tenta(window.SQLDEV3), 'Este script é só para o ambiente de desenvolvimento: o banco tem pessoas reais.');
+    await db.query(`delete from pessoas where email = 'real@facil.test'`);
+    confere('Instala no banco de desenvolvimento', await tenta(window.SQLDEV3), 'permitido');
+
+    const liderancas = async () => (await db.query(`select id, titular, cobertura from areas order by id`)).rows;
+    const inicio = await liderancas();
+    const trocar = (papel, area = null, nucleo = null) => como(`select dev_trocar_meu_cargo($1::papel, $2, $3)`, [papel, area, nucleo]);
+    const perfil = async () => (await como(`select papel::text as papel, area_id, nucleo_id, areas_que_conduz, eh_presidencia, pode_cadastrar_pessoas from meu_perfil`))[0];
+    const vistas = async () => (await como(`select count(*)::int as n from demandas`))[0].n;
+    const tentaComo = async (sql, params) => { try { await como(sql, params); return 'permitido'; } catch (e) { return e.message; } };
+
+    await trocar('membro', null, 'proj-cli');
+    confere('Como membro: sem acesso de Presidência, vê só as demandas em que é executor', [await perfil(), await vistas()], [
+      { papel: 'membro', area_id: 'proj', nucleo_id: 'proj-cli', areas_que_conduz: [], eh_presidencia: false, pode_cadastrar_pessoas: false }, 1]);
+    await trocar('gerente', null, 'com-mkt');
+    confere('Como gerência do Marketing: vê as demandas do núcleo', [(await perfil()).papel, await vistas()], ['gerente', 1]);
+    await trocar('diretor', 'proj');
+    confere('Como diretoria de Projetos: conduz a área e vê as duas demandas dela, mais a do Marketing em que é executora', [(await perfil()).areas_que_conduz, await vistas()], [['proj'], 3]);
+    await trocar('vice');
+    confere('Como Vice-Presidência: conduz a Financeira e tem acesso de Presidência', [(await perfil()).areas_que_conduz, (await perfil()).eh_presidencia, await vistas()], [['fin'], true, 3]);
+    await trocar('assessor', null, 'pres-ass');
+    confere('Como Assessoria de Presidência: acesso de Presidência', [(await perfil()).papel, (await perfil()).eh_presidencia], ['assessor', true]);
+    confere('As lideranças das outras pessoas continuam (o Diretor Teste segue na Comercial)', (await db.query(`select p.nome from areas a join pessoas p on p.id = a.titular where a.id = 'com'`)).rows[0].nome, 'Diretor Teste');
+    await trocar('presidente');
+    confere('De volta à Presidência: perfil completo e lideranças exatamente como no início', [await perfil(), await liderancas()], [
+      { papel: 'presidente', area_id: 'pres', nucleo_id: null, areas_que_conduz: [], eh_presidencia: true, pode_cadastrar_pessoas: true }, inicio]);
+
+    confere('Escolhas inválidas são recusadas', [
+      await tentaComo(`select dev_trocar_meu_cargo('diretor')`), await tentaComo(`select dev_trocar_meu_cargo('diretor', 'pres')`),
+      await tentaComo(`select dev_trocar_meu_cargo('membro', null, 'nao-existe')`), await tentaComo(`select dev_trocar_meu_cargo('vice', 'pres')`),
+    ], ['Escolha a diretoria.', 'Escolha a diretoria.', 'Escolha o núcleo.', 'Escolha a diretoria que a Vice-Presidência conduz.']);
+
+    await db.query(`insert into auth.users(email) values ('membro.a@example.com')`);
+    await db.query(`update pessoas set auth_user_id = (select id from auth.users where email = 'membro.a@example.com') where email = 'membro.a@example.com'`);
+    const outro = (await db.query(`select id from auth.users where email = 'membro.a@example.com'`)).rows[0].id;
+    const tentaOutro = async () => {
+      try {
+        await db.transaction(async tx => {
+          await tx.query(`select set_config('request.jwt.claim.sub', $1, true)`, [outro]);
+          await tx.exec('set local role authenticated');
+          await tx.query(`select dev_trocar_meu_cargo('presidente')`);
+        });
+        return 'permitido';
+      } catch (e) { return e.message; }
+    };
+    confere('Outra pessoa não troca de cargo', await tentaOutro(), 'Só a conta de teste do ambiente de desenvolvimento troca de cargo.');
+    confere('Visitante sem login não troca de cargo', await db.transaction(async tx => {
+      await tx.exec('set local role anon');
+      try { await tx.query(`select dev_trocar_meu_cargo('presidente')`); return 'permitido'; } catch (e) { return e.message; }
+    }), 'permission denied for function dev_trocar_meu_cargo');
+    confere('Cada troca fica na auditoria', (await db.query(`select count(*)::int as n from auditoria where acao = 'Trocou o próprio cargo (desenvolvimento)'`)).rows[0].n, 6);
   } catch (e) {
     falhas++;
     log(`ERRO GERAL ${e.message}`);
