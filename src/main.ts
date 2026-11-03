@@ -14,6 +14,7 @@ import './styles/projetos.css';
 import './styles/inicio.css';
 import './styles/dadospessoais.css';
 import './styles/disponibilidade.css';
+import './styles/notificacoes.css';
 
 import type { AuthChangeEvent, Session } from '@supabase/supabase-js';
 import { montarLayout, type Layout } from './app/layout';
