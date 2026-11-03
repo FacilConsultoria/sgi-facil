@@ -62,7 +62,7 @@ function desenharInicio(
   const validar = aguardandoValidacao(dados.demandas);
   const lancamentos = ultimosLancamentos(dados.lancamentos);
   const pedidos = pedidosParaDecidir(dados.solicitacoes);
-  const recados = blocoDeRecados(dados, pai, recarregar);
+  const recados = blocoDeRecados(dados, perfil.id, pai, recarregar);
 
   const indicadores = indicadoresDoInicio({ minhas, ranking: dados.ranking, proximas, meuId: perfil.id, hoje });
   const permissoes = [

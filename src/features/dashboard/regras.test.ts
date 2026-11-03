@@ -4,7 +4,8 @@ import type {
 } from '../../types/database';
 import {
   aguardandoValidacao, descreverPrazo, descreverQuando, descreverRecado, descreverValidadeDoPedido, indicadoresDoInicio, lerDestino,
-  minhasDemandasAbertas, pedidosParaDecidir, proximasReunioes, recadosRecentes, rotuloDoDestino, ultimosLancamentos, validarRecado, valorDoDestino,
+  meusPedidosDeRecado, minhasDemandasAbertas, pedidosParaDecidir, proximasReunioes, recadosParaAutorizar, recadosRecentes, rotuloDoDestino,
+  ultimosLancamentos, validarRecado, valorDoDestino,
 } from './regras';
 
 const HOJE = '2026-11-10';
@@ -142,7 +143,8 @@ describe('indicadoresDoInicio', () => {
 
 const recado = (alteracao: Partial<RecadoDoPainel>): RecadoDoPainel => ({
   id: 'r', titulo: 'Aviso', texto: 'Texto', escopo: 'todos', escopo_id: null, autor_id: 'x', autor_nome: 'Mel', publico: 'Toda a equipe',
-  criado_em: '2026-11-09T15:00:00Z', pode_retirar: false, ...alteracao,
+  criado_em: '2026-11-09T15:00:00Z', pode_retirar: false, situacao: 'publicado', visivel_ate: null, publicado_em: null, motivo_recusa: null,
+  pode_autorizar: false, ...alteracao,
 });
 
 describe('recadosRecentes', () => {
@@ -160,19 +162,59 @@ describe('recadosRecentes', () => {
   it('inclui o recado de hoje (no horário de São Paulo)', () => {
     expect(recadosRecentes([recado({ id: 'hoje', criado_em: '2026-11-10T12:30:00Z' })], HOJE).map((r) => r.id)).toEqual(['hoje']);
   });
+
+  it('com prazo escolhido, fica até o dia do prazo mesmo depois de 30 dias', () => {
+    const antigoComPrazo = recado({ id: 'prazo', criado_em: '2026-09-01T12:00:00Z', publicado_em: '2026-09-01T12:00:00Z', visivel_ate: '2026-12-01' });
+    expect(recadosRecentes([antigoComPrazo], HOJE).map((r) => r.id)).toEqual(['prazo']);
+  });
+
+  it('mostra só os publicados e ordena pelo dia em que foram publicados', () => {
+    const lista = [
+      recado({ id: 'pedido', situacao: 'pendente' }),
+      recado({ id: 'recusado', situacao: 'recusado' }),
+      recado({ id: 'autorizado-hoje', criado_em: '2026-11-01T12:00:00Z', publicado_em: '2026-11-10T12:00:00Z' }),
+      recado({ id: 'ontem', criado_em: '2026-11-09T12:00:00Z' }),
+    ];
+    expect(recadosRecentes(lista, HOJE).map((r) => r.id)).toEqual(['autorizado-hoje', 'ontem']);
+  });
+});
+
+describe('pedidos de recado para toda a equipe', () => {
+  const lista = [
+    recado({ id: 'meu-pendente', autor_id: 'eu', situacao: 'pendente', criado_em: '2026-11-08T12:00:00Z' }),
+    recado({ id: 'meu-recusado', autor_id: 'eu', situacao: 'recusado', criado_em: '2026-11-09T12:00:00Z' }),
+    recado({ id: 'meu-recusado-antigo', autor_id: 'eu', situacao: 'recusado', criado_em: '2026-09-01T12:00:00Z' }),
+    recado({ id: 'meu-publicado', autor_id: 'eu' }),
+    recado({ id: 'para-autorizar-novo', situacao: 'pendente', pode_autorizar: true, criado_em: '2026-11-09T12:00:00Z' }),
+    recado({ id: 'para-autorizar-velho', situacao: 'pendente', pode_autorizar: true, criado_em: '2026-11-02T12:00:00Z' }),
+    recado({ id: 'pendente-de-outra-pessoa', situacao: 'pendente' }),
+  ];
+
+  it('quem autoriza vê os pedidos que pode decidir, do mais antigo para o mais novo', () => {
+    expect(recadosParaAutorizar(lista).map((r) => r.id)).toEqual(['para-autorizar-velho', 'para-autorizar-novo']);
+  });
+
+  it('quem pediu acompanha os sem resposta e os recusados nos últimos 30 dias', () => {
+    expect(meusPedidosDeRecado(lista, 'eu', HOJE).map((r) => r.id)).toEqual(['meu-recusado', 'meu-pendente']);
+  });
 });
 
 describe('descreverRecado', () => {
   it('junta autor, público e dia', () => {
     expect(descreverRecado(recado({}))).toBe('Mel · Toda a equipe · 09/11');
   });
+
+  it('usa o dia da autorização e mostra o prazo', () => {
+    expect(descreverRecado(recado({ publicado_em: '2026-11-10T13:00:00Z', visivel_ate: '2026-11-20' }))).toBe('Mel · Toda a equipe · 10/11 · até 20/11');
+  });
 });
 
 describe('destino do recado', () => {
   it('dá nome e valor a cada destino', () => {
-    expect(rotuloDoDestino({ escopo: 'todos', nome: 'Toda a equipe' })).toBe('Toda a equipe');
-    expect(rotuloDoDestino({ escopo: 'area', nome: 'Diretoria Comercial' })).toBe('Área · Diretoria Comercial');
-    expect(rotuloDoDestino({ escopo: 'nucleo', nome: 'Marketing' })).toBe('Núcleo · Marketing');
+    expect(rotuloDoDestino({ escopo: 'todos', nome: 'Toda a equipe', precisa_autorizacao: false })).toBe('Toda a equipe');
+    expect(rotuloDoDestino({ escopo: 'todos', nome: 'Toda a equipe', precisa_autorizacao: true })).toBe('Toda a equipe (precisa de autorização)');
+    expect(rotuloDoDestino({ escopo: 'area', nome: 'Diretoria Comercial', precisa_autorizacao: false })).toBe('Área · Diretoria Comercial');
+    expect(rotuloDoDestino({ escopo: 'nucleo', nome: 'Marketing', precisa_autorizacao: false })).toBe('Núcleo · Marketing');
     expect(valorDoDestino({ escopo: 'todos', escopo_id: null })).toBe('todos:');
     expect(valorDoDestino({ escopo: 'nucleo', escopo_id: 'com-mkt' })).toBe('nucleo:com-mkt');
   });
@@ -187,21 +229,29 @@ describe('destino do recado', () => {
 });
 
 describe('validarRecado', () => {
-  const certo = { titulo: 'Reunião adiada', texto: 'Passou para sexta.', destino: 'todos:' };
+  const certo = { titulo: 'Reunião adiada', texto: 'Passou para sexta.', destino: 'todos:', visivelAte: '' };
 
-  it('aceita um recado completo', () => {
-    expect(validarRecado(certo)).toBe(null);
+  it('aceita um recado completo, com ou sem prazo', () => {
+    expect(validarRecado(certo, HOJE)).toBe(null);
+    expect(validarRecado({ ...certo, visivelAte: HOJE }, HOJE)).toBe(null);
   });
 
   it('pede público, título e texto, nesta ordem', () => {
-    expect(validarRecado({ ...certo, destino: '' })).toBe('Escolha para quem é o recado.');
-    expect(validarRecado({ ...certo, titulo: '   ' })).toBe('Dê um título ao recado.');
-    expect(validarRecado({ ...certo, texto: '  ' })).toBe('Escreva o recado.');
+    expect(validarRecado({ ...certo, destino: '' }, HOJE)).toBe('Escolha para quem é o recado.');
+    expect(validarRecado({ ...certo, titulo: '   ' }, HOJE)).toBe('Dê um título ao recado.');
+    expect(validarRecado({ ...certo, texto: '  ' }, HOJE)).toBe('Escreva o recado.');
   });
 
   it('respeita os limites de tamanho', () => {
-    expect(validarRecado({ ...certo, titulo: 'x'.repeat(81) })).toBe('O título pode ter até 80 caracteres.');
-    expect(validarRecado({ ...certo, titulo: 'x'.repeat(80) })).toBe(null);
-    expect(validarRecado({ ...certo, texto: 'x'.repeat(1001) })).toBe('O recado pode ter até 1000 caracteres.');
+    expect(validarRecado({ ...certo, titulo: 'x'.repeat(81) }, HOJE)).toBe('O título pode ter até 80 caracteres.');
+    expect(validarRecado({ ...certo, titulo: 'x'.repeat(80) }, HOJE)).toBe(null);
+    expect(validarRecado({ ...certo, texto: 'x'.repeat(1001) }, HOJE)).toBe('O recado pode ter até 1000 caracteres.');
+  });
+
+  it('o prazo vai de hoje até um ano à frente', () => {
+    expect(validarRecado({ ...certo, visivelAte: '2026-11-09' }, HOJE)).toBe('A data limite não pode ser anterior a hoje.');
+    expect(validarRecado({ ...certo, visivelAte: '2027-11-10' }, HOJE)).toBe(null);
+    expect(validarRecado({ ...certo, visivelAte: '2027-11-11' }, HOJE)).toBe('A data limite pode ser no máximo um ano à frente.');
+    expect(validarRecado({ ...certo, visivelAte: '10/11/2026' }, HOJE)).toBe('Data limite inválida.');
   });
 });

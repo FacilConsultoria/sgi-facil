@@ -65,25 +65,47 @@ export const LIMITE_DE_RECADOS = 5;
 export const DIAS_DE_RECADO_NA_TELA = 30;
 export const LIMITE_DO_TITULO_DO_RECADO = 80;
 export const LIMITE_DO_TEXTO_DO_RECADO = 1000;
+/** Até quantos dias à frente pode ir o prazo de exibição (o banco confere o mesmo). */
+export const LIMITE_DO_PRAZO_DO_RECADO = 365;
 
-/** Recados dos últimos 30 dias, do mais novo para o mais antigo (os mais velhos continuam no banco, só saem da tela). */
+const diaDe = (instante: string): string => hojeEmSaoPaulo(new Date(instante));
+const quandoSaiu = (recado: Pick<RecadoDoPainel, 'publicado_em' | 'criado_em'>): string => recado.publicado_em ?? recado.criado_em;
+
+/**
+ * Recados publicados, do mais novo para o mais antigo. Sem prazo, ficam na tela por 30 dias; com prazo, até o dia escolhido
+ * (os vencidos o banco já não entrega). Os mais velhos continuam no banco, só saem da tela.
+ */
 export function recadosRecentes(recados: readonly RecadoDoPainel[], hoje: string, limite = LIMITE_DE_RECADOS): RecadoDoPainel[] {
   return recados
-    .filter((r) => diasAte(hojeEmSaoPaulo(new Date(r.criado_em)), hoje) <= DIAS_DE_RECADO_NA_TELA)
-    .sort((a, b) => b.criado_em.localeCompare(a.criado_em))
+    .filter((r) => r.situacao === 'publicado' && (r.visivel_ate !== null || diasAte(diaDe(quandoSaiu(r)), hoje) <= DIAS_DE_RECADO_NA_TELA))
+    .sort((a, b) => quandoSaiu(b).localeCompare(quandoSaiu(a)))
     .slice(0, limite);
 }
 
-/** "Mel · Toda a equipe · 05/11". */
-export function descreverRecado(recado: Pick<RecadoDoPainel, 'autor_nome' | 'publico' | 'criado_em'>): string {
-  return `${recado.autor_nome} · ${recado.publico} · ${dataCurta(hojeEmSaoPaulo(new Date(recado.criado_em)))}`;
+/** Pedidos para toda a equipe que quem consulta pode autorizar (o indicador vem do banco), do mais antigo para o mais novo. */
+export function recadosParaAutorizar(recados: readonly RecadoDoPainel[]): RecadoDoPainel[] {
+  return recados.filter((r) => r.situacao === 'pendente' && r.pode_autorizar).sort((a, b) => a.criado_em.localeCompare(b.criado_em));
+}
+
+/** Pedidos da própria pessoa ainda sem resposta ou recusados nos últimos 30 dias, do mais novo para o mais antigo. */
+export function meusPedidosDeRecado(recados: readonly RecadoDoPainel[], meuId: string, hoje: string): RecadoDoPainel[] {
+  return recados
+    .filter((r) => r.autor_id === meuId
+      && (r.situacao === 'pendente' || (r.situacao === 'recusado' && diasAte(diaDe(r.criado_em), hoje) <= DIAS_DE_RECADO_NA_TELA)))
+    .sort((a, b) => b.criado_em.localeCompare(a.criado_em));
+}
+
+/** "Mel · Toda a equipe · 05/11", com " · até 20/11" quando há prazo. */
+export function descreverRecado(recado: Pick<RecadoDoPainel, 'autor_nome' | 'publico' | 'criado_em' | 'publicado_em' | 'visivel_ate'>): string {
+  const prazo = recado.visivel_ate ? ` · até ${dataCurta(recado.visivel_ate)}` : '';
+  return `${recado.autor_nome} · ${recado.publico} · ${dataCurta(diaDe(quandoSaiu(recado)))}${prazo}`;
 }
 
 /** Nome do destino na lista de escolha: "Toda a equipe", "Área · Diretoria Comercial" ou "Núcleo · Marketing". */
-export function rotuloDoDestino(destino: Pick<DestinoDeRecado, 'escopo' | 'nome'>): string {
+export function rotuloDoDestino(destino: Pick<DestinoDeRecado, 'escopo' | 'nome' | 'precisa_autorizacao'>): string {
   if (destino.escopo === 'area') return `Área · ${destino.nome}`;
   if (destino.escopo === 'nucleo') return `Núcleo · ${destino.nome}`;
-  return destino.nome;
+  return destino.precisa_autorizacao ? `${destino.nome} (precisa de autorização)` : destino.nome;
 }
 
 /** Valor da opção na lista de escolha: "todos:", "area:com" ou "nucleo:com-mkt". */
@@ -103,10 +125,12 @@ export interface RecadoDigitado {
   titulo: string;
   texto: string;
   destino: string;
+  /** "AAAA-MM-DD" do campo de data, ou vazio para não ter prazo. */
+  visivelAte: string;
 }
 
 /** Mensagem do primeiro problema do recado, ou null se pode enviar. As mesmas regras valem no banco. */
-export function validarRecado(recado: RecadoDigitado): string | null {
+export function validarRecado(recado: RecadoDigitado, hoje: string): string | null {
   if (lerDestino(recado.destino) === null) return 'Escolha para quem é o recado.';
   const titulo = recado.titulo.trim();
   if (titulo === '') return 'Dê um título ao recado.';
@@ -114,6 +138,11 @@ export function validarRecado(recado: RecadoDigitado): string | null {
   const texto = recado.texto.trim();
   if (texto === '') return 'Escreva o recado.';
   if (texto.length > LIMITE_DO_TEXTO_DO_RECADO) return `O recado pode ter até ${LIMITE_DO_TEXTO_DO_RECADO} caracteres.`;
+  if (recado.visivelAte !== '') {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(recado.visivelAte)) return 'Data limite inválida.';
+    if (recado.visivelAte < hoje) return 'A data limite não pode ser anterior a hoje.';
+    if (diasAte(hoje, recado.visivelAte) > LIMITE_DO_PRAZO_DO_RECADO) return 'A data limite pode ser no máximo um ano à frente.';
+  }
   return null;
 }
 

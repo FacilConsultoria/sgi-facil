@@ -1,5 +1,5 @@
 // Acesso a dados da Tela Inicial: leituras pelas visões e funções que os outros módulos já usam
-// (já filtradas pelas regras de cada pessoa) e, só para os recados internos, publicar e retirar (rpc).
+// (já filtradas pelas regras de cada pessoa) e, só para os recados internos, publicar, decidir e retirar (rpc).
 import { supabase } from '../../lib/supabase';
 import type {
   DemandaVisivel, DestinoDeRecado, EscopoDeRecado, LancamentoVisivel, LinhaDoRanking, PublicoDeReuniao, RecadoDoPainel, ReuniaoVisivel,
@@ -44,13 +44,22 @@ export async function carregarInicio(meuId: string): Promise<DadosDoInicio> {
   };
 }
 
-export async function publicarRecado(recado: { titulo: string; texto: string; escopo: EscopoDeRecado; escopoId: string | null }): Promise<void> {
+export async function publicarRecado(recado: {
+  titulo: string; texto: string; escopo: EscopoDeRecado; escopoId: string | null; visivelAte: string | null;
+}): Promise<void> {
   const { error } = await supabase.rpc('publicar_recado', {
     p_titulo: recado.titulo,
     p_texto: recado.texto,
     p_escopo: recado.escopo,
     p_escopo_id: recado.escopoId,
+    p_visivel_ate: recado.visivelAte,
   });
+  if (error) throw error;
+}
+
+/** Autoriza (publica e avisa o público) ou recusa um recado para toda a equipe. */
+export async function decidirRecado(recadoId: string, autorizar: boolean, motivo: string | null): Promise<void> {
+  const { error } = await supabase.rpc('decidir_recado', { p_id: recadoId, p_autorizar: autorizar, p_motivo: motivo });
   if (error) throw error;
 }
 
