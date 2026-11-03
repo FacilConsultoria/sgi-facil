@@ -20,6 +20,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 | `13_modulo_regras.sql` | Para a tela Regras: a simulação de visibilidade (quantas demandas e pontuações cada pessoa enxerga com os dados de agora), que só a Presidência recebe. Os valores de pontuação usam a tabela e a função que já existiam. |
 | `14_modulo_projetos.sql` | Para a tela Projetos: uma visão com o andamento de cada projeto que a pessoa enxerga (demandas, concluídas, atrasadas) e o tipo de acesso dela (integral, exceção ou parcial). Os números contam só as demandas que a pessoa vê. |
 | `15_dados_pessoais.sql` | Dados pessoais (nome completo, RGA, CPF, data de nascimento e gênero) e o e-mail protegido. A tabela `dados_pessoais` só é lida pela própria pessoa e pela Presidente, e só a própria pessoa grava (função `salvar_meus_dados`, que valida CPF, RGA, data e gênero). O e-mail deixa de ser legível por todas as pessoas: cada uma vê o seu e quem cadastra pessoas vê o de todas. |
+| `16_tratamento.sql` | Gênero nos textos: guarda em `pessoas.tratamento` (feminino, masculino ou neutro) a forma de tratamento de cada pessoa, que todas leem; o gênero em si continua privado. Também troca duas mensagens de pedido de aval que tinham gênero fixo. |
 | `07_assessoria_aval_publico_exclusao.sql` | Assessoria de Presidência com acesso de Presidência, avais (pedidos que a Presidente ou a Vice aprovam), reunião para pessoas escolhidas, diretorias agendando para todos e exclusão de reuniões. |
 | `functions/receber-transcricao/index.ts` | Endereço que vai receber as transcrições do Meet quando a automação estiver pronta. Pode ficar para depois. |
 
@@ -41,7 +42,7 @@ Tempo estimado: 20 minutos. Não precisa instalar nada no computador; tudo é fe
 4. Clique em **Run**. Se esquecer algum e-mail, o script avisa e não grava nada.
 5. Abra mais uma query, cole `03_visoes_interface.sql` e clique em **Run**.
 6. Repita com `04_modulo_demandas.sql` e depois com `05_modulo_reunioes.sql`.
-7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql` e, depois, o `08_modulo_acessos.sql`, o `09_modulo_pontuacao.sql`, o `10_modulo_presencas.sql`, o `11_modulo_equipe.sql`, o `12_modulo_historico.sql`, o `13_modulo_regras.sql`, o `14_modulo_projetos.sql` e o `15_dados_pessoais.sql`. O Supabase pode avisar de "operações destrutivas" no 07 (ele troca funções e políticas antigas, sem apagar dados).
+7. Rode `06_reuniao_por_pessoas.sql` **sozinho** e espere terminar. Só então rode o `07_assessoria_aval_publico_exclusao.sql` e, depois, o `08_modulo_acessos.sql`, o `09_modulo_pontuacao.sql`, o `10_modulo_presencas.sql`, o `11_modulo_equipe.sql`, o `12_modulo_historico.sql`, o `13_modulo_regras.sql`, o `14_modulo_projetos.sql`, o `15_dados_pessoais.sql` e o `16_tratamento.sql`. O Supabase pode avisar de "operações destrutivas" no 07 (ele troca funções e políticas antigas, sem apagar dados).
 
 Para conferir: em **Table Editor**, a tabela `pessoas` deve ter 7 linhas e `areas` deve ter 5.
 
@@ -82,7 +83,7 @@ A função recebe `titulo`, `inicio` (data e hora com fuso) e `texto`, e vincula
 
 ## Como as regras foram testadas
 
-Os quinze scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 290 verificações por perfil (inclui o e-mail oculto e os dados pessoais) (inclui Assessoria, avais, público por pessoas, exclusão de reuniões, arquivos órfãos, as visões de pontuação, a frequência, o cadastro de pessoas, o histórico, a simulação de visibilidade e o painel de projetos): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
+Os dezesseis scripts SQL foram executados num Postgres real (PGlite), simulando as partes do Supabase (login, papéis e armazenamento de arquivos), com 296 verificações por perfil (inclui o e-mail oculto, os dados pessoais e o tratamento) (inclui Assessoria, avais, público por pessoas, exclusão de reuniões, arquivos órfãos, as visões de pontuação, a frequência, o cadastro de pessoas, o histórico, a simulação de visibilidade e o painel de projetos): quem vê quais demandas, quem valida e quem reabre, pontos ao concluir e ao reabrir, faltas ao encerrar reunião, ajustes, pedidos de acesso, arquivos, transcrições, indicadores das visões, listas dos cadastros de demandas e de reuniões e bloqueio de escrita direta. Todas passaram (30/10/2026).
 
 Para repetir os testes em qualquer computador Windows com Edge e internet, a partir da pasta do projeto:
 
