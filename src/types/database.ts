@@ -423,6 +423,22 @@ export interface Perfil {
   dados_pendentes: boolean;
 }
 
+/** Linha da tabela public.disponibilidade_semanal (supabase/17_disponibilidade.sql). Horário = dia * 24 + hora (segunda = dia 0). */
+export interface DisponibilidadeSemanal {
+  pessoa_id: string;
+  slots: number[];
+  atualizado_em: string;
+}
+
+/** Linha da visão public.disponibilidade_pessoas: pessoas cuja grade quem consulta pode ver, e se já preencheram. */
+export interface PessoaComDisponibilidade {
+  id: string;
+  nome: string;
+  setor: string;
+  preenchida: boolean;
+  atualizado_em: string | null;
+}
+
 export type GeneroInformado = 'feminino' | 'masculino' | 'outro' | 'nao_informar';
 
 /** Linha da tabela public.dados_pessoais: só a própria pessoa e a Presidente leem. CPF e RGA vêm sem pontuação. */
