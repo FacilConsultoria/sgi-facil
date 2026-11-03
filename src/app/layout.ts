@@ -3,7 +3,6 @@ import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../features/dadospessoais/j
 import { descreverCargo } from '../lib/perfil';
 import { el, substituir } from '../ui/dom';
 import { criarSimbolo } from '../ui/logo';
-import { iconeDePendencia } from '../ui/pendencia';
 import { ROTAS, type Rota } from './rotas';
 import type { ContextoDaSessao } from './sessao';
 
@@ -21,9 +20,8 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
       rota.disponivel ? null : el('span', { class: 'nav-selo' }, 'em breve')),
   );
 
-  // ícone de pendência enquanto os dados pessoais não foram preenchidos (indicador dados_pendentes do perfil)
-  const pendencia = perfil.dados_pendentes ? iconeDePendencia('proximo', 'Seus dados pessoais estão pendentes') : null;
-  const nomeDaPessoa = el('div', { class: 'quem-nome' }, el('strong', {}, perfil.nome), pendencia);
+  // enquanto os dados pessoais não foram preenchidos (indicador dados_pendentes do perfil), o atalho pede para preencher
+  const nomeDaPessoa = el('strong', {}, perfil.nome);
   const meusDados = el('button', { type: 'button', class: 'meus-dados' }, perfil.dados_pendentes ? 'Preencher meus dados' : 'Meus dados');
 
   const lateral = el('aside', { class: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' },
@@ -67,7 +65,6 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
       window.removeEventListener(EVENTO_DADOS_SALVOS, aoSalvarDados);
       return;
     }
-    pendencia?.remove();
     meusDados.textContent = 'Meus dados';
   };
   window.addEventListener(EVENTO_DADOS_SALVOS, aoSalvarDados);
