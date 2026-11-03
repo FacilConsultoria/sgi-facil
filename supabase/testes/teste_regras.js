@@ -59,6 +59,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL16);
     await db.exec(window.SQL17);
     await db.exec(window.SQL18);
+    await db.exec(window.SQL19);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -883,7 +884,6 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Gerência não publica para o núcleo de outra área', DUDA, `select publicar_recado('Aviso','Texto','nucleo','proj-cli')`, [], 'Você não pode enviar recados para este público.');
     await bloqueia('Diretoria não publica para outra área', JOAO, `select publicar_recado('Aviso','Texto','area','fin')`, [], 'Você não pode enviar recados para este público.');
     await bloqueia('Diretoria não publica para núcleo de outra área', JOAO, `select publicar_recado('Aviso','Texto','nucleo','fin-cx')`, [], 'Você não pode enviar recados para este público.');
-    await bloqueia('Diretoria não publica para toda a equipe', JOAO, `select publicar_recado('Aviso','Texto','todos')`, [], 'Você não pode enviar recados para este público.');
     await bloqueia('Público inexistente', MEL, `select publicar_recado('Aviso','Texto','area','nao-existe')`, [], 'Área não encontrada.');
     await bloqueia('Escolha de público inválida', MEL, `select publicar_recado('Aviso','Texto','geral')`, [], 'Escolha para quem é o recado.');
     await bloqueia('Título vazio', MEL, `select publicar_recado('   ','Texto','todos')`, [], 'Dê um título ao recado.');
@@ -923,7 +923,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     for (const [nome, email] of [['mel', MEL], ['luis', LUIS], ['joao', JOAO], ['duda', DUDA], ['ana', ANA]]) destinos[nome] = await valor(email, `select count(*)::int from destinos_de_recado`);
     const totais = { areas: await valor(MEL, `select count(*)::int from areas`), nucleos: await valor(MEL, `select count(*)::int from nucleos`), nucleosDoJoao: await valor(MEL, `select count(*)::int from nucleos where area_id in ('com','proj')`) };
     confere('Destinos de recado: Presidência, diretoria (a sua área e a que cobre), gerência e membro', destinos, {
-      mel: 1 + totais.areas + totais.nucleos, luis: 1 + totais.areas + totais.nucleos, joao: 2 + totais.nucleosDoJoao, duda: 1, ana: 0 });
+      mel: 1 + totais.areas + totais.nucleos, luis: 1 + totais.areas + totais.nucleos, joao: 1 + 2 + totais.nucleosDoJoao, duda: 1, ana: 0 });
     confere('A diretoria publica para as áreas que conduz; a gerência, só para o núcleo', [
       (await como(JOAO, `select escopo_id from destinos_de_recado where escopo = 'area' order by escopo_id`)).map(l => l.escopo_id),
       (await como(DUDA, `select escopo, escopo_id from destinos_de_recado`)),
@@ -962,6 +962,79 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       await valor('sem-cadastro@facil.test', `select count(*)::int from minhas_notificacoes`),
       await valor('sem-cadastro@facil.test', `select count(*)::int from destinos_de_recado`),
     ], [true, true, true, 0, 0, 0]);
+
+    // recados para toda a equipe com autorização e prazo de exibição (19)
+    const precisa = {};
+    for (const [nome, email] of [['mel', MEL], ['luis', LUIS], ['maju', MAJU], ['joao', JOAO], ['duda', DUDA], ['ana', ANA]]) {
+      precisa[nome] = (await como(email, `select precisa_autorizacao from destinos_de_recado where escopo = 'todos'`)).map(l => l.precisa_autorizacao);
+    }
+    confere('Toda a equipe: Presidente, Vice e Assessoria publicam direto; diretoria pede autorização; gerência e membros não', precisa,
+      { mel: [false], luis: [false], maju: [false], joao: [true], duda: [], ana: [] });
+    await bloqueia('Gerência não pede recado para toda a equipe', DUDA, `select publicar_recado('Aviso','Texto','todos')`, [], 'Você não pode enviar recados para este público.');
+    const rPedido = await valor(JOAO, `select publicar_recado('Feira de profissões','Precisamos de voluntários no sábado.','todos', null, privado.hoje() + 3)`);
+    confere('Pedido da diretoria fica aguardando, com prazo, e ninguém é avisado', [
+      (await db.query(`select situacao, visivel_ate = (now() at time zone 'America/Sao_Paulo')::date + 3 as prazo_certo, publicado_em is null as sem_data from recados where id = $1`, [rPedido])).rows[0],
+      await avisadas(rPedido),
+    ], [{ situacao: 'pendente', prazo_certo: true, sem_data: true }, 0]);
+    const vePedido = {};
+    for (const [nome, email] of [['joao', JOAO], ['maju', MAJU], ['mel', MEL], ['luis', LUIS], ['ana', ANA], ['duda', DUDA]]) {
+      vePedido[nome] = (await como(email, `select situacao, pode_autorizar from recados_painel where id = $1`, [rPedido]));
+    }
+    confere('O pedido aparece para quem pediu e para quem autoriza; o público ainda não vê', vePedido, {
+      joao: [{ situacao: 'pendente', pode_autorizar: false }], maju: [{ situacao: 'pendente', pode_autorizar: true }],
+      mel: [{ situacao: 'pendente', pode_autorizar: true }], luis: [{ situacao: 'pendente', pode_autorizar: true }], ana: [], duda: [] });
+    confere('O sino de quem autoriza mostra o pedido (e só dele)', [
+      (await como(MAJU, `select tipo, titulo, autor_nome from minhas_notificacoes where recado_id = $1`, [rPedido])),
+      await valor(JOAO, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rPedido]),
+      await valor(ANA, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rPedido]),
+    ], [[{ tipo: 'autorizacao', titulo: 'Feira de profissões', autor_nome: 'João' }], 0, 0]);
+    await bloqueia('Ninguém autoriza o próprio recado', JOAO, `select decidir_recado($1, true)`, [rPedido], 'Ninguém autoriza o próprio recado.');
+    await bloqueia('Gerência não autoriza recado', DUDA, `select decidir_recado($1, true)`, [rPedido], 'Só a Presidência, a Vice-Presidência ou a Assessoria autorizam recados para toda a equipe.');
+    await bloqueia('Visitante sem login não decide', null, `select decidir_recado($1, true)`, [rPedido], 'permission denied for function decidir_recado');
+    await permite('Assessoria autoriza o pedido da diretoria', MAJU, `select decidir_recado($1, true)`, [rPedido]);
+    confere('Autorizado: publicado, avisa todos menos quem pediu e sai do sino de quem autoriza', [
+      (await db.query(`select situacao, publicado_em is not null as com_data from recados where id = $1`, [rPedido])).rows[0],
+      await avisadas(rPedido),
+      await valor(ANA, `select count(*)::int from recados_painel where id = $1`, [rPedido]),
+      await valor(ANA, `select tipo from minhas_notificacoes where recado_id = $1`, [rPedido]),
+      await valor(MEL, `select count(*)::int from minhas_notificacoes where recado_id = $1 and tipo = 'autorizacao'`, [rPedido]),
+    ], [{ situacao: 'publicado', com_data: true }, pessoasAtivas - 1, 1, 'recado', 0]);
+    await bloqueia('Decidir de novo não vale', MEL, `select decidir_recado($1, false)`, [rPedido], 'Este recado não está aguardando autorização.');
+
+    const rDaMaju = await valor(MAJU, `select publicar_recado('Prestação de contas','Envio na sexta.','todos')`);
+    confere('A Assessoria publica direto para toda a equipe e todos menos ela são avisados', [
+      (await db.query(`select situacao from recados where id = $1`, [rDaMaju])).rows[0].situacao, await avisadas(rDaMaju),
+    ], ['publicado', pessoasAtivas - 1]);
+    const rRifa = await valor(JOAO, `select publicar_recado('Rifa de novembro','Comprem rifas.','todos')`);
+    await bloqueia('Motivo da recusa tem limite', LUIS, `select decidir_recado($1, false, $2)`, [rRifa, 'x'.repeat(301)], 'O motivo tem no máximo 300 caracteres.');
+    await permite('A Vice recusa com motivo', LUIS, `select decidir_recado($1, false, ' Já saiu no grupo. ')`, [rRifa]);
+    confere('Recusado: só quem pediu vê, com o motivo; ninguém é avisado', [
+      (await como(JOAO, `select situacao, motivo_recusa, pode_autorizar from recados_painel where id = $1`, [rRifa])),
+      await valor(MEL, `select count(*)::int from recados_painel where id = $1`, [rRifa]),
+      await valor(ANA, `select count(*)::int from recados_painel where id = $1`, [rRifa]),
+      await avisadas(rRifa),
+      await valor(MEL, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rRifa]),
+    ], [[{ situacao: 'recusado', motivo_recusa: 'Já saiu no grupo.', pode_autorizar: false }], 0, 0, 0, 0]);
+    await permite('A Assessoria publica direto para uma área', MAJU, `select publicar_recado('Aviso da área','Texto','area','com')`);
+    confere('Para área e núcleo não há autorização', (await db.query(`select situacao from recados where titulo = 'Aviso da área'`)).rows.map(l => l.situacao), ['publicado']);
+
+    await bloqueia('Prazo no passado é recusado', MEL, `select publicar_recado('Aviso','Texto','todos', null, privado.hoje() - 1)`, [], 'A data limite não pode ser anterior a hoje.');
+    await bloqueia('Prazo de mais de um ano é recusado', MEL, `select publicar_recado('Aviso','Texto','todos', null, privado.hoje() + 366)`, [], 'A data limite pode ser no máximo um ano à frente.');
+    const rSoHoje = await valor(MEL, `select publicar_recado('Só hoje','Sala 3.','todos', null, privado.hoje())`);
+    confere('Com prazo até hoje, o recado aparece hoje', [await valor(ANA, `select count(*)::int from recados_painel where id = $1`, [rSoHoje]), await valor(ANA, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rSoHoje])], [1, 1]);
+    await db.query(`update recados set visivel_ate = visivel_ate - 1 where id = $1`, [rSoHoje]);
+    confere('Passado o prazo, some da Tela Inicial e do sino de todos, mas fica guardado', [
+      await valor(ANA, `select count(*)::int from recados_painel where id = $1`, [rSoHoje]),
+      await valor(ANA, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rSoHoje]),
+      await valor(MEL, `select count(*)::int from recados_painel where id = $1`, [rSoHoje]),
+      (await db.query(`select count(*)::int as n from recados where id = $1`, [rSoHoje])).rows[0].n,
+    ], [0, 0, 0, 1]);
+    const rVencido = await valor(JOAO, `select publicar_recado('Pedido que venceu','Texto','todos', null, privado.hoje())`);
+    await db.query(`update recados set visivel_ate = visivel_ate - 1 where id = $1`, [rVencido]);
+    confere('Pedido vencido sai da lista de quem autoriza', await valor(MEL, `select count(*)::int from minhas_notificacoes where recado_id = $1`, [rVencido]), 0);
+    await bloqueia('Pedido vencido não pode ser autorizado', MEL, `select decidir_recado($1, true)`, [rVencido], 'O prazo deste recado já passou. Recuse e peça um novo.');
+    confere('Pedir, autorizar e recusar ficam na auditoria', (await db.query(`select acao, count(*)::int as n from auditoria where acao in ('Pediu autorização de recado','Autorizou recado','Recusou recado') group by acao order by acao`)).rows,
+      [{ acao: 'Autorizou recado', n: 1 }, { acao: 'Pediu autorização de recado', n: 3 }, { acao: 'Recusou recado', n: 1 }]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
