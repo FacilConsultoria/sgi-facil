@@ -5,10 +5,8 @@ import { descreverEscopo, primeiroNome } from '../../lib/perfil';
 import { hojeEmSaoPaulo } from '../../lib/datas';
 import type { DemandaVisivel, LancamentoVisivel, ReuniaoVisivel, SolicitacaoVisivel } from '../../types/database';
 import { el, substituir } from '../../ui/dom';
-import { iconeDePendencia } from '../../ui/pendencia';
 import { montarRecarregavel } from '../../ui/recarregavel';
 import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../dadospessoais/janela';
-import { iconeDoPrazo } from '../demandas/componentes';
 import { pedirPainelDaDemanda } from '../demandas/pagina';
 import { estaAtrasada } from '../demandas/regras';
 import { comSinal, descreverLancamento, NOME_DO_TIPO_DE_LANCAMENTO } from '../pontuacao/regras';
@@ -42,7 +40,6 @@ function avisoDeDadosPendentes(contexto: ContextoDaSessao, pai: HTMLElement): HT
   const preencher = el('button', { type: 'button', class: 'btn prim' }, 'Preencher agora');
   preencher.addEventListener('click', () => void abrirMeusDados(pai, contexto.perfil));
   const aviso = el('section', { class: 'aviso-dados' },
-    iconeDePendencia('proximo', 'Dados pessoais pendentes'),
     el('div', {},
       el('b', {}, 'Seus dados pessoais estão pendentes'),
       el('p', { class: 'dica' }, 'Nome completo, RGA, CPF, data de nascimento e gênero. Leva um minuto e evita pedirmos de novo.')),
@@ -109,8 +106,7 @@ function itemDeDemanda(demanda: DemandaVisivel, hoje: string): HTMLElement {
   return item(
     demanda.titulo,
     el('span', {}, el('span', { class: 'mono' }, demanda.codigo), ` · ${demanda.projeto_nome}`),
-    el('span', { class: estaAtrasada(demanda, hoje) ? 'lado prazo-com-icone atrasada' : 'lado prazo-com-icone' },
-      iconeDoPrazo(demanda, hoje), descreverPrazo(demanda, hoje)),
+    el('span', { class: estaAtrasada(demanda, hoje) ? 'lado atrasada' : 'lado' }, descreverPrazo(demanda, hoje)),
     () => {
       pedirPainelDaDemanda(demanda.id);
       window.location.hash = '#demandas';
