@@ -3,7 +3,7 @@
 // Supabase simuladas (auth.uid(), papéis anon/authenticated/service_role e storage)
 // e confere, perfil a perfil, o que cada pessoa pode ver e fazer.
 // Execução: powershell -ExecutionPolicy Bypass -File supabase\testes\rodar_testes.ps1
-// O runner injeta window.SQL01 a window.SQL16 antes deste módulo. O 06 roda sozinho, antes do 07.
+// O runner injeta window.SQL01 a window.SQL17 antes deste módulo. O 06 roda sozinho, antes do 07.
 // Os e-mails usados aqui são fictícios (domínio facil.test).
 import { PGlite } from 'https://cdn.jsdelivr.net/npm/@electric-sql/pglite@0.2.17/dist/index.js';
 
@@ -57,6 +57,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL14);
     await db.exec(window.SQL15);
     await db.exec(window.SQL16);
+    await db.exec(window.SQL17);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -804,6 +805,51 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       (await tenta(MEL, `update pessoas set tratamento = 'masculino' where nome = 'Luis'`)).startsWith('permission denied'),
     ], [true, true]);
     confere('O tratamento de uma pessoa só muda quando ela mesma salva os dados', await tratamentoDe('Mel'), 'feminino');
+
+    // disponibilidade (17)
+    const slot = (dia, hora) => dia * 24 + hora;
+    const literalDeSlots = slots => `{${slots.join(',')}}`;
+    const salvarDisp = (email, slots) => como(email, `select salvar_minha_disponibilidade($1::smallint[])`, [literalDeSlots(slots)]);
+    const doAna = [slot(5, 11), slot(5, 9), slot(0, 19), slot(5, 10), slot(0, 20), slot(0, 19)];
+    await bloqueia('Hora antes das 7h é recusada', ANA, `select salvar_minha_disponibilidade($1::smallint[])`, [literalDeSlots([slot(0, 6)])], 'Horário fora da grade (segunda a domingo, das 7h às 22h).');
+    await bloqueia('Hora a partir das 22h é recusada', ANA, `select salvar_minha_disponibilidade($1::smallint[])`, [literalDeSlots([slot(2, 22)])], 'Horário fora da grade (segunda a domingo, das 7h às 22h).');
+    await bloqueia('Dia fora da semana é recusado', ANA, `select salvar_minha_disponibilidade($1::smallint[])`, [literalDeSlots([168 + 9])], 'Horário fora da grade (segunda a domingo, das 7h às 22h).');
+    await bloqueia('Número negativo é recusado', ANA, `select salvar_minha_disponibilidade($1::smallint[])`, ['{-1}'], 'Horário fora da grade (segunda a domingo, das 7h às 22h).');
+    await bloqueia('Login sem cadastro não grava', 'sem-cadastro@facil.test', `select salvar_minha_disponibilidade($1::smallint[])`, [literalDeSlots([slot(0, 8)])], 'Seu e-mail não tem cadastro ativo no SGI.');
+    await bloqueia('Visitante sem login não grava', null, `select salvar_minha_disponibilidade($1::smallint[])`, [literalDeSlots([slot(0, 8)])], 'permission denied for function salvar_minha_disponibilidade');
+    await salvarDisp(ANA, doAna);
+    confere('Disponibilidade gravada sem repetição e em ordem', await valor(ANA, `select slots from disponibilidade_semanal`), [slot(0, 19), slot(0, 20), slot(5, 9), slot(5, 10), slot(5, 11)]);
+    await salvarDisp(CAMILA, [slot(5, 10), slot(5, 11)]);
+    const veAna = {};
+    for (const [nome, email] of [['ana', ANA], ['victor', VICTOR], ['joao', JOAO], ['mel', MEL], ['maju', MAJU], ['camila', CAMILA], ['duda', DUDA], ['pedro', PEDRO]]) {
+      veAna[nome] = await valor(email, `select count(*)::int from disponibilidade_semanal where pessoa_id = $1`, [iAna]);
+    }
+    confere('Quem lê a grade de Ana: ela, a gerência do núcleo, a diretoria da área (e quem cobre) e a Presidência; os demais não', veAna,
+      { ana: 1, victor: 1, joao: 1, mel: 1, maju: 1, camila: 0, duda: 0, pedro: 0 });
+    confere('A pessoa vê só a própria grade quando não tem ninguém no escopo', await como(CAMILA, `select pessoa_id from disponibilidade_semanal`).then(r => r.map(l => l.pessoa_id === iCamila)), [true]);
+    confere('Lista de pessoas: o escopo de cada um e quem já preencheu', {
+      camila: (await como(CAMILA, `select nome, preenchida from disponibilidade_pessoas order by nome`)),
+      victorVeAna: (await como(VICTOR, `select preenchida from disponibilidade_pessoas where nome = 'Ana'`)),
+      victorNaoVeCamila: (await como(VICTOR, `select 1 from disponibilidade_pessoas where nome = 'Camila'`)).length,
+    }, { camila: [{ nome: 'Camila', preenchida: true }], victorVeAna: [{ preenchida: true }], victorNaoVeCamila: 0 });
+    confere('Quem ainda não preencheu aparece como pendente para quem enxerga', (await como(MEL, `select preenchida from disponibilidade_pessoas where nome = 'Pedro'`)), [{ preenchida: false }]);
+    await salvarDisp(ANA, [slot(6, 21)]);
+    confere('Salvar de novo substitui a grade inteira', await valor(ANA, `select slots from disponibilidade_semanal`), [slot(6, 21)]);
+    await salvarDisp(ANA, []);
+    confere('Grade vazia vale como preenchida (a pessoa disse que não tem horário fixo)', [await valor(ANA, `select slots from disponibilidade_semanal`), (await como(MEL, `select preenchida from disponibilidade_pessoas where nome = 'Ana'`))[0].preenchida], [[], true]);
+    confere('Ninguém escreve na grade diretamente, nem a Presidente; a grade de outra pessoa não muda', [
+      (await tenta(ANA, `update disponibilidade_semanal set slots = '{}'`)).startsWith('permission denied'),
+      (await tenta(MEL, `update disponibilidade_semanal set slots = '{9}' where pessoa_id = $1`, [iAna])).startsWith('permission denied'),
+      (await tenta(MEL, `delete from disponibilidade_semanal`)).startsWith('permission denied'),
+      (await tenta(ANA, `insert into disponibilidade_semanal(pessoa_id, slots) values ($1, '{9}')`, [iAna])).startsWith('permission denied'),
+      await valor(CAMILA, `select slots from disponibilidade_semanal where pessoa_id = $1`, [iCamila]),
+    ], [true, true, true, true, [slot(5, 10), slot(5, 11)]]);
+    confere('Fechada ao visitante e a quem não tem cadastro', [
+      (await tenta(null, `select * from disponibilidade_semanal`)).startsWith('permission denied'),
+      (await tenta(null, `select * from disponibilidade_pessoas`)).startsWith('permission denied'),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from disponibilidade_semanal`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from disponibilidade_pessoas`),
+    ], [true, true, 0, 0]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
