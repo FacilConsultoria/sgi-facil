@@ -30,12 +30,14 @@ import { salvarMeusDados } from './features/dadospessoais/dados';
 import type { DadosParaSalvar } from './features/dadospessoais/regras';
 import { paginaLogin, type AcoesDeLogin } from './features/auth/pagina';
 import { senhaJaDefinida } from './features/auth/regras';
+import { marcarAmbiente } from './lib/ambiente';
 import { mensagemParaUsuario, registrarErro } from './lib/erros';
 import { configuracaoValida } from './lib/supabase';
 import { mostrarAviso } from './ui/aviso';
 
 const raiz = document.getElementById('raiz');
 if (!raiz) throw new Error('Elemento #raiz não encontrado em index.html.');
+marcarAmbiente();
 
 const ACOES_DE_LOGIN: AcoesDeLogin = {
   entrarComSenha,
