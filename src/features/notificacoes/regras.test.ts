@@ -6,7 +6,7 @@ const HOJE = '2026-11-10';
 
 const notificacao = (alteracao: Partial<Notificacao>): Notificacao => ({
   chave: 'k', id: null, tipo: 'atraso', titulo: 'Relatório', codigo: 'COM-001', prazo: '2026-11-05', autor_nome: null, demanda_id: 'd', recado_id: null,
-  em: '2026-11-05T00:00:00Z', ...alteracao,
+  em: '2026-11-05T00:00:00Z', sugestao_id: null, detalhe: null, ...alteracao,
 });
 
 describe('contador do sino', () => {
@@ -69,6 +69,15 @@ describe('pedido de autorização no sino', () => {
     const pedido = notificacao({ tipo: 'autorizacao', titulo: 'Feira de profissões', codigo: null, prazo: null, autor_nome: 'João', recado_id: 'r', demanda_id: null });
     expect(descreverNotificacao(pedido, HOJE)).toEqual({ titulo: 'Feira de profissões', detalhe: 'Recado para toda a equipe pedido por João' });
     expect(idsParaMarcar([pedido])).toEqual([]);
+  });
+});
+
+describe('novidade em sugestão no sino', () => {
+  it('título da sugestão e o que aconteceu; pode ser marcada como lida', () => {
+    const aviso = notificacao({ tipo: 'sugestao', id: 's1', titulo: 'Filtro por prazo', codigo: null, prazo: null, demanda_id: null, sugestao_id: 'sug', detalhe: 'Situação: Planejada' });
+    expect(descreverNotificacao(aviso, HOJE)).toEqual({ titulo: 'Filtro por prazo', detalhe: 'Situação: Planejada' });
+    expect(descreverNotificacao({ ...aviso, detalhe: null }, HOJE).detalhe).toBe('Novidade na sua sugestão');
+    expect(idsParaMarcar([aviso])).toEqual(['s1']);
   });
 });
 

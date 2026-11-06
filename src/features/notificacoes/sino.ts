@@ -78,6 +78,8 @@ export function criarControleDoSino(moldura: () => HTMLElement): ControleDoSino 
     if (notificacao.demanda_id) {
       pedirPainelDaDemanda(notificacao.demanda_id);
       irPara('demandas');
+    } else if (notificacao.sugestao_id) {
+      irPara('sugestoes');
     } else {
       irPara('dashboard');
     }

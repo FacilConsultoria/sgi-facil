@@ -29,6 +29,7 @@ export const NOME_DO_TIPO_DE_NOTIFICACAO: Readonly<Record<TipoDeNotificacao, str
   atribuicao: 'Nova atividade',
   recado: 'Recado',
   autorizacao: 'Autorizar',
+  sugestao: 'Sugestão',
 };
 
 /** "Venceu ontem · 05/11" ou "Atrasada há 3 dias · 05/11". */
@@ -56,6 +57,8 @@ export function descreverNotificacao(notificacao: Notificacao, hoje: string): Te
         titulo: notificacao.titulo,
         detalhe: notificacao.autor_nome ? `Recado para toda a equipe pedido por ${notificacao.autor_nome}` : 'Recado para toda a equipe aguardando autorização',
       };
+    case 'sugestao':
+      return { titulo: notificacao.titulo, detalhe: notificacao.detalhe ?? 'Novidade na sua sugestão' };
   }
 }
 
