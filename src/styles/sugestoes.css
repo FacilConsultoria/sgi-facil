@@ -1,0 +1,28 @@
+/* Tela Sugestões: filtros, cartões, resposta da Presidência e comentários. */
+.filtros-sugestoes { flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-bottom: 14px; }
+.abas-sugestoes { display: inline-flex; gap: 4px; padding: 3px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.aba-sugestoes {
+  appearance: none; border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 0.85rem; padding: 5px 10px; border-radius: 7px; cursor: pointer;
+}
+.aba-sugestoes[aria-pressed='true'] { background: var(--accent-soft); color: var(--accent-text); font-weight: 600; }
+.aba-sugestoes:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.filtros-sugestoes input[type='search'] { flex: 1 1 200px; min-width: 0; }
+
+.lista-sugestoes { display: flex; flex-direction: column; gap: 12px; }
+.sugestao { max-width: none; }
+.sugestao h3 { margin: 0; overflow-wrap: anywhere; }
+.sugestao .meta { margin: 0; }
+.sugestao-topo { gap: 6px; }
+.sugestao .chip.tipo-bug { color: var(--danger); }
+.sugestao .chip.tipo-melhoria { color: var(--accent-text); }
+.sugestao .chip.situacao.concluida { opacity: 0.8; }
+.sugestao-texto { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sugestao-resposta { border-left: 3px solid var(--accent); background: var(--surface-2); border-radius: 8px; padding: 8px 12px; }
+.sugestao-resposta p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sugestao-acoes { gap: 8px; flex-wrap: wrap; }
+.btn.apoio.ativo { border-color: var(--accent); color: var(--accent-text); background: var(--accent-soft); }
+.situacao-feita, .situacao-recusada { opacity: 0.92; }
+
+.comentarios-sugestao { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.comentarios-sugestao li { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 12px; background: var(--bg); }
+.comentarios-sugestao p { margin: 4px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
