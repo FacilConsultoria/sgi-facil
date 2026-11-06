@@ -11,6 +11,7 @@ import { paginaPresencas } from '../features/presencas/pagina';
 import { paginaProjetos } from '../features/projetos/pagina';
 import { paginaRegras } from '../features/regras/pagina';
 import { paginaReunioes } from '../features/reunioes/pagina';
+import { paginaSugestoes } from '../features/sugestoes/pagina';
 import type { Rota } from './rotas';
 import type { ContextoDaSessao } from './sessao';
 
@@ -48,6 +49,9 @@ export function renderizarPagina(rota: Rota, destino: HTMLElement, contexto: Con
       return;
     case 'regras':
       paginaRegras(destino, contexto);
+      return;
+    case 'sugestoes':
+      paginaSugestoes(destino, contexto);
       return;
     default:
       paginaEmMigracao(destino, rota);

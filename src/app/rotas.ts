@@ -18,6 +18,7 @@ export const ROTAS: readonly Rota[] = [
   { id: 'autorizacoes', titulo: 'Autorizações', disponivel: true },
   { id: 'historico', titulo: 'Histórico completo', disponivel: true },
   { id: 'regras', titulo: 'Regras', disponivel: true },
+  { id: 'sugestoes', titulo: 'Sugestões', disponivel: true },
 ];
 
 const ROTA_INICIAL: Rota = { id: 'dashboard', titulo: 'Tela Inicial', disponivel: true };
