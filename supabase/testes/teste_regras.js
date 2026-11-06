@@ -60,6 +60,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL17);
     await db.exec(window.SQL18);
     await db.exec(window.SQL19);
+    await db.exec(window.SQL20);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -1035,6 +1036,68 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Pedido vencido não pode ser autorizado', MEL, `select decidir_recado($1, true)`, [rVencido], 'O prazo deste recado já passou. Recuse e peça um novo.');
     confere('Pedir, autorizar e recusar ficam na auditoria', (await db.query(`select acao, count(*)::int as n from auditoria where acao in ('Pediu autorização de recado','Autorizou recado','Recusou recado') group by acao order by acao`)).rows,
       [{ acao: 'Autorizou recado', n: 1 }, { acao: 'Pediu autorização de recado', n: 3 }, { acao: 'Recusou recado', n: 1 }]);
+
+    // sugestões (20)
+    const LUCAS = 'lucas@facil.test';
+    await bloqueia('Sugestão: tipo inválido', ANA, `select criar_sugestao('x','Título','Texto')`, [], 'Escolha o tipo da sugestão.');
+    await bloqueia('Sugestão: título vazio', ANA, `select criar_sugestao('bug','  ','Texto')`, [], 'Dê um título à sugestão.');
+    await bloqueia('Sugestão: descrição vazia', ANA, `select criar_sugestao('bug','Título','  ')`, [], 'Descreva a sugestão.');
+    await bloqueia('Sugestão: título longo', ANA, `select criar_sugestao('bug',$1,'Texto')`, ['x'.repeat(121)], 'O título tem no máximo 120 caracteres.');
+    await bloqueia('Sugestão: descrição longa', ANA, `select criar_sugestao('bug','Título',$1)`, ['x'.repeat(2001)], 'A descrição tem no máximo 2000 caracteres.');
+    await bloqueia('Visitante sem login não envia sugestão', null, `select criar_sugestao('bug','Título','Texto')`, [], 'permission denied for function criar_sugestao');
+    const sAna = await valor(ANA, `select criar_sugestao('melhoria','  Filtro por prazo nas demandas ',' Seria bom filtrar por semana. ')`);
+    confere('Todas as pessoas ativas leem as sugestões; visitante e login sem cadastro, não', [
+      await valor(CAMILA, `select count(*)::int from sugestoes_painel`), await valor(PEDRO, `select count(*)::int from sugestoes_painel`),
+      await valor('sem-cadastro@facil.test', `select count(*)::int from sugestoes_painel`),
+      (await tenta(null, `select * from sugestoes_painel`)).startsWith('permission denied'),
+    ], [1, 1, 0, true]);
+    confere('A sugestão sai com o texto limpo, aberta e sem apoios', await como(PEDRO, `select tipo, titulo, descricao, situacao, autor_nome, apoios, apoiei, comentarios, resposta from sugestoes_painel`),
+      [{ tipo: 'melhoria', titulo: 'Filtro por prazo nas demandas', descricao: 'Seria bom filtrar por semana.', situacao: 'aberta', autor_nome: 'Ana', apoios: 0, apoiei: false, comentarios: 0, resposta: null }]);
+
+    await bloqueia('Quem sugeriu não apoia a própria sugestão', ANA, `select apoiar_sugestao($1)`, [sAna], 'Quem sugeriu não apoia a própria sugestão.');
+    confere('Apoiar liga e desliga', [
+      await valor(CAMILA, `select apoiar_sugestao($1)`, [sAna]), await valor(CAMILA, `select apoiar_sugestao($1)`, [sAna]), await valor(CAMILA, `select apoiar_sugestao($1)`, [sAna]),
+    ], [true, false, true]);
+    await como(LUCAS, `select apoiar_sugestao($1)`, [sAna]);
+    confere('Contagem de apoios e quem já apoiou', [
+      (await como(CAMILA, `select apoios, apoiei from sugestoes_painel`))[0], (await como(ANA, `select apoios, apoiei from sugestoes_painel`))[0],
+    ], [{ apoios: 2, apoiei: true }, { apoios: 2, apoiei: false }]);
+
+    await bloqueia('Comentário vazio', CAMILA, `select comentar_sugestao($1,'  ')`, [sAna], 'Escreva o comentário.');
+    await bloqueia('Comentário longo', CAMILA, `select comentar_sugestao($1,$2)`, [sAna, 'x'.repeat(1001)], 'O comentário tem no máximo 1000 caracteres.');
+    const avisosDaAna = () => como(ANA, `select tipo, titulo, detalhe from minhas_notificacoes where sugestao_id = $1`, [sAna]);
+    await como(CAMILA, `select comentar_sugestao($1,'Eu também uso muito isso.')`, [sAna]);
+    confere('Comentário de outra pessoa avisa quem sugeriu', await avisosDaAna(), [{ tipo: 'sugestao', titulo: 'Filtro por prazo nas demandas', detalhe: 'Novo comentário de Camila' }]);
+    await como(ANA, `select comentar_sugestao($1,'Valeu!')`, [sAna]);
+    await como(DUDA, `select comentar_sugestao($1,'Ajudaria no Marketing.')`, [sAna]);
+    confere('O próprio comentário não avisa, e o aviso novo substitui o anterior ainda não lido', await avisosDaAna(), [{ tipo: 'sugestao', titulo: 'Filtro por prazo nas demandas', detalhe: 'Novo comentário de Duda' }]);
+    confere('Comentários em ordem, com autor', (await como(PEDRO, `select autor_nome, texto from sugestao_comentarios_painel where sugestao_id = $1 order by criado_em`, [sAna])).map(c => `${c.autor_nome}: ${c.texto}`),
+      ['Camila: Eu também uso muito isso.', 'Ana: Valeu!', 'Duda: Ajudaria no Marketing.']);
+
+    await bloqueia('Gerência não responde sugestão', DUDA, `select responder_sugestao($1,'planejada','ok')`, [sAna], 'Só a Presidência responde às sugestões.');
+    await bloqueia('Membro não responde sugestão', ANA, `select responder_sugestao($1,'feita')`, [sAna], 'Só a Presidência responde às sugestões.');
+    await bloqueia('Situação inválida', MEL, `select responder_sugestao($1,'pronta')`, [sAna], 'Escolha a situação.');
+    confere('Só a Presidência vê o botão de responder', [await valor(MEL, `select pode_responder from sugestoes_painel`), await valor(MAJU, `select pode_responder from sugestoes_painel`), await valor(ANA, `select pode_responder from sugestoes_painel`)], [true, true, false]);
+    await permite('A Assessoria responde', MAJU, `select responder_sugestao($1,'planejada',' Entra no próximo ciclo. ')`, [sAna]);
+    confere('Resposta gravada e quem sugeriu é avisado', [
+      (await como(CAMILA, `select situacao, resposta, respondido_por_nome from sugestoes_painel`))[0], await avisosDaAna(),
+    ], [{ situacao: 'planejada', resposta: 'Entra no próximo ciclo.', respondido_por_nome: 'Maju' }, [{ tipo: 'sugestao', titulo: 'Filtro por prazo nas demandas', detalhe: 'Situação: Planejada' }]]);
+    await permite('Quem sugeriu lê o aviso', ANA, `select marcar_notificacoes_lidas(array(select id from minhas_notificacoes where sugestao_id = $1))`, [sAna]);
+    confere('Aviso lido sai do sino', (await avisosDaAna()).length, 0);
+    const sMel = await valor(MEL, `select criar_sugestao('bug','Erro ao salvar','Aparece erro.')`);
+    await permite('A Presidência responde a própria sugestão sem gerar aviso', MEL, `select responder_sugestao($1,'feita')`, [sMel]);
+    confere('Sem aviso para si mesma, e resposta vazia fica nula', [
+      await valor(MEL, `select count(*)::int from minhas_notificacoes where sugestao_id = $1`, [sMel]),
+      await valor(MEL, `select resposta from sugestoes_painel where id = $1`, [sMel]),
+    ], [0, null]);
+    confere('Ninguém grava sugestões, apoios ou comentários diretamente', [
+      (await tenta(ANA, `insert into sugestoes(autor_id, tipo, titulo, descricao) values ($1,'bug','x','y')`, [iAna])).startsWith('permission denied'),
+      (await tenta(MEL, `update sugestoes set situacao = 'feita'`)).startsWith('permission denied'),
+      (await tenta(CAMILA, `delete from sugestao_apoios`)).startsWith('permission denied'),
+      (await tenta(CAMILA, `insert into sugestao_comentarios(sugestao_id, autor_id, texto) values ($1,$2,'x')`, [sAna, iCamila])).startsWith('permission denied'),
+    ], [true, true, true, true]);
+    confere('Enviar e responder sugestões ficam na auditoria', (await db.query(`select acao, count(*)::int as n from auditoria where acao in ('Enviou sugestão','Respondeu sugestão') group by acao order by acao`)).rows,
+      [{ acao: 'Enviou sugestão', n: 2 }, { acao: 'Respondeu sugestão', n: 2 }]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');

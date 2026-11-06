@@ -38,7 +38,7 @@ const EMAIL_DEV = 'pessoa+dev@facil.test';
   try {
     const db = new PGlite();
     await db.exec(SIMULACAO_SUPABASE);
-    for (const n of ['01', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19']) await db.exec(window[`SQL${n}`]);
+    for (const n of ['01', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20']) await db.exec(window[`SQL${n}`]);
     const tenta = async sql => { try { await db.exec(sql); return 'permitido'; } catch (e) { return e.message; } };
     const comEmail = window.SQLDEV.replace(/(v_email_dev\s+text := )'PREENCHER'/, `$1'${EMAIL_DEV}'`);
     confere('A troca de cargo não é instalada antes dos dados de desenvolvimento', await tenta(window.SQLDEV3), 'Este script é só para o ambiente de desenvolvimento: rode antes o dev/02_dados_dev.sql.');
