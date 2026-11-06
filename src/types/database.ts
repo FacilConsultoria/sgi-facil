@@ -424,7 +424,7 @@ export interface Perfil {
 }
 
 /** "autorizacao": recado para toda a equipe aguardando a autorização de quem consulta (supabase/19_recados_autorizacao_e_prazo.sql). */
-export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao';
+export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao' | 'sugestao';
 
 /** Linha da visão public.minhas_notificacoes (supabase/18_recados_e_notificacoes.sql): o que o sino mostra. */
 export interface Notificacao {
@@ -441,6 +441,44 @@ export interface Notificacao {
   demanda_id: string | null;
   recado_id: string | null;
   em: string;
+  /** Sugestão de quem consulta que recebeu comentário ou resposta (supabase/20_sugestoes.sql). */
+  sugestao_id: string | null;
+  /** "Novo comentário de Camila" ou "Situação: Planejada", nas sugestões. */
+  detalhe: string | null;
+}
+
+export type TipoDeSugestao = 'melhoria' | 'bug' | 'outro';
+export type SituacaoDaSugestao = 'aberta' | 'em_analise' | 'planejada' | 'feita' | 'recusada';
+
+/** Linha da visão public.sugestoes_painel (supabase/20_sugestoes.sql). */
+export interface SugestaoDoPainel {
+  id: string;
+  tipo: TipoDeSugestao;
+  titulo: string;
+  descricao: string;
+  situacao: SituacaoDaSugestao;
+  resposta: string | null;
+  autor_id: string;
+  autor_nome: string;
+  criado_em: string;
+  respondido_em: string | null;
+  respondido_por_nome: string | null;
+  apoios: number;
+  /** Quem consulta já apoia esta sugestão. */
+  apoiei: boolean;
+  comentarios: number;
+  /** Presidência: pode mudar a situação e responder. */
+  pode_responder: boolean;
+}
+
+/** Linha da visão public.sugestao_comentarios_painel. */
+export interface ComentarioDeSugestao {
+  id: string;
+  sugestao_id: string;
+  autor_id: string;
+  autor_nome: string;
+  texto: string;
+  criado_em: string;
 }
 
 export type EscopoDeRecado = 'todos' | 'area' | 'nucleo';
