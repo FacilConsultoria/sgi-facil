@@ -1,5 +1,5 @@
-// Acesso a dados dos dados pessoais. A leitura passa pela RLS (só a própria pessoa, a Presidente e a Assessoria de
-// Presidência recebem linha)
+// Acesso a dados dos dados pessoais. A leitura passa pela RLS (só a própria pessoa, a Presidente, a Assessoria de
+// Presidência e a diretoria da área recebem linha)
 // e a gravação só vale para quem chama (supabase.rpc salvar_meus_dados).
 import { supabase } from '../../lib/supabase';
 import type { DadosPessoais } from '../../types/database';
