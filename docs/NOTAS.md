@@ -222,6 +222,13 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
 - **Sugestões (06/11/2026), a pedido do usuário, direto na produção:** nova aba "Sugestões" no menu (última), migração `20_sugestoes.sql`. Qualquer pessoa ativa envia melhoria, bug ou outro (título até 120, descrição até 2000), vê todas, apoia as dos outros (não a própria; o botão liga e desliga) e comenta (até 1000). A Presidência (Presidente, Vice e Assessoria) responde: situação (aberta, em análise, planejada, feita, recusada) e texto opcional que todos veem. Quem sugeriu recebe aviso no sino ("Novo comentário de X" ou "Situação: Planejada"; o mais novo substitui o anterior não lido; nada é avisado para a própria ação). Tela: abas Em aberto / Concluídas / Todas com contagem, filtro por tipo e busca sem acento; ordem pelas mais apoiadas e, no empate, as mais novas; comentários num painel lateral. Código em `src/features/sugestoes/`, estilos em `src/styles/sugestoes.css`.
   - Decisões minhas, a confirmar: todos veem todas as sugestões (inclusive bugs); quem responde é a Presidência; não há edição nem exclusão de sugestão ou comentário.
 
+- **Quem vê os dados dos membros (11/11/2026), revisão pedida pelo usuário:**
+  - **Dados pessoais** (nome completo, RGA, CPF, nascimento, gênero): a própria pessoa, a Presidente e, desde a migração `21_dados_pessoais_assessoria.sql`, a **Assessoria de Presidência** (pedido do usuário). Só leitura; só a própria pessoa altera. Vice, diretorias, gerências e membros não leem os dos outros. O site mostra o botão "Dados pessoais" (organograma e Cadastro) pelo indicador `pode_ver_dados_pessoais` do perfil.
+  - **Tratamento** (feminino, masculino, neutro, derivado do gênero): todos leem, para os textos; o gênero em si não.
+  - **E-mail**: a própria pessoa e quem cadastra pessoas (Presidência: Presidente, Vice e Assessoria; e a Gente e Gestão).
+  - **Pontuação detalhada e disponibilidade semanal**: a própria pessoa e quem a enxerga pela hierarquia (Presidência e Gente e Gestão todas; diretoria as da área; gerência as do núcleo).
+  - **Nome, cargo, área, núcleo e curso**: todos os logados (organograma).
+
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
 2. Usuário cria o repositório privado `sgi-facil` no GitHub, envia os arquivos e confere a aba Actions (verificação verde).
