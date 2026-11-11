@@ -21,7 +21,7 @@ risco de expor ou estragar os dados reais da equipe. Usa o mesmo código do site
    - Marque **Auto Confirm User**.
 3. **Authentication → Sign In / Providers → Email**: **Minimum password length** em 10.
 4. **SQL Editor**: rode os scripts da pasta `supabase` na mesma ordem da produção (ver `supabase/LEIA-ME.md`), **menos o
-   `02_dados_iniciais.sql`**: `01`, `03`, `04`, `05`, `06` (sozinho), `07` a `20`.
+   `02_dados_iniciais.sql`**: `01`, `03`, `04`, `05`, `06` (sozinho), `07` a `21`.
 5. Depois, `supabase/dev/02_dados_dev.sql`, com o e-mail da conta de teste no lugar de `PREENCHER`.
    O script se recusa a rodar se o banco já tiver pessoas (proteção contra rodar na produção por engano).
 6. Por último, `supabase/dev/03_trocar_cargo_dev.sql`: liga o seletor **"Ver como"** da faixa do topo, que troca o
