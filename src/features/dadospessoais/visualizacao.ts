@@ -1,5 +1,6 @@
-// Dados pessoais de uma pessoa, só leitura, para a Presidente (a RLS devolve linha só para ela e para a própria
-// pessoa; quem chama aqui só mostra o botão quando o perfil tem eh_presidente). Nada é editado por esta janela.
+// Dados pessoais de uma pessoa, só leitura, para a Presidente e a Assessoria de Presidência (a RLS devolve linha só
+// para elas e para a própria pessoa; quem chama aqui só mostra o botão quando o perfil tem pode_ver_dados_pessoais).
+// Nada é editado por esta janela.
 import { dataEHora, hojeEmSaoPaulo } from '../../lib/datas';
 import { mensagemParaUsuario, registrarErro } from '../../lib/erros';
 import { mostrarAviso } from '../../ui/aviso';
@@ -40,7 +41,7 @@ export async function abrirDadosDaPessoa(pai: HTMLElement, pessoa: { id: string;
         el('div', { class: 'form-janela' },
           el('div', { class: 'painel-cab' }, el('h2', { id: 'dados-da-pessoa-titulo' }, `Dados pessoais: ${pessoa.nome}`), botaoFechar(fechar)),
           el('div', { class: 'painel-corpo' }, corpo,
-            el('p', { class: 'dica' }, 'Só a própria pessoa e a Presidente leem estes dados. Só a própria pessoa os altera.')),
+            el('p', { class: 'dica' }, 'Só a própria pessoa, a Presidente e a Assessoria de Presidência leem estes dados. Só a própria pessoa os altera.')),
           el('div', { class: 'modal-pe' }, fecharJanela)),
       ];
     },
