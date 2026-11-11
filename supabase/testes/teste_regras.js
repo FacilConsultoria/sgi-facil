@@ -61,6 +61,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL18);
     await db.exec(window.SQL19);
     await db.exec(window.SQL20);
+    await db.exec(window.SQL21);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -763,11 +764,20 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     for (const [nome, email] of [['mel', MEL], ['ana', ANA], ['maju', MAJU], ['luis', LUIS], ['joao', JOAO], ['gina', GINA], ['camila', CAMILA]]) {
       leituras[nome] = await valor(email, `select count(*)::int from dados_pessoais`);
     }
-    confere('Lê os dados só a dona ou o dono e a Presidente (Assessoria, Vice, diretoria e gerência não)', leituras, { mel: 2, ana: 1, maju: 0, luis: 0, joao: 0, gina: 0, camila: 0 });
-    confere('A Presidente consegue ler os dados de uma pessoa; a Assessoria não', [
+    confere('Lê os dados só a dona ou o dono, a Presidente e a Assessoria de Presidência (Vice, diretoria e gerência não)', leituras, { mel: 2, ana: 1, maju: 2, luis: 0, joao: 0, gina: 0, camila: 0 });
+    confere('A Presidente e a Assessoria leem os dados de uma pessoa', [
       await valor(MEL, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna]),
-      (await como(MAJU, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna])).length,
-    ], ['52998224725', 0]);
+      await valor(MAJU, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna]),
+    ], ['52998224725', '52998224725']);
+    confere('O perfil diz quem vê os dados pessoais dos outros (21)', {
+      mel: await valor(MEL, `select pode_ver_dados_pessoais from meu_perfil`), maju: await valor(MAJU, `select pode_ver_dados_pessoais from meu_perfil`),
+      luis: await valor(LUIS, `select pode_ver_dados_pessoais from meu_perfil`), joao: await valor(JOAO, `select pode_ver_dados_pessoais from meu_perfil`),
+      ana: await valor(ANA, `select pode_ver_dados_pessoais from meu_perfil`),
+    }, { mel: true, maju: true, luis: false, joao: false, ana: false });
+    confere('A Assessoria lê, mas não altera os dados de outra pessoa', [
+      (await tenta(MAJU, `update dados_pessoais set cpf = '11144477735' where pessoa_id = $1`, [iAna])).startsWith('permission denied'),
+      (await tenta(MAJU, `delete from dados_pessoais where pessoa_id = $1`, [iAna])).startsWith('permission denied'),
+    ], [true, true]);
     confere('Dados pessoais fechados ao visitante e a quem não tem cadastro', [
       (await tenta(null, `select * from dados_pessoais`)).startsWith('permission denied'),
       await valor('sem-cadastro@facil.test', `select count(*)::int from dados_pessoais`),
