@@ -80,3 +80,5 @@
 .tabela tr.desativada td { opacity: 0.6; }
 .tabela .acoes-da-linha { text-align: right; white-space: nowrap; }
 .tabela td .meta { word-break: break-all; }
+/* aba Dados do time */
+.chip.dados-pendentes { --c: var(--warn); }
