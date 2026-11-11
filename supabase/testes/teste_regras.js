@@ -62,6 +62,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL19);
     await db.exec(window.SQL20);
     await db.exec(window.SQL21);
+    await db.exec(window.SQL22);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -764,7 +765,26 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     for (const [nome, email] of [['mel', MEL], ['ana', ANA], ['maju', MAJU], ['luis', LUIS], ['joao', JOAO], ['gina', GINA], ['camila', CAMILA]]) {
       leituras[nome] = await valor(email, `select count(*)::int from dados_pessoais`);
     }
-    confere('Lê os dados só a dona ou o dono, a Presidente e a Assessoria de Presidência (Vice, diretoria e gerência não)', leituras, { mel: 2, ana: 1, maju: 2, luis: 0, joao: 0, gina: 0, camila: 0 });
+    confere('Lê os dados a dona ou o dono, a Presidente, a Assessoria e a diretoria da área (João cobre Projetos, onde está a Ana); Vice de outra área, gerência e membros não', leituras, { mel: 2, ana: 1, maju: 2, luis: 0, joao: 1, gina: 0, camila: 0 });
+    confere('A diretoria lê os dados do time, mas não os da Presidente (22)', [
+      await valor(JOAO, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna]),
+      (await como(JOAO, `select 1 from dados_pessoais where pessoa_id = $1`, [iMel])).length,
+      (await tenta(JOAO, `update dados_pessoais set cpf = '11144477735' where pessoa_id = $1`, [iAna])).startsWith('permission denied'),
+    ], ['52998224725', 0, true]);
+    confere('A lista da equipe diz de quem cada um vê os dados e se já preencheram (só para quem vê)', {
+      joao: (await como(JOAO, `select nome, dados_preenchidos from equipe_pessoas where pode_ver_dados and id <> $1 order by nome`, [iJoao])).map(l => `${l.nome}:${l.dados_preenchidos}`),
+      camilaVeAna: await valor(CAMILA, `select dados_preenchidos from equipe_pessoas where id = $1`, [iAna]),
+      maju: await valor(MAJU, `select count(*)::int from equipe_pessoas where pode_ver_dados and ativo`),
+    }, {
+      joao: ['Ana:true', 'Camila:false', 'Duda:false', 'Emilli:false', 'Lucas Prado:false', 'Novo Dois:false', 'Victor:false'],
+      camilaVeAna: null,
+      maju: await valor(MEL, `select count(*)::int from pessoas where ativo`),
+    });
+    confere('O perfil diz quem tem time para ver (aba "Dados do time")', {
+      mel: await valor(MEL, `select ve_dados_do_time from meu_perfil`), maju: await valor(MAJU, `select ve_dados_do_time from meu_perfil`),
+      joao: await valor(JOAO, `select ve_dados_do_time from meu_perfil`), luis: await valor(LUIS, `select ve_dados_do_time from meu_perfil`),
+      duda: await valor(DUDA, `select ve_dados_do_time from meu_perfil`), ana: await valor(ANA, `select ve_dados_do_time from meu_perfil`),
+    }, { mel: true, maju: true, joao: true, luis: false, duda: false, ana: false });
     confere('A Presidente e a Assessoria leem os dados de uma pessoa', [
       await valor(MEL, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna]),
       await valor(MAJU, `select cpf from dados_pessoais where pessoa_id = $1`, [iAna]),
