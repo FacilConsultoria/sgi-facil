@@ -421,6 +421,8 @@ export interface Perfil {
   pode_editar_regras: boolean;
   /** A pessoa ainda não preencheu os dados pessoais (supabase/15_dados_pessoais.sql). */
   dados_pendentes: boolean;
+  /** Lê os dados pessoais das outras pessoas: a Presidente e a Assessoria de Presidência (supabase/21_dados_pessoais_assessoria.sql). */
+  pode_ver_dados_pessoais: boolean;
 }
 
 /** "autorizacao": recado para toda a equipe aguardando a autorização de quem consulta (supabase/19_recados_autorizacao_e_prazo.sql). */
@@ -535,7 +537,7 @@ export interface PessoaComDisponibilidade {
 
 export type GeneroInformado = 'feminino' | 'masculino' | 'outro' | 'nao_informar';
 
-/** Linha da tabela public.dados_pessoais: só a própria pessoa e a Presidente leem. CPF e RGA vêm sem pontuação. */
+/** Linha da tabela public.dados_pessoais: só a própria pessoa, a Presidente e a Assessoria de Presidência leem. CPF e RGA vêm sem pontuação. */
 export interface DadosPessoais {
   pessoa_id: string;
   nome_completo: string;
