@@ -49,6 +49,11 @@ export function filtrarEquipe(pessoas: readonly PessoaDaEquipe[], busca: string,
     .sort(porNome);
 }
 
+/** Para a aba "Dados do time": pessoas ativas cujos dados quem consulta lê (indicador do banco), sem a própria, por nome. */
+export function pessoasDoTime(pessoas: readonly PessoaDaEquipe[], meuId: string): PessoaDaEquipe[] {
+  return pessoas.filter((p) => p.ativo && p.pode_ver_dados && p.id !== meuId).sort(porNome);
+}
+
 export interface CamposDoCadastro {
   email: string;
   nome: string;

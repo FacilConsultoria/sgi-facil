@@ -1,11 +1,24 @@
 import { describe, expect, it } from 'vitest';
 import type { NucleoDaEstrutura, PessoaDaEquipe } from '../../types/database';
 import {
-  descreverCargoDaPessoa, filtrarEquipe, iniciais, nucleosDaArea, ordenarAreasParaCadastro, precisaDeNucleo, validarCadastro,
+  descreverCargoDaPessoa, filtrarEquipe, iniciais, nucleosDaArea, ordenarAreasParaCadastro, pessoasDoTime, precisaDeNucleo, validarCadastro,
 } from './regras';
 
+describe('pessoasDoTime', () => {
+  it('lista as pessoas ativas cujos dados quem consulta pode ver, sem a própria, por nome', () => {
+    const lista = [
+      pessoa({ id: 'eu', nome: 'Eu', pode_ver_dados: true }),
+      pessoa({ id: 'b', nome: 'Bruno', pode_ver_dados: true, dados_preenchidos: false }),
+      pessoa({ id: 'a', nome: 'Ana', pode_ver_dados: true, dados_preenchidos: true }),
+      pessoa({ id: 'c', nome: 'Carla', pode_ver_dados: false }),
+      pessoa({ id: 'd', nome: 'Davi', pode_ver_dados: true, ativo: false }),
+    ];
+    expect(pessoasDoTime(lista, 'eu').map((p) => p.nome)).toEqual(['Ana', 'Bruno']);
+  });
+});
+
 function pessoa(campos: Partial<PessoaDaEquipe>): PessoaDaEquipe {
-  return { id: 'p1', nome: 'Ana Ferraz', papel: 'membro', area_id: 'proj', nucleo_id: 'proj-cli', curso: null, ativo: true, email: null, pode_editar: false, ...campos };
+  return { id: 'p1', nome: 'Ana Ferraz', papel: 'membro', area_id: 'proj', nucleo_id: 'proj-cli', curso: null, ativo: true, email: null, pode_editar: false, pode_ver_dados: false, dados_preenchidos: null, ...campos };
 }
 function nucleo(campos: Partial<NucleoDaEstrutura>): NucleoDaEstrutura {
   return { id: 'proj-cli', area_id: 'proj', nome: 'Entregas aos clientes', vaga: false, nota: null, ...campos };

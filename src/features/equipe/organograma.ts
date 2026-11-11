@@ -70,10 +70,9 @@ function abrirFuncao(contexto: ContextoDoOrganograma, no: NoDoOrganograma): void
         return definir;
       };
       const definir = no.area?.pode_definir_lideranca ? botaoDeLideranca(no.area) : null;
-      // dados pessoais: Presidente e Assessoria de Presidência (indicador pode_ver_dados_pessoais do perfil);
-      // o banco devolve linha só a elas e à própria pessoa
+      // dados pessoais: quem pode ver esta pessoa vem do banco (pode_ver_dados: Presidente, Assessoria e diretoria da área)
       const pessoa = no.pessoa;
-      const dadosPessoais = contexto.sessao.perfil.pode_ver_dados_pessoais && pessoa ? el('button', { type: 'button', class: 'btn' }, 'Dados pessoais') : null;
+      const dadosPessoais = pessoa?.pode_ver_dados ? el('button', { type: 'button', class: 'btn' }, 'Dados pessoais') : null;
       dadosPessoais?.addEventListener('click', () => {
         fechar();
         if (pessoa) void abrirDadosDaPessoa(contexto.pagina, pessoa);

@@ -37,8 +37,8 @@ export function desenharCadastro(contexto: ContextoDoCadastro): HTMLElement[] {
     const linhas = pessoas.map((pessoa) => {
       const editar = el('button', { type: 'button', class: 'btn peq' }, 'Editar');
       editar.addEventListener('click', () => abrirFormularioDePessoa(contexto, pessoa));
-      // dados pessoais: Presidente e Assessoria de Presidência (o banco devolve linha só a elas e à própria pessoa)
-      const dadosPessoais = contexto.sessao.perfil.pode_ver_dados_pessoais ? el('button', { type: 'button', class: 'btn peq' }, 'Dados pessoais') : null;
+      // dados pessoais: quem pode ver esta pessoa vem do banco (pode_ver_dados)
+      const dadosPessoais = pessoa.pode_ver_dados ? el('button', { type: 'button', class: 'btn peq' }, 'Dados pessoais') : null;
       dadosPessoais?.addEventListener('click', () => void abrirDadosDaPessoa(contexto.pagina, pessoa));
       return el('tr', { class: pessoa.ativo ? undefined : 'desativada' },
         el('td', {}, pessoa.nome, el('br', {}), el('span', { class: 'meta' }, pessoa.email ?? '')),

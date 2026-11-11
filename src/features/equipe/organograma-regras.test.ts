@@ -5,7 +5,7 @@ import {
 } from './organograma-regras';
 
 function pessoa(campos: Partial<PessoaDaEquipe>): PessoaDaEquipe {
-  return { id: 'p1', nome: 'Ana', papel: 'membro', area_id: 'com', nucleo_id: 'com-mkt', curso: null, ativo: true, email: null, pode_editar: false, ...campos };
+  return { id: 'p1', nome: 'Ana', papel: 'membro', area_id: 'com', nucleo_id: 'com-mkt', curso: null, ativo: true, email: null, pode_editar: false, pode_ver_dados: false, dados_preenchidos: null, ...campos };
 }
 function area(campos: Partial<AreaDaEstrutura>): AreaDaEstrutura {
   return { id: 'com', titulo: 'Diretoria Comercial', sigla: 'COM', titular: null, cobertura: null, nota: null, pode_definir_lideranca: false, area_da_presidencia: false, ...campos };
