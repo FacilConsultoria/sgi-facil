@@ -329,6 +329,10 @@ export interface PessoaDaEquipe {
   email: string | null;
   /** Quem consulta pode alterar este cadastro. */
   pode_editar: boolean;
+  /** Quem consulta lê os dados pessoais desta pessoa (supabase/22_dados_pessoais_diretorias.sql). */
+  pode_ver_dados: boolean;
+  /** Se a pessoa já preencheu os dados pessoais; nulo para quem não pode ver. */
+  dados_preenchidos: boolean | null;
 }
 
 /** Linha da visão public.areas_da_estrutura: Presidência e diretorias, com titular e cobertura (ids de pessoas). */
@@ -423,6 +427,8 @@ export interface Perfil {
   dados_pendentes: boolean;
   /** Lê os dados pessoais das outras pessoas: a Presidente e a Assessoria de Presidência (supabase/21_dados_pessoais_assessoria.sql). */
   pode_ver_dados_pessoais: boolean;
+  /** Há outra pessoa ativa cujos dados pessoais quem consulta lê (Presidente, Assessoria e diretorias com time). */
+  ve_dados_do_time: boolean;
 }
 
 /** "autorizacao": recado para toda a equipe aguardando a autorização de quem consulta (supabase/19_recados_autorizacao_e_prazo.sql). */
@@ -537,7 +543,10 @@ export interface PessoaComDisponibilidade {
 
 export type GeneroInformado = 'feminino' | 'masculino' | 'outro' | 'nao_informar';
 
-/** Linha da tabela public.dados_pessoais: só a própria pessoa, a Presidente e a Assessoria de Presidência leem. CPF e RGA vêm sem pontuação. */
+/**
+ * Linha da tabela public.dados_pessoais: leem a própria pessoa, a Presidente, a Assessoria de Presidência e a diretoria
+ * da área da pessoa. CPF e RGA vêm sem pontuação.
+ */
 export interface DadosPessoais {
   pessoa_id: string;
   nome_completo: string;
