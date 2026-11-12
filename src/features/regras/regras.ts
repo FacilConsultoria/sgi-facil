@@ -112,7 +112,7 @@ export const perfisDeAcesso = (): readonly PerfilDeAcesso[] => [
     demandas: 'Só aquelas em que é executor',
     pontuacao: 'Só a própria',
     restritos: 'Não',
-    criarEValidar: 'Move as próprias demandas até "Em revisão"',
+    criarEValidar: 'Envia as próprias entregas para aprovação e tira dúvidas com quem aprova',
     ajustarPontos: 'Não',
     aprovarExcecoes: 'Não. Pode pedir acesso para si.',
   },
