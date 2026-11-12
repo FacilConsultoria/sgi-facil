@@ -4,7 +4,11 @@
 export type Papel = 'presidente' | 'vice' | 'diretor' | 'gerente' | 'assessor' | 'membro';
 export type StatusDemanda = 'afazer' | 'andamento' | 'revisao' | 'concluida';
 export type Prioridade = 'alta' | 'media' | 'baixa';
-export type MotivoAcesso = 'presidencia' | 'diretoria' | 'nucleo' | 'executor' | 'excecao';
+export type MotivoAcesso = 'presidencia' | 'diretoria' | 'nucleo' | 'executor' | 'aprovador' | 'informado' | 'excecao';
+/** Alcance da entrega na RACI: só uma parte do time ou a Fácil como um todo (informa a Presidência). */
+export type AlcanceDaEntrega = 'parte' | 'geral';
+/** De quem é a caixa agora: de quem executa (R), de quem aprova (A) ou de ninguém (concluída). */
+export type ComQuem = 'executores' | 'aprovador' | 'ninguem';
 
 /** Linha da visão public.demandas_visiveis. Datas no formato AAAA-MM-DD. */
 export interface DemandaVisivel {
@@ -33,6 +37,60 @@ export interface DemandaVisivel {
   nucleo_nome: string;
   /** Último dia da liberação por exceção de quem consulta. */
   excecao_ate: string | null;
+  // RACI (supabase/23_raci.sql). Os indicadores pode_* e na_minha_caixa vêm calculados pelo banco.
+  /** Quem aprova (A). Nulo só em demandas antigas sem diretoria nem Presidente para sugerir. */
+  aprovador_id: string | null;
+  alcance: AlcanceDaEntrega;
+  /** Há uma dúvida de quem executa esperando resposta de quem aprova. */
+  duvida_aberta: boolean;
+  /** Quem é informado (I) na conclusão. */
+  informados: string[];
+  /** Um só executor, que também aprova: concluir encerra direto. */
+  eh_ar: boolean;
+  com_quem: ComQuem;
+  pode_entregar: boolean;
+  pode_sinalizar_duvida: boolean;
+  pode_responder_duvida: boolean;
+  /** Aprovar ou pedir ajuste. */
+  pode_avaliar: boolean;
+  /** A demanda espera uma ação de quem consulta. */
+  na_minha_caixa: boolean;
+}
+
+/** Linha da visão public.aprovadores_possiveis: quem pode aprovar as entregas de um projeto. */
+export interface AprovadorPossivel {
+  projeto_id: string;
+  pessoa_id: string;
+  nome: string;
+  papel: Papel;
+  /** Só a Presidência aprova demandas restritas. */
+  da_presidencia: boolean;
+  /** A diretoria da área (ou, sem ela, a Presidente): já vem marcada no formulário. */
+  sugerido: boolean;
+}
+
+/** Linha da visão public.pessoas_informaveis: quem pode ser informado (I) numa entrega de alcance geral. */
+export interface PessoaInformavel {
+  id: string;
+  nome: string;
+  papel: Papel;
+  area_id: string;
+  /** A Presidente: entra sem precisar escolher. */
+  automatico: boolean;
+  da_presidencia: boolean;
+}
+
+export type TipoDeMensagemDaDemanda = 'entrega' | 'duvida' | 'resposta' | 'ajuste' | 'aprovacao';
+
+/** Linha da visão public.demanda_conversa_painel: o que foi dito em cada passagem da demanda. */
+export interface MensagemDaDemanda {
+  id: string;
+  demanda_id: string;
+  autor_id: string;
+  autor_nome: string;
+  tipo: TipoDeMensagemDaDemanda;
+  texto: string;
+  criado_em: string;
 }
 
 /** Linha da visão public.projetos_visiveis. */
@@ -432,7 +490,7 @@ export interface Perfil {
 }
 
 /** "autorizacao": recado para toda a equipe aguardando a autorização de quem consulta (supabase/19_recados_autorizacao_e_prazo.sql). */
-export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao' | 'sugestao';
+export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao' | 'sugestao' | 'raci';
 
 /** Linha da visão public.minhas_notificacoes (supabase/18_recados_e_notificacoes.sql): o que o sino mostra. */
 export interface Notificacao {
