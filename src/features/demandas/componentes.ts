@@ -5,6 +5,7 @@ import { el } from '../../ui/dom';
 import {
   estaAtrasada, estadoDoPrazo, iniciais, NOME_DA_PRIORIDADE, NOME_DO_ESTADO_DO_PRAZO, NOME_DO_MOTIVO, NOME_DO_STATUS, type GrupoDeExecutores,
 } from './regras';
+import { PERGUNTA_DO_EXECUTOR, type PapelNaRaci } from './raci';
 
 export function seloDeStatus(status: StatusDemanda): HTMLElement {
   return el('span', { class: `chip s-${status}` }, NOME_DO_STATUS[status]);
@@ -20,6 +21,13 @@ export function seloDeAcesso(demanda: Pick<DemandaVisivel, 'motivo_acesso' | 'ex
       demanda.excecao_ate ? `Exceção · até ${dataCurta(demanda.excecao_ate)}` : 'Exceção');
   }
   return el('span', { class: `chip m-${demanda.motivo_acesso}` }, NOME_DO_MOTIVO[demanda.motivo_acesso]);
+}
+
+/** Selo do papel na matriz RACI: R, A, A/R ou I. */
+export function seloDePapel(papel: PapelNaRaci): HTMLElement {
+  const classe = papel === 'A/R' ? 'ar' : papel.toLowerCase();
+  const nome = { R: 'Executa', A: 'Aprova', 'A/R': 'Executa e aprova', I: 'É informado' }[papel];
+  return el('span', { class: `chip ${classe}`, title: nome }, papel);
 }
 
 export function seloDeRestricao(): HTMLElement {
@@ -50,6 +58,12 @@ export function cartaoDaDemanda(
       el('span', { class: 'mono' }, demanda.codigo),
       seloDePrioridade(demanda.prioridade)),
     el('span', { class: 'card-tit' }, demanda.titulo),
+    demanda.duvida_aberta || demanda.eh_ar || demanda.na_minha_caixa
+      ? el('span', { class: 'card-raci' },
+        demanda.na_minha_caixa ? el('span', { class: 'chip caixa' }, 'Na sua caixa') : null,
+        demanda.duvida_aberta ? el('span', { class: 'chip duvida' }, 'Dúvida') : null,
+        demanda.eh_ar ? seloDePapel('A/R') : null)
+      : null,
     el('span', { class: 'card-proj' }, [demanda.projeto_nome, demanda.projeto_cliente].filter(Boolean).join(' · ')),
     el('span', { class: 'card-pe' },
       el('span', { class: atrasada ? 'prazo atrasada' : 'prazo' }, `${atrasada ? 'Atrasada · ' : ''}${dataCurta(demanda.prazo)}`),
@@ -64,8 +78,13 @@ export interface SeletorDeExecutores {
   marcados: () => string[];
 }
 
-/** Lista de caixas de seleção agrupada (ver agruparExecutores). */
-export function seletorDeExecutores(prefixo: string, grupos: readonly GrupoDeExecutores[], selecionados: readonly string[]): SeletorDeExecutores {
+/** Lista de caixas de seleção agrupada (ver agruparExecutores). Avisa a cada marcação pelo evento "change" do elemento. */
+export function seletorDeExecutores(
+  prefixo: string,
+  grupos: readonly GrupoDeExecutores[],
+  selecionados: readonly string[],
+  legenda = '1. Executores (R)',
+): SeletorDeExecutores {
   const caixas: HTMLInputElement[] = [];
   const lista = el('div', { class: 'picker' });
   for (const grupo of grupos) {
@@ -79,7 +98,7 @@ export function seletorDeExecutores(prefixo: string, grupos: readonly GrupoDeExe
   }
   if (grupos.length === 0) lista.append(el('p', { class: 'dica' }, 'Ninguém disponível no seu escopo.'));
   return {
-    elemento: el('fieldset', {}, el('legend', {}, 'Executores'), lista),
+    elemento: el('fieldset', { class: 'passo-raci' }, el('legend', {}, legenda), el('p', { class: 'pergunta' }, PERGUNTA_DO_EXECUTOR), lista),
     marcados: () => caixas.filter((caixa) => caixa.checked).map((caixa) => caixa.value),
   };
 }

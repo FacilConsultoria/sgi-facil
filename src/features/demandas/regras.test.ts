@@ -12,6 +12,8 @@ function demanda(campos: Partial<DemandaVisivel>): DemandaVisivel {
     atualizado_em: '2026-10-30T12:00:00Z', projeto_nome: 'Mapeamento', projeto_cliente: 'Padaria', nucleo_id: 'proj-cli',
     area_id: 'proj', restrita: false, executores: ['u2'], pode_gerir: false, pode_mudar_status: true,
     motivo_acesso: 'executor', nucleo_nome: 'Entregas aos clientes', excecao_ate: null,
+    aprovador_id: 'u1', alcance: 'parte', duvida_aberta: false, informados: [], eh_ar: false, com_quem: 'executores',
+    pode_entregar: false, pode_sinalizar_duvida: false, pode_responder_duvida: false, pode_avaliar: false, na_minha_caixa: false,
     ...campos,
   };
 }
@@ -89,6 +91,11 @@ describe('filtrarDemandas', () => {
     expect(filtrarDemandas(lista, { ...FILTROS_VAZIOS, executor: 'u2' }, 'u9').map((d) => d.id)).toEqual(['a']);
     expect(filtrarDemandas(lista, { ...FILTROS_VAZIOS, soMinhas: true }, 'u3').map((d) => d.id)).toEqual(['b']);
   });
+
+  it('"minha caixa" segue o indicador do banco', () => {
+    const comCaixa = [demanda({ id: 'x', na_minha_caixa: true }), demanda({ id: 'y' })];
+    expect(filtrarDemandas(comCaixa, { ...FILTROS_VAZIOS, minhaCaixa: true }, 'u9').map((d) => d.id)).toEqual(['x']);
+  });
 });
 
 describe('demandasDaEtapa', () => {
@@ -107,16 +114,16 @@ describe('resumir', () => {
   it('conta etapas e atrasos', () => {
     const lista = [
       demanda({ status: 'andamento', prazo: '2026-10-01' }),
-      demanda({ status: 'revisao', prazo: '2026-12-01' }),
+      demanda({ status: 'revisao', prazo: '2026-12-01', na_minha_caixa: true }),
       demanda({ status: 'concluida', prazo: '2026-10-01' }),
     ];
-    expect(resumir(lista, '2026-10-30')).toEqual({ total: 3, andamento: 1, revisao: 1, atrasadas: 1, concluidas: 1 });
+    expect(resumir(lista, '2026-10-30')).toEqual({ total: 3, andamento: 1, revisao: 1, atrasadas: 1, concluidas: 1, naMinhaCaixa: 1 });
   });
 });
 
 describe('statusPermitidos', () => {
-  it('só oferece "Concluída" a quem gere a demanda', () => {
-    expect(statusPermitidos({ pode_gerir: false })).toEqual(['afazer', 'andamento', 'revisao']);
+  it('quem gere escolhe qualquer etapa; quem só executa alterna entre "A fazer" e "Em andamento"', () => {
+    expect(statusPermitidos({ pode_gerir: false })).toEqual(['afazer', 'andamento']);
     expect(statusPermitidos({ pode_gerir: true })).toEqual(['afazer', 'andamento', 'revisao', 'concluida']);
   });
 });
@@ -127,6 +134,8 @@ describe('explicarAcesso', () => {
   it('explica cada motivo calculado pelo banco', () => {
     expect(explicarAcesso(demanda({ motivo_acesso: 'diretoria' }), titulo)).toBe('A demanda pertence à Diretoria de Projetos, que você conduz.');
     expect(explicarAcesso(demanda({ motivo_acesso: 'nucleo' }), titulo)).toBe('A demanda é do núcleo Entregas aos clientes, que você lidera.');
+    expect(explicarAcesso(demanda({ motivo_acesso: 'aprovador' }), titulo)).toBe('Você é quem aprova esta entrega (A na matriz RACI).');
+    expect(explicarAcesso(demanda({ motivo_acesso: 'informado' }), titulo)).toBe('Você é informado na conclusão desta entrega (I na matriz RACI). Acesso somente para consulta.');
     expect(explicarAcesso(demanda({ motivo_acesso: 'excecao', excecao_ate: '2026-11-30' }), titulo))
       .toBe('Liberação por exceção válida até 30/11/2026. Acesso somente para consulta.');
   });

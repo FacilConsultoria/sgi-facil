@@ -119,7 +119,7 @@ function cabecalho(contexto: ContextoDeDemandas | null): HTMLElement {
   return el('section', { class: 'cab' },
     el('div', {},
       el('h1', {}, 'Demandas'),
-      el('p', { class: 'sub' }, 'Atividades no seu escopo, por etapa. A conclusão é validada pela liderança e gera pontos.')),
+      el('p', { class: 'sub' }, 'Atividades no seu escopo, por etapa. Cada entrega passa de quem executa (R) para quem aprova (A) e, se impactar a Fácil como um todo, avisa quem é informado (I).')),
     botoes.length ? el('div', { class: 'linha' }, ...botoes) : null);
 }
 
@@ -150,10 +150,13 @@ function barraDeFiltros(
     el('option', { value: '' }, 'Todos os executores'),
     ...executores.map((p) => el('option', { value: p.id, selected: p.id === atuais.executor }, p.nome)));
   const soMinhas = el('input', { type: 'checkbox', id: 'f-minhas', checked: atuais.soMinhas });
+  const minhaCaixa = el('input', { type: 'checkbox', id: 'f-caixa', checked: atuais.minhaCaixa });
 
-  const ler = (): Filtros => ({ busca: busca.value, projeto: projeto.value, executor: executor.value, soMinhas: soMinhas.checked });
+  const ler = (): Filtros => ({
+    busca: busca.value, projeto: projeto.value, executor: executor.value, soMinhas: soMinhas.checked, minhaCaixa: minhaCaixa.checked,
+  });
   busca.addEventListener('input', () => aoMudar(ler()));
-  for (const controle of [projeto, executor, soMinhas]) controle.addEventListener('change', () => aoMudar(ler()));
+  for (const controle of [projeto, executor, soMinhas, minhaCaixa]) controle.addEventListener('change', () => aoMudar(ler()));
 
   return el('div', { class: 'filtros' },
     el('div', { class: 'busca' }, el('label', { for: 'f-busca', class: 'sr' }, 'Buscar demandas'), busca),
@@ -161,7 +164,8 @@ function barraDeFiltros(
     el('label', { for: 'f-executor', class: 'sr' }, 'Executor'), executor,
     dados.demandas.some((d) => d.executores.includes(meuId))
       ? el('label', { class: 'check', for: 'f-minhas' }, soMinhas, ' Só as minhas')
-      : null);
+      : null,
+    el('label', { class: 'check', for: 'f-caixa', title: 'O que espera uma ação sua: entregar, responder dúvida ou aprovar' }, minhaCaixa, ' Minha caixa'));
 }
 
 function linhaDeResumo(lista: Parameters<typeof resumir>[0], hoje: string): HTMLElement[] {
@@ -171,8 +175,9 @@ function linhaDeResumo(lista: Parameters<typeof resumir>[0], hoje: string): HTML
   return [
     numero(r.total, r.total === 1 ? 'demanda' : 'demandas'),
     numero(r.andamento, 'em andamento'),
-    numero(r.revisao, 'em revisão'),
+    numero(r.revisao, 'em aprovação'),
     numero(r.atrasadas, r.atrasadas === 1 ? 'atrasada' : 'atrasadas', r.atrasadas ? 'alerta' : undefined),
     numero(r.concluidas, r.concluidas === 1 ? 'concluída' : 'concluídas'),
+    numero(r.naMinhaCaixa, 'na sua caixa', r.naMinhaCaixa ? 'destaque' : undefined),
   ];
 }

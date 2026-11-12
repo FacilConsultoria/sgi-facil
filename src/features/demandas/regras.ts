@@ -7,14 +7,14 @@ import type { DemandaVisivel, MotivoAcesso, PessoaAtribuivel, Prioridade, Status
 export const STATUS: readonly { id: StatusDemanda; nome: string }[] = [
   { id: 'afazer', nome: 'A fazer' },
   { id: 'andamento', nome: 'Em andamento' },
-  { id: 'revisao', nome: 'Em revisão' },
+  { id: 'revisao', nome: 'Em aprovação' },
   { id: 'concluida', nome: 'Concluída' },
 ];
 
 export const NOME_DO_STATUS: Record<StatusDemanda, string> = {
   afazer: 'A fazer',
   andamento: 'Em andamento',
-  revisao: 'Em revisão',
+  revisao: 'Em aprovação',
   concluida: 'Concluída',
 };
 
@@ -33,6 +33,8 @@ export const NOME_DO_MOTIVO: Record<MotivoAcesso, string> = {
   diretoria: 'Diretoria',
   nucleo: 'Núcleo',
   executor: 'Executor',
+  aprovador: 'Aprovador',
+  informado: 'Informado',
   excecao: 'Exceção',
 };
 
@@ -90,6 +92,10 @@ export function explicarAcesso(
       return `A demanda é do núcleo ${demanda.nucleo_nome}, que você lidera.`;
     case 'executor':
       return 'Você consta como executor desta demanda.';
+    case 'aprovador':
+      return 'Você é quem aprova esta entrega (A na matriz RACI).';
+    case 'informado':
+      return 'Você é informado na conclusão desta entrega (I na matriz RACI). Acesso somente para consulta.';
     case 'excecao':
       return demanda.excecao_ate
         ? `Liberação por exceção válida até ${dataCompleta(demanda.excecao_ate)}. Acesso somente para consulta.`
@@ -104,9 +110,11 @@ export interface Filtros {
   projeto: string;
   executor: string;
   soMinhas: boolean;
+  /** Só o que espera uma ação de quem consulta (indicador na_minha_caixa do banco). */
+  minhaCaixa: boolean;
 }
 
-export const FILTROS_VAZIOS: Filtros = { busca: '', projeto: '', executor: '', soMinhas: false };
+export const FILTROS_VAZIOS: Filtros = { busca: '', projeto: '', executor: '', soMinhas: false, minhaCaixa: false };
 
 /** Minúsculas e sem acentos, para a busca achar "revisao" em "Revisão". */
 function normalizar(texto: string): string {
@@ -119,6 +127,7 @@ export function filtrarDemandas(demandas: readonly DemandaVisivel[], filtros: Fi
     (!filtros.projeto || d.projeto_id === filtros.projeto)
     && (!filtros.executor || d.executores.includes(filtros.executor))
     && (!filtros.soMinhas || d.executores.includes(meuId))
+    && (!filtros.minhaCaixa || d.na_minha_caixa)
     && (!busca || normalizar(d.titulo).includes(busca) || normalizar(d.codigo).includes(busca)));
 }
 
@@ -137,6 +146,8 @@ export interface Resumo {
   revisao: number;
   atrasadas: number;
   concluidas: number;
+  /** Esperando uma ação de quem consulta. */
+  naMinhaCaixa: number;
 }
 
 export function resumir(demandas: readonly DemandaVisivel[], hoje: string): Resumo {
@@ -147,12 +158,16 @@ export function resumir(demandas: readonly DemandaVisivel[], hoje: string): Resu
     revisao: contar('revisao'),
     atrasadas: demandas.filter((d) => estaAtrasada(d, hoje)).length,
     concluidas: contar('concluida'),
+    naMinhaCaixa: demandas.filter((d) => d.na_minha_caixa).length,
   };
 }
 
-/** Etapas oferecidas no seletor de status. Validar a conclusão é de quem gere (indicador do banco). */
+/**
+ * Etapas oferecidas no seletor de status. Quem gere a demanda escolhe qualquer uma; quem só executa alterna entre
+ * "A fazer" e "Em andamento": enviar para aprovação e concluir são os botões da RACI.
+ */
 export function statusPermitidos(demanda: Pick<DemandaVisivel, 'pode_gerir'>): StatusDemanda[] {
-  return STATUS.map((s) => s.id).filter((id) => demanda.pode_gerir || id !== 'concluida');
+  return STATUS.map((s) => s.id).filter((id) => demanda.pode_gerir || id === 'afazer' || id === 'andamento');
 }
 
 // ---------- formulários ----------

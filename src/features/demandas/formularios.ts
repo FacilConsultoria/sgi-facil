@@ -5,10 +5,12 @@ import type { Prioridade } from '../../types/database';
 import { mostrarAviso } from '../../ui/aviso';
 import { el, substituir } from '../../ui/dom';
 import { abrirJanela, campo, ligarEnvio, linhaDeErro, rodapeDaJanela, seletor } from '../../ui/formulario';
+import { camposDeRaci, raciParaGravar } from './campos-raci';
 import { seletorDeExecutores, type SeletorDeExecutores } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { criarDemanda, criarProjeto } from './dados';
 import { abrirPainelDaDemanda } from './painel';
+import { validarRaci } from './raci';
 import { agruparExecutores, PRIORIDADES, validarDemanda } from './regras';
 
 /** Janela de cadastro da tela de Demandas (a estrutura comum fica em ui/formulario). */
@@ -48,15 +50,26 @@ export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: 
 
     // a lista de executores depende do núcleo do projeto escolhido; marcações já feitas são mantidas
     let executores: SeletorDeExecutores = seletorDeExecutores('nd', [], []);
+    const projetoEscolhido = (): typeof inicial => projetos.find((p) => p.id === projeto.value) ?? inicial;
+    const raci = camposDeRaci({
+      prefixo: 'nd',
+      dados,
+      projetoId: () => projeto.value,
+      restrita: () => projetoEscolhido().restrito || (!linhaRestrita.hidden && restrita.checked),
+      executores: () => executores.marcados(),
+    });
     const montarExecutores = (): void => {
-      const escolhido = projetos.find((p) => p.id === projeto.value) ?? inicial;
+      const escolhido = projetoEscolhido();
       const marcados = executores.marcados();
       executores = seletorDeExecutores('nd', agruparExecutores(dados.atribuiveis, escolhido.nucleo_id, [], dados.nomeDe), marcados);
+      executores.elemento.addEventListener('change', raci.atualizar);
       substituir(areaExecutores, executores.elemento);
       linhaRestrita.hidden = !(perfil.eh_presidencia && !escolhido.restrito);
+      raci.atualizar();
     };
     montarExecutores();
     projeto.addEventListener('change', montarExecutores);
+    restrita.addEventListener('change', raci.atualizar);
 
     const formulario = el('form', { class: 'form-janela', novalidate: true },
       el('div', { class: 'painel-corpo form' },
@@ -64,16 +77,20 @@ export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: 
         campo('Título', titulo),
         campo('Descrição', descricao),
         el('div', { class: 'dois' }, campo('Prazo', prazo), campo('Prioridade', prioridade)),
-        areaExecutores,
         linhaRestrita,
-        el('p', { class: 'dica' }, 'Os executores passam a ver esta demanda, mesmo que sejam de outro núcleo.'),
+        el('h3', { class: 'titulo-raci' }, 'Matriz RACI'),
+        areaExecutores,
+        el('p', { class: 'dica' }, 'Quem executa passa a ver esta demanda, mesmo que seja de outro núcleo.'),
+        raci.aprovador,
+        raci.alcance,
         erro.elemento),
       rodape(fechar, botao));
 
     ligarEnvio({
       formulario, botao, erro,
       operacao: 'Criar demanda',
-      validar: () => validarDemanda({ titulo: titulo.value, prazo: prazo.value, executores: executores.marcados() }),
+      validar: () => validarDemanda({ titulo: titulo.value, prazo: prazo.value, executores: executores.marcados() })
+        ?? validarRaci({ executores: executores.marcados(), ...raci.ler() }),
       acao: () => criarDemanda({
         projetoId: projeto.value,
         titulo: titulo.value.trim(),
@@ -82,6 +99,7 @@ export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: 
         prioridade: prioridade.value as Prioridade,
         executores: executores.marcados(),
         restrita: !linhaRestrita.hidden && restrita.checked,
+        raci: raciParaGravar(raci.ler()),
       }),
       depois: async (id) => {
         fechar();
