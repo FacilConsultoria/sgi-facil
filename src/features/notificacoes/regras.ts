@@ -1,5 +1,5 @@
 // Regras de apresentação do sino de notificações. Funções puras, sem acesso a dados.
-// O que entra no sino (atrasos, atividades atribuídas e recados) já vem decidido pela visão minhas_notificacoes.
+// O que entra no sino (atrasos, atividades atribuídas, passagens da RACI, recados e sugestões) já vem decidido pela visão minhas_notificacoes.
 import { dataCurta, diasAte } from '../../lib/datas';
 import type { Notificacao, TipoDeNotificacao } from '../../types/database';
 
@@ -30,6 +30,7 @@ export const NOME_DO_TIPO_DE_NOTIFICACAO: Readonly<Record<TipoDeNotificacao, str
   recado: 'Recado',
   autorizacao: 'Autorizar',
   sugestao: 'Sugestão',
+  raci: 'Entrega',
 };
 
 /** "Venceu ontem · 05/11" ou "Atrasada há 3 dias · 05/11". */
@@ -59,6 +60,8 @@ export function descreverNotificacao(notificacao: Notificacao, hoje: string): Te
       };
     case 'sugestao':
       return { titulo: notificacao.titulo, detalhe: notificacao.detalhe ?? 'Novidade na sua sugestão' };
+    case 'raci':
+      return { titulo: demanda, detalhe: notificacao.detalhe ?? 'A demanda mudou de etapa' };
   }
 }
 

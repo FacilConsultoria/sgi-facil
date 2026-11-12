@@ -81,6 +81,15 @@ describe('novidade em sugestão no sino', () => {
   });
 });
 
+describe('passagem da RACI no sino', () => {
+  it('código e título da demanda, com o que aconteceu; pode ser marcada como lida', () => {
+    const aviso = notificacao({ tipo: 'raci', id: 'r1', titulo: 'Proposta', codigo: 'COM-004', demanda_id: 'd', detalhe: 'Entrega aguardando sua aprovação' });
+    expect(descreverNotificacao(aviso, HOJE)).toEqual({ titulo: 'COM-004 · Proposta', detalhe: 'Entrega aguardando sua aprovação' });
+    expect(descreverNotificacao({ ...aviso, detalhe: null }, HOJE).detalhe).toBe('A demanda mudou de etapa');
+    expect(idsParaMarcar([aviso])).toEqual(['r1']);
+  });
+});
+
 describe('idsParaMarcar', () => {
   it('leva só as que têm id gravado (atrasos não têm)', () => {
     expect(idsParaMarcar([notificacao({ id: null }), notificacao({ id: 'x', tipo: 'recado' }), notificacao({ id: 'y', tipo: 'atribuicao' })])).toEqual(['x', 'y']);
