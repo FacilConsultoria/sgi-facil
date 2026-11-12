@@ -6,6 +6,7 @@ import type {
   DemandaVisivel, DestinoDeRecado, EscopoDeRecado, LancamentoVisivel, LinhaDoRanking, RecadoDoPainel, ReuniaoVisivel, SolicitacaoVisivel,
 } from '../../types/database';
 import { separarSolicitacoes } from '../acessos/regras';
+import { filaDeAprovacao } from '../demandas/raci';
 import { estaAtrasada } from '../demandas/regras';
 import { posicaoNoRanking } from '../pontuacao/regras';
 
@@ -20,9 +21,12 @@ export function minhasDemandasAbertas(demandas: readonly DemandaVisivel[], meuId
   return demandas.filter((d) => d.status !== 'concluida' && d.executores.includes(meuId)).sort(porPrazo);
 }
 
-/** Demandas em revisão que a pessoa pode validar (o indicador pode_gerir vem do banco). */
+/**
+ * Caixa de quem aprova: dúvidas para responder no topo, depois entregas para aprovar, por prazo
+ * (os indicadores pode_responder_duvida e pode_avaliar vêm do banco).
+ */
 export function aguardandoValidacao(demandas: readonly DemandaVisivel[]): DemandaVisivel[] {
-  return demandas.filter((d) => d.status === 'revisao' && d.pode_gerir).sort(porPrazo);
+  return filaDeAprovacao(demandas);
 }
 
 /** "05/11" ou, vencida, "Atrasada · 05/11". */
@@ -176,7 +180,7 @@ export function indicadoresDoInicio(entrada: EntradaDosIndicadores): Indicador[]
       detalhe: posicao ? `${posicao.posicao}º no ranking` : 'Fora do ranking visível',
       alerta: false,
     },
-    { titulo: 'Suas demandas abertas', valor: String(minhas.length), detalhe: `${emRevisao} em revisão`, alerta: false },
+    { titulo: 'Suas demandas abertas', valor: String(minhas.length), detalhe: `${emRevisao} em aprovação`, alerta: false },
     { titulo: 'Atrasadas', valor: String(atrasadas), detalhe: 'Prazo vencido sem conclusão', alerta: atrasadas > 0 },
     {
       titulo: 'Próxima reunião',

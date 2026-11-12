@@ -13,7 +13,9 @@ const HOJE = '2026-11-10';
 const demanda = (alteracao: Partial<DemandaVisivel>): DemandaVisivel => ({
   id: 'd', codigo: 'COM-001', projeto_id: 'p', titulo: 'Demanda', descricao: '', status: 'andamento', prioridade: 'media', prazo: '2026-11-20',
   concluida_em: null, criado_por: 'x', criado_em: '', atualizado_em: '', projeto_nome: 'Projeto', projeto_cliente: '', nucleo_id: 'n', area_id: 'a',
-  restrita: false, executores: [], pode_gerir: false, pode_mudar_status: false, motivo_acesso: 'executor', nucleo_nome: 'Núcleo', excecao_ate: null, ...alteracao,
+  restrita: false, executores: [], pode_gerir: false, pode_mudar_status: false, motivo_acesso: 'executor', nucleo_nome: 'Núcleo', excecao_ate: null,
+  aprovador_id: null, alcance: 'parte', duvida_aberta: false, informados: [], eh_ar: false, com_quem: 'executores', pode_entregar: false,
+  pode_sinalizar_duvida: false, pode_responder_duvida: false, pode_avaliar: false, na_minha_caixa: false, ...alteracao,
 });
 
 const reuniao = (alteracao: Partial<ReuniaoVisivel>): ReuniaoVisivel => ({
@@ -29,16 +31,17 @@ describe('minhasDemandasAbertas e aguardandoValidacao', () => {
     demanda({ id: '3', prazo: '2026-11-01', executores: ['eu'] }),
     demanda({ id: '4', status: 'concluida', executores: ['eu'] }),
     demanda({ id: '5', executores: ['outra'] }),
-    demanda({ id: '6', status: 'revisao', pode_gerir: true, prazo: '2026-11-12' }),
-    demanda({ id: '7', status: 'revisao', pode_gerir: false }),
+    demanda({ id: '6', status: 'revisao', pode_avaliar: true, prazo: '2026-11-12' }),
+    demanda({ id: '7', status: 'revisao', pode_gerir: true }),
+    demanda({ id: '8', duvida_aberta: true, pode_responder_duvida: true, prazo: '2026-12-01' }),
   ];
 
   it('lista só as abertas em que a pessoa é executora, por prazo e depois por código', () => {
     expect(minhasDemandasAbertas(lista, 'eu').map((d) => d.id)).toEqual(['3', '2', '1']);
   });
 
-  it('lista só as em revisão que a pessoa pode validar', () => {
-    expect(aguardandoValidacao(lista).map((d) => d.id)).toEqual(['6']);
+  it('lista o que a pessoa aprova ou responde, com as dúvidas no topo (indicadores do banco)', () => {
+    expect(aguardandoValidacao(lista).map((d) => d.id)).toEqual(['8', '6']);
   });
 
   it('não altera a lista recebida', () => {
@@ -128,7 +131,7 @@ describe('indicadoresDoInicio', () => {
     const proximas = [reuniao({ titulo: 'Geral de novembro', data: '2026-11-12' })];
     const [pontos, abertas, atrasadas, proxima] = indicadoresDoInicio({ minhas, ranking, proximas, meuId: 'eu', hoje: HOJE });
     expect([pontos?.valor, pontos?.detalhe]).toEqual(['12', '2º no ranking']);
-    expect([abertas?.valor, abertas?.detalhe]).toEqual(['3', '1 em revisão']);
+    expect([abertas?.valor, abertas?.detalhe]).toEqual(['3', '1 em aprovação']);
     expect([atrasadas?.valor, atrasadas?.alerta]).toEqual(['1', true]);
     expect([proxima?.valor, proxima?.detalhe]).toEqual(['12/11', 'Geral de novembro']);
   });

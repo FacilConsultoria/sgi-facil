@@ -80,8 +80,8 @@ function desenharInicio(
       bloco('Suas próximas entregas', minhas.slice(0, LIMITE_DE_ENTREGAS).map((d) => itemDeDemanda(d, hoje)), 'Nenhuma demanda aberta com você.'),
       perfil.papel === 'membro'
         ? null
-        : bloco('Aguardando sua validação', validar.slice(0, LIMITE_DE_ENTREGAS).map((d) => itemDeDemanda(d, hoje)), 'Nada em revisão no seu escopo.',
-          'Concluir uma demanda gera os pontos de entrega para os executores.'),
+        : bloco('Aguardando sua aprovação', validar.slice(0, LIMITE_DE_ENTREGAS).map((d) => itemDeDemanda(d, hoje)), 'Nenhuma entrega ou dúvida esperando por você.',
+          'Aprovar uma entrega gera os pontos para quem executou. Dúvidas aparecem primeiro.'),
       bloco('Próximas reuniões', proximas.slice(0, LIMITE_DE_REUNIOES).map((r) => itemDeReuniao(r, dados)), 'Nenhuma reunião agendada para você.'),
       bloco('Seus últimos lançamentos', lancamentos.map(itemDeLancamento), 'Sem lançamentos ainda.'),
       pedidos.length ? bloco('Pedidos de acesso para decidir', pedidos.map(itemDePedido), '') : null),
@@ -111,7 +111,9 @@ function itemDeDemanda(demanda: DemandaVisivel, hoje: string): HTMLElement {
   return item(
     demanda.titulo,
     el('span', {}, el('span', { class: 'mono' }, demanda.codigo), ` · ${demanda.projeto_nome}`),
-    el('span', { class: estaAtrasada(demanda, hoje) ? 'lado atrasada' : 'lado' }, descreverPrazo(demanda, hoje)),
+    demanda.duvida_aberta && demanda.pode_responder_duvida
+      ? el('span', { class: 'lado duvida' }, 'Dúvida')
+      : el('span', { class: estaAtrasada(demanda, hoje) ? 'lado atrasada' : 'lado' }, descreverPrazo(demanda, hoje)),
     () => {
       pedirPainelDaDemanda(demanda.id);
       window.location.hash = '#demandas';
