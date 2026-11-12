@@ -1,10 +1,11 @@
 // Projetos: andamento dos projetos que a pessoa enxerga, em cartões. Os números e o tipo de acesso vêm da
-// visão projetos_painel (a RLS já aplicou a hierarquia); aqui nada decide permissão.
+// visão projetos_painel (a RLS já aplicou a hierarquia); aqui nada decide permissão. Cada projeto abre a sua matriz RACI.
 import type { ProjetoDoPainel } from '../../types/database';
 import { el, substituir } from '../../ui/dom';
 import { montarRecarregavel } from '../../ui/recarregavel';
 import { pedirDemandasDoProjeto } from '../demandas/pagina';
 import { carregarProjetos } from './dados';
+import { abrirMatrizDoProjeto } from './matriz';
 import {
   descreverAndamento, descreverAtrasadas, descreverOrigem, introducaoDosProjetos, ordenarProjetos, percentualConcluido, seloDoAcesso,
 } from './regras';
@@ -21,12 +22,12 @@ export function paginaProjetos(destino: HTMLElement): void {
     desenhar: (projetos) => {
       subtitulo.textContent = introducaoDosProjetos(projetos);
       if (projetos.length === 0) return [el('p', { class: 'vazio' }, 'Nenhum projeto visível para o seu perfil.')];
-      return [el('div', { class: 'grade-projetos' }, ...ordenarProjetos(projetos).map(cartaoDoProjeto))];
+      return [el('div', { class: 'grade-projetos' }, ...ordenarProjetos(projetos).map((p) => cartaoDoProjeto(p, destino)))];
     },
   });
 }
 
-function cartaoDoProjeto(projeto: ProjetoDoPainel): HTMLElement {
+function cartaoDoProjeto(projeto: ProjetoDoPainel, pai: HTMLElement): HTMLElement {
   const percentual = percentualConcluido(projeto);
   const selo = seloDoAcesso(projeto.acesso);
   const atrasadas = descreverAtrasadas(projeto.atrasadas);
@@ -39,6 +40,8 @@ function cartaoDoProjeto(projeto: ProjetoDoPainel): HTMLElement {
     pedirDemandasDoProjeto(projeto.id);
     window.location.hash = '#demandas';
   });
+  const verMatriz = el('button', { type: 'button', class: 'btn peq' }, 'Matriz RACI');
+  verMatriz.addEventListener('click', () => abrirMatrizDoProjeto(pai, projeto));
 
   return el('article', { class: 'bloco cartao-projeto' },
     el('div', { class: 'linha cartao-projeto-topo' },
@@ -52,5 +55,5 @@ function cartaoDoProjeto(projeto: ProjetoDoPainel): HTMLElement {
     el('div', { class: 'linha meta cartao-projeto-numeros' },
       el('span', {}, descreverAndamento(projeto)),
       atrasadas ? el('span', { class: 'atrasadas' }, atrasadas) : null),
-    projeto.total_demandas > 0 ? el('div', { class: 'linha' }, verDemandas) : null);
+    projeto.total_demandas > 0 ? el('div', { class: 'linha' }, verDemandas, verMatriz) : null);
 }
