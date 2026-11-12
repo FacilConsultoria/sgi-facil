@@ -74,7 +74,7 @@ Pessoas fictícias marcadas `exemplo:true` preenchem vagas e times em PS, só pa
 ## Pontuação (valores editáveis na tela Regras)
 
 Pontos iniciais 10 · entrega no prazo +2 · entrega com atraso +1 · falta em reunião −2 · falta justificada 0 · ranking visível para todos (opção).
-Executor leva a demanda até "Em revisão"; a liderança valida "Concluída" e os pontos são lançados. Reabrir desconsidera os pontos.
+Executor envia a entrega para quem aprova ("Em aprovação", antigo "Em revisão"); quem aprova (ou a liderança) valida "Concluída" e os pontos são lançados. Reabrir desconsidera os pontos. Ver "Matriz RACI" abaixo.
 
 ## Módulos do protótipo
 
@@ -228,6 +228,15 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
   - **E-mail**: a própria pessoa e quem cadastra pessoas (Presidência: Presidente, Vice e Assessoria; e a Gente e Gestão).
   - **Pontuação detalhada e disponibilidade semanal**: a própria pessoa e quem a enxerga pela hierarquia (Presidência e Gente e Gestão todas; diretoria as da área; gerência as do núcleo).
   - **Nome, cargo, área, núcleo e curso**: todos os logados (organograma).
+
+- **Matriz RACI (12/11/2026), a pedido do usuário, a partir do documento "Especificação Funcional: Automação de Matriz RACI no SGI":** migração `23_raci.sql`.
+  - Cada demanda: **R** executores (já existiam), **A** aprovador (um só; sugerido = diretoria da área, titular e depois cobertura; sem ela, a Presidente; precisa ser da liderança do projeto: gerência/assessoria do núcleo, diretoria da área ou Presidência; demanda restrita: só Presidência) e **alcance** ("Apenas uma parte do time" ou "A Fácil como um todo"). Com alcance geral, **I** = a Presidente (automática) + quem for escolhido entre Vice, Assessoria e diretorias; o seletor esconde quem executa ou aprova (trava de redundância). Sem "C": dúvidas vão ao aprovador.
+  - **A/R**: um só executor que também aprova; "Concluir entrega" encerra direto.
+  - **Caixas** (`com_quem` e `na_minha_caixa` em `demandas_visiveis`): A fazer/Em andamento → quem executa; dúvida aberta ou "Em aprovação" (antigo "Em revisão", o valor no banco continua `revisao`) → quem aprova; concluída → ninguém. Passagens por funções: `entregar_demanda`, `sinalizar_duvida`, `responder_duvida`, `solicitar_ajuste`, `aprovar_entrega`; o que foi dito fica em `demanda_conversa`. Criar e editar com `criar_demanda_raci` / `editar_demanda_raci` (as antigas continuam valendo).
+  - **Sino** (tipo `raci`): cada mudança de caixa tira os avisos anteriores ainda não lidos da demanda e avisa quem passa a ter a demanda (dúvida, resposta, entrega aguardando aprovação, ajuste pedido, entrega aprovada; na conclusão com alcance geral, os informados). Mudar a etapa pelo quadro ou pela edição também avisa (gatilho na tabela). Por isso concluir passou a deixar um aviso "Entrega aprovada" para os executores.
+  - **Quem vê**: além de quem já via, quem aprova e quem é informado (só consulta). Sem aprovador ativo, a liderança que gere a demanda aprova (demandas antigas sem sugestão). A liderança continua podendo editar e concluir pela edição.
+  - **Site**: formulário "Nova demanda" com os 3 passos (perguntas do documento, exemplos que mudam conforme o alcance); painel com seção "Matriz RACI", botões da etapa e "Conversa"; filtro "Minha caixa" e selos "Na sua caixa", "Dúvida" e "A/R" no quadro; Tela Inicial "Aguardando sua aprovação" com dúvidas no topo; botão "Matriz RACI" em cada projeto (tabela demanda × pessoa). Executor sem gestão só alterna "A fazer"/"Em andamento"; entregar é o botão.
+  - Decisões minhas, a confirmar: novas demandas começam em "A fazer" (não "Em andamento"); uma dúvida por vez e não se entrega com dúvida aberta; demandas existentes ganharam a diretoria da área como aprovadora; quem pode ser informado: Presidência e diretorias.
 
 **Próximos passos:**
 1. Usuário cria o projeto no Supabase e roda os scripts 01, 02 e 03 (ver `supabase/LEIA-ME.md`), preenchendo e-mails e nome da Presidência no `02`; envia Project URL e anon key (públicas). Nunca pedir service_role nem senha do banco.
