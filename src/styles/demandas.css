@@ -80,3 +80,54 @@
   .quadro { grid-template-columns: minmax(0, 1fr); }
   .filtros select { flex: 1 1 100%; }
 }
+
+/* ---------- matriz RACI (23) ---------- */
+.chip.m-aprovador { --c: var(--direx); }
+.chip.m-informado { --c: var(--presex); }
+.chip.r { --c: var(--executor); }
+.chip.a { --c: var(--direx); }
+.chip.ar { --c: var(--accent-text); border-width: 2px; }
+.chip.i { --c: var(--presex); }
+.chip.duvida { --c: var(--warn); }
+.chip.caixa { --c: var(--accent-text); }
+.card-raci { display: flex; flex-wrap: wrap; gap: 4px; }
+.resumo .destaque b { color: var(--accent); }
+
+/* formulário: os três passos */
+.titulo-raci { font-size: 0.82rem; color: var(--ink-3); text-transform: uppercase; letter-spacing: 0.06em; margin-top: 4px; }
+.passo-raci { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.passo-raci legend { font-weight: 600; padding: 0 4px; }
+.passo-raci .pergunta { margin: 0; color: var(--ink-2); font-size: 0.86rem; font-weight: 400; }
+.passo-raci .linha { align-items: center; gap: 8px; flex-wrap: nowrap; }
+.passo-raci select { flex: 1 1 auto; min-width: 0; }
+.cartoes-alcance { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.cartao-alcance {
+  display: flex; align-items: flex-start; gap: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+  cursor: pointer; background: var(--surface); min-width: 0;
+}
+.cartao-alcance input { margin-top: 3px; flex: none; }
+.cartao-alcance b { font-weight: 600; overflow-wrap: anywhere; }
+.cartao-alcance.escolhido { border-color: var(--accent); background: var(--accent-soft); }
+.detalhe-alcance { display: flex; flex-direction: column; gap: 6px; }
+.detalhe-alcance p { margin: 0; }
+.detalhe-alcance .exemplos { font-size: 0.85rem; color: var(--ink-2); background: var(--surface-2); border-radius: 8px; padding: 8px 10px; }
+.informado-fixo { display: flex; align-items: center; gap: 6px; font-size: 0.86rem; }
+.informados legend { font-size: 0.82rem; color: var(--ink-2); }
+
+/* painel da demanda */
+.secao-raci h3, .secao-conversa h3, .passagem h3 { margin-bottom: 6px; }
+.com-quem { margin: 0 0 8px; font-weight: 600; color: var(--accent-text); }
+.com-quem.aprovador { color: var(--warn); }
+.acoes-raci { display: flex; flex-direction: column; gap: 12px; }
+.passagem { border: 1px solid var(--accent); border-radius: 10px; padding: 12px; background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
+.passagem .dica { margin: 0; }
+.conversa { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.msg { border-left: 3px solid var(--line); padding: 4px 0 4px 10px; }
+.msg p { margin: 2px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.msg.duvida, .msg.ajuste { border-left-color: var(--warn); }
+.msg.resposta { border-left-color: var(--accent); }
+.msg.aprovacao { border-left-color: var(--ok); }
+
+@media (max-width: 560px) {
+  .cartoes-alcance { grid-template-columns: minmax(0, 1fr); }
+}
