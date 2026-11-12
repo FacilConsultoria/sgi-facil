@@ -62,10 +62,10 @@ function desenharMatriz(dados: DadosDaMatriz, fechar: () => void): HTMLElement[]
 
   return [
     el('div', { class: 'legenda-raci' },
-      el('span', {}, seloDePapel('R'), ' executa'),
-      el('span', {}, seloDePapel('A'), ' aprova'),
-      el('span', {}, seloDePapel('A/R'), ' executa e aprova'),
-      el('span', {}, seloDePapel('I'), ' é informado na conclusão')),
+      el('span', {}, seloDePapel('R'), ' Executa'),
+      el('span', {}, seloDePapel('A'), ' Aprova'),
+      el('span', {}, seloDePapel('A/R'), ' Executa e aprova'),
+      el('span', {}, seloDePapel('I'), ' Informado na conclusão')),
     el('div', { class: 'tabela-rolavel' }, el('table', { class: 'matriz-raci' }, el('thead', {}, cabecalho), el('tbody', {}, ...linhas))),
     el('p', { class: 'dica' }, 'A matriz mostra as demandas que você enxerga. Clique numa demanda para abrir os detalhes.'),
   ];
