@@ -63,6 +63,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL20);
     await db.exec(window.SQL21);
     await db.exec(window.SQL22);
+    await db.exec(window.SQL23);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -133,7 +134,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     confere('Membro vê só o projeto em que atua', (await como(ANA, `select nome from projetos`)).map(r => r.nome), ['Mapeamento de processos']);
 
     // status e pontos
-    await bloqueia('Executor não valida a própria entrega', ANA, `select mudar_status($1,'concluida')`, [dCli], 'Só a liderança do núcleo, a diretoria ou a Presidência validam a conclusão.');
+    await bloqueia('Executor não valida a própria entrega', ANA, `select mudar_status($1,'concluida')`, [dCli], 'Só quem aprova a entrega, a liderança do núcleo, a diretoria ou a Presidência validam a conclusão.');
     await permite('Executor move para revisão', ANA, `select mudar_status($1,'revisao')`, [dCli]);
     await permite('Gerência do núcleo valida a conclusão', VICTOR, `select mudar_status($1,'concluida')`, [dCli]);
     confere('Conclusão no prazo lança +2 por executor', await como(MEL, `select nome, pontos from ranking() where nome in ('Ana','Lucas') order by nome`), [{ nome: 'Ana', pontos: 12 }, { nome: 'Lucas', pontos: 12 }]);
@@ -905,7 +906,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await permite('Camila marca o aviso como lido', CAMILA, `select marcar_notificacoes_lidas(array[$1]::uuid[])`, [idAviso]);
     confere('Lido sai do sino, mas o atraso continua enquanto não concluir', await tiposDe(CAMILA, codAtrasada), ['atraso']);
     await permite('Gerência conclui a demanda atrasada', DUDA, `select mudar_status($1,'concluida')`, [dAtrasada]);
-    confere('Concluir tira o atraso do sino', await tiposDe(CAMILA, codAtrasada), []);
+    confere('Concluir tira o atraso do sino e avisa que a entrega foi aprovada (23)', await tiposDe(CAMILA, codAtrasada), ['raci']);
 
     const pessoasAtivas = await valor(MEL, `select count(*)::int from pessoas where ativo`);
     const pessoasProj = await valor(MEL, `select count(*)::int from pessoas where ativo and area_id = 'proj'`);
@@ -1128,6 +1129,128 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     ], [true, true, true, true]);
     confere('Enviar e responder sugestões ficam na auditoria', (await db.query(`select acao, count(*)::int as n from auditoria where acao in ('Enviou sugestão','Respondeu sugestão') group by acao order by acao`)).rows,
       [{ acao: 'Enviou sugestão', n: 2 }, { acao: 'Respondeu sugestão', n: 2 }]);
+
+    // matriz RACI (23)
+    const iDudaR = await id('Duda'), iMajuR = await id('Maju');
+    confere('Aprovadores possíveis do projeto, com a diretoria da área sugerida', [
+      (await como(JOAO, `select nome from aprovadores_possiveis where projeto_id = $1 order by nome`, [pCli])).map(l => l.nome),
+      (await como(JOAO, `select nome from aprovadores_possiveis where projeto_id = $1 and sugerido`, [pCli])).map(l => l.nome),
+      (await como(DUDA, `select nome from aprovadores_possiveis where projeto_id = $1 and sugerido`, [pMkt])).map(l => l.nome),
+      (await como(LUIS, `select nome from aprovadores_possiveis where projeto_id = $1 and sugerido`, [pFin])).map(l => l.nome),
+      await valor(ANA, `select count(*)::int from aprovadores_possiveis`),
+    ], [['João', 'Luis', 'Maju', 'Mel', 'Victor'], ['João'], ['João'], ['Luis'], 0]);
+    confere('Informáveis: Presidência (a Presidente entra sozinha) e diretorias; membros não consultam', [
+      (await como(JOAO, `select nome, automatico from pessoas_informaveis order by nome`)),
+      await valor(ANA, `select count(*)::int from pessoas_informaveis`),
+    ], [[{ nome: 'João', automatico: false }, { nome: 'Luis', automatico: false }, { nome: 'Maju', automatico: false }, { nome: 'Mel', automatico: true }], 0]);
+
+    const novaRaci = `select criar_demanda_raci($1,'Proposta para a Padaria','',privado.hoje() + 4,'alta',array[$2,$3]::uuid[],$4,$5,$6::uuid[])`;
+    const contarDemandas = async () => (await db.query(`select count(*)::int as n from demandas`)).rows[0].n;
+    const antesDosErros = await contarDemandas();
+    await bloqueia('RACI: sem aprovador', JOAO, novaRaci, [pCli, iAna, iLucas, null, 'parte', []], 'Escolha quem aprova a entrega.');
+    await bloqueia('RACI: membro não aprova', JOAO, novaRaci, [pCli, iAna, iLucas, iCamila, 'parte', []], 'Quem aprova precisa ser da liderança do projeto: gerência ou assessoria do núcleo, diretoria da área ou Presidência.');
+    await bloqueia('RACI: gerência de outro núcleo não aprova', JOAO, novaRaci, [pCli, iAna, iLucas, iDudaR, 'parte', []], 'Quem aprova precisa ser da liderança do projeto: gerência ou assessoria do núcleo, diretoria da área ou Presidência.');
+    await bloqueia('RACI: alcance inválido', JOAO, novaRaci, [pCli, iAna, iLucas, iJoao, 'tudo', []], 'Escolha o alcance da entrega.');
+    await bloqueia('RACI: membro não é informado', JOAO, novaRaci, [pCli, iAna, iLucas, iJoao, 'geral', [iCamila]], 'Só a Presidência e as diretorias podem ser informadas.');
+    await bloqueia('RACI: quem aprova não é informado também', JOAO, novaRaci, [pCli, iAna, iLucas, iJoao, 'geral', [iJoao]], 'Quem executa ou aprova não entra como informado.');
+    await bloqueia('RACI: restrita só tem a Presidência como aprovadora', MEL,
+      `select criar_demanda_raci($1,'Metas','',privado.hoje() + 4,'alta',array[$2]::uuid[],$3,'parte')`, [pEst, iMel, iJoao],
+      'Quem aprova precisa ser da liderança do projeto: gerência ou assessoria do núcleo, diretoria da área ou Presidência.');
+    await bloqueia('RACI: restrita só informa a Presidência', MEL,
+      `select criar_demanda_raci($1,'Metas','',privado.hoje() + 4,'alta',array[$2]::uuid[],$3,'geral',array[$4]::uuid[])`, [pEst, iMajuR, iMel, iJoao],
+      'Demanda restrita: só a Presidência pode ser informada.');
+    confere('Erro na RACI não deixa demanda pela metade', await contarDemandas(), antesDosErros);
+
+    const dRaci = await valor(JOAO, novaRaci, [pCli, iAna, iLucas, iJoao, 'geral', [iLuis]]);
+    const raciDe = async demanda => (await db.query(
+      `select d.alcance, a.nome as aprovador, array(select p.nome from demanda_informados i join pessoas p on p.id = i.pessoa_id where i.demanda_id = d.id order by p.nome) as informados
+         from demandas d join pessoas a on a.id = d.aprovador_id where d.id = $1`, [demanda])).rows[0];
+    confere('Alcance geral: quem foi escolhido e a Presidente são informados', await raciDe(dRaci), { alcance: 'geral', aprovador: 'João', informados: ['Luis', 'Mel'] });
+    const dParte = await valor(JOAO, novaRaci, [pCli, iAna, iLucas, iJoao, 'parte', [iLuis]]);
+    confere('Alcance parte do time: ninguém é informado', await raciDe(dParte), { alcance: 'parte', aprovador: 'João', informados: [] });
+
+    const caixa = (email, demanda) => como(email, `select com_quem, pode_entregar, pode_sinalizar_duvida, pode_responder_duvida, pode_avaliar, na_minha_caixa, eh_ar from demandas_visiveis where id = $1`, [demanda]).then(l => l[0]);
+    const sinoRaci = (email, demanda) => como(email, `select detalhe from minhas_notificacoes where demanda_id = $1 and tipo = 'raci'`, [demanda]).then(l => l.map(n => n.detalhe));
+    confere('Criada: está na caixa de quem executa', [await caixa(ANA, dRaci), await caixa(JOAO, dRaci)], [
+      { com_quem: 'executores', pode_entregar: true, pode_sinalizar_duvida: true, pode_responder_duvida: false, pode_avaliar: false, na_minha_caixa: true, eh_ar: false },
+      { com_quem: 'executores', pode_entregar: false, pode_sinalizar_duvida: false, pode_responder_duvida: false, pode_avaliar: false, na_minha_caixa: false, eh_ar: false }]);
+    await bloqueia('Quem não executa não entrega', CAMILA, `select entregar_demanda($1)`, [dRaci], 'Só quem executa a demanda pode fazer isso.');
+    await bloqueia('Não se aprova o que não foi entregue', JOAO, `select aprovar_entrega($1)`, [dRaci], 'Esta entrega não está aguardando aprovação.');
+    await bloqueia('Dúvida precisa de texto', ANA, `select sinalizar_duvida($1,'  ')`, [dRaci], 'Escreva a dúvida.');
+    await permite('Executor sinaliza dúvida ao aprovador', ANA, `select sinalizar_duvida($1,' Qual modelo de fluxograma? ')`, [dRaci]);
+    confere('Dúvida: a demanda vai para a caixa de quem aprova, que é avisado', [
+      (await db.query(`select status, duvida_aberta from demandas where id = $1`, [dRaci])).rows[0],
+      await caixa(JOAO, dRaci), (await caixa(ANA, dRaci)).na_minha_caixa, await sinoRaci(JOAO, dRaci),
+    ], [{ status: 'andamento', duvida_aberta: true },
+      { com_quem: 'aprovador', pode_entregar: false, pode_sinalizar_duvida: false, pode_responder_duvida: true, pode_avaliar: false, na_minha_caixa: true, eh_ar: false },
+      false, ['Dúvida de Ana']]);
+    await bloqueia('Uma dúvida por vez', LUCAS, `select sinalizar_duvida($1,'Outra')`, [dRaci], 'Já há uma dúvida aberta nesta demanda. Aguarde a resposta.');
+    await bloqueia('Com dúvida aberta não se entrega', ANA, `select entregar_demanda($1)`, [dRaci], 'Há uma dúvida aberta com quem aprova. Aguarde a resposta antes de enviar.');
+    await bloqueia('Gerência do núcleo não responde no lugar de quem aprova', VICTOR, `select responder_duvida($1,'x')`, [dRaci], 'Só quem aprova esta entrega pode fazer isso.');
+    await permite('Quem aprova responde e devolve', JOAO, `select responder_duvida($1,'Use o modelo B.')`, [dRaci]);
+    confere('Respondida: volta para quem executa, que é avisado; o aviso de quem aprova sai', [
+      (await caixa(ANA, dRaci)).com_quem, await sinoRaci(ANA, dRaci), await sinoRaci(LUCAS, dRaci), await sinoRaci(JOAO, dRaci),
+    ], ['executores', ['Dúvida respondida por João'], ['Dúvida respondida por João'], []]);
+    confere('Entregar devolve a nova etapa', await valor(ANA, `select entregar_demanda($1,'Fluxo na pasta do projeto.')`, [dRaci]), 'revisao');
+    confere('Em aprovação: caixa de quem aprova; avisos antigos de quem executa saem', [
+      await caixa(JOAO, dRaci), await sinoRaci(JOAO, dRaci), await sinoRaci(ANA, dRaci),
+    ], [{ com_quem: 'aprovador', pode_entregar: false, pode_sinalizar_duvida: false, pode_responder_duvida: false, pode_avaliar: true, na_minha_caixa: true, eh_ar: false },
+      ['Entrega aguardando sua aprovação'], []]);
+    await bloqueia('Executor não aprova a própria entrega', ANA, `select aprovar_entrega($1)`, [dRaci], 'Só quem aprova esta entrega pode fazer isso.');
+    await bloqueia('Ajuste precisa de explicação', JOAO, `select solicitar_ajuste($1,'')`, [dRaci], 'Explique o ajuste que precisa ser feito.');
+    await permite('Quem aprova pede ajuste', JOAO, `select solicitar_ajuste($1,'Faltou a etapa de entrega.')`, [dRaci]);
+    confere('Ajuste: volta para quem executa, com aviso', [
+      (await db.query(`select status from demandas where id = $1`, [dRaci])).rows[0].status, await sinoRaci(LUCAS, dRaci), await sinoRaci(JOAO, dRaci),
+    ], ['andamento', ['Ajuste pedido por João'], []]);
+    await como(LUCAS, `select entregar_demanda($1)`, [dRaci]);
+    await permite('Quem aprova aprova a entrega', JOAO, `select aprovar_entrega($1)`, [dRaci]);
+    confere('Aprovada: concluída, pontos para quem executou e aviso para executores e informados', [
+      (await db.query(`select status from demandas where id = $1`, [dRaci])).rows[0].status,
+      (await db.query(`select count(*)::int as n from lancamentos where demanda_id = $1 and valor = 2`, [dRaci])).rows[0].n,
+      await sinoRaci(ANA, dRaci), await sinoRaci(MEL, dRaci), await sinoRaci(LUIS, dRaci), await sinoRaci(JOAO, dRaci),
+      (await caixa(ANA, dRaci)).com_quem,
+    ], ['concluida', 2, ['Entrega aprovada'], ['Entrega concluída · impacta a Fácil como um todo'], ['Entrega concluída · impacta a Fácil como um todo'], [], 'ninguem']);
+    confere('A conversa fica registrada, e só quem vê a demanda lê', [
+      (await como(ANA, `select tipo, autor_nome, texto from demanda_conversa_painel where demanda_id = $1 order by criado_em`, [dRaci])).map(c => `${c.tipo} · ${c.autor_nome}: ${c.texto}`),
+      await valor(CAMILA, `select count(*)::int from demanda_conversa_painel where demanda_id = $1`, [dRaci]),
+    ], [['duvida · Ana: Qual modelo de fluxograma?', 'resposta · João: Use o modelo B.', 'entrega · Ana: Fluxo na pasta do projeto.', 'ajuste · João: Faltou a etapa de entrega.'], 0]);
+    confere('As passagens ficam na auditoria', (await db.query(`select acao, count(*)::int as n from auditoria where demanda_id = $1 and acao <> 'Criou demanda' group by acao order by acao`, [dRaci])).rows, [
+      { acao: 'Aprovou entrega', n: 1 }, { acao: 'Definiu RACI', n: 1 }, { acao: 'Enviou para aprovação', n: 2 },
+      { acao: 'Respondeu dúvida', n: 1 }, { acao: 'Sinalizou dúvida', n: 1 }, { acao: 'Solicitou ajuste', n: 1 }]);
+
+    // A/R e informado de fora da área
+    const dAr = await valor(LUIS, `select criar_demanda_raci($1,'Fechar orçamento','',privado.hoje() + 2,'alta',array[$2]::uuid[],$2,'geral',array[$3]::uuid[])`, [pFin, iLuis, iJoao]);
+    confere('A/R: um só executor que também aprova; a diretoria informada passa a ver a demanda', [
+      (await caixa(LUIS, dAr)), await valor(JOAO, `select motivo_acesso from demandas_visiveis where id = $1`, [dAr]),
+      await valor(DUDA, `select count(*)::int from demandas_visiveis where id = $1`, [dAr]),
+    ], [{ com_quem: 'executores', pode_entregar: true, pode_sinalizar_duvida: false, pode_responder_duvida: false, pode_avaliar: false, na_minha_caixa: true, eh_ar: true }, 'informado', 0]);
+    await bloqueia('A/R não manda dúvida a si mesmo', LUIS, `select sinalizar_duvida($1,'x')`, [dAr], 'Em A/R, quem executa também aprova: não há a quem enviar a dúvida.');
+    confere('A/R: concluir encerra direto e avisa os informados', [
+      await valor(LUIS, `select entregar_demanda($1)`, [dAr]), await sinoRaci(JOAO, dAr), await sinoRaci(MEL, dAr), await sinoRaci(LUIS, dAr),
+    ], ['concluida', ['Entrega concluída · impacta a Fácil como um todo'], ['Entrega concluída · impacta a Fácil como um todo'], []]);
+    await bloqueia('Informado só consulta', JOAO, `select mudar_status($1,'andamento')`, [dAr], 'Você não pode alterar o status desta demanda.');
+
+    // caminho antigo (quadro) e demandas sem aprovador
+    await como(ANA, `select mudar_status($1,'revisao')`, [dParte]);
+    confere('Mover para "Em aprovação" pelo quadro também avisa quem aprova', await sinoRaci(JOAO, dParte), ['Entrega aguardando sua aprovação']);
+    await permite('Diretoria troca quem aprova com a entrega na caixa', JOAO,
+      `select editar_demanda_raci($1,'Proposta para a Padaria','','revisao','alta',privado.hoje() + 4,array[$2,$3]::uuid[],$4,'parte')`, [dParte, iAna, iLucas, iVictor]);
+    confere('O aviso passa para quem aprova agora', [await sinoRaci(VICTOR, dParte), await sinoRaci(JOAO, dParte), (await caixa(VICTOR, dParte)).pode_avaliar, (await caixa(JOAO, dParte)).pode_avaliar],
+      [['Entrega aguardando sua aprovação'], [], true, false]);
+    await bloqueia('Edição da RACI segue as mesmas regras', JOAO,
+      `select editar_demanda_raci($1,'Proposta para a Padaria','','revisao','alta',privado.hoje() + 4,array[$2,$3]::uuid[],$4,'geral',array[$2]::uuid[])`, [dParte, iAna, iLucas, iVictor],
+      'Quem executa ou aprova não entra como informado.');
+    await bloqueia('Membro não edita a RACI', ANA,
+      `select editar_demanda_raci($1,'x','','revisao','alta',privado.hoje() + 4,array[$2]::uuid[],$2,'parte')`, [dParte, iAna], 'Você não pode editar esta demanda.');
+    const dSemA = await valor(VICTOR, `select criar_demanda($1,'Demanda antiga','',privado.hoje() + 5,'media',array[$2]::uuid[])`, [pCli, iAna]);
+    await como(ANA, `select mudar_status($1,'revisao')`, [dSemA]);
+    confere('Sem aprovador, a liderança que gere a demanda aprova', [(await caixa(VICTOR, dSemA)).pode_avaliar, (await caixa(JOAO, dSemA)).pode_avaliar, (await caixa(ANA, dSemA)).pode_avaliar], [true, true, false]);
+    await permite('Gerência aprova demanda sem aprovador', VICTOR, `select aprovar_entrega($1)`, [dSemA]);
+    confere('Ninguém grava RACI ou conversa diretamente', [
+      (await tenta(JOAO, `insert into demanda_informados(demanda_id, pessoa_id) values ($1,$2)`, [dRaci, iCamila])).startsWith('permission denied'),
+      (await tenta(JOAO, `insert into demanda_conversa(demanda_id, autor_id, tipo, texto) values ($1,$2,'resposta','x')`, [dRaci, iJoao])).startsWith('permission denied'),
+      (await tenta(JOAO, `update demandas set aprovador_id = $2 where id = $1`, [dRaci, iJoao])).startsWith('permission denied'),
+    ], [true, true, true]);
 
     // proteção da camada de dados
     await bloqueia('Gravação direta em tabela é bloqueada', JOAO, `insert into demandas(codigo,projeto_id,titulo,prazo,criado_por) values ('X-1',$1,'x',privado.hoje(),$2)`, [pCli, iJoao], 'permission denied for table demandas');
