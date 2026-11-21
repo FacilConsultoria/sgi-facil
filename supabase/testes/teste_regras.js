@@ -64,6 +64,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL21);
     await db.exec(window.SQL22);
     await db.exec(window.SQL23);
+    await db.exec(window.SQL24);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -1105,8 +1106,8 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     confere('Comentários em ordem, com autor', (await como(PEDRO, `select autor_nome, texto from sugestao_comentarios_painel where sugestao_id = $1 order by criado_em`, [sAna])).map(c => `${c.autor_nome}: ${c.texto}`),
       ['Camila: Eu também uso muito isso.', 'Ana: Valeu!', 'Duda: Ajudaria no Marketing.']);
 
-    await bloqueia('Gerência não responde sugestão', DUDA, `select responder_sugestao($1,'planejada','ok')`, [sAna], 'Só a Presidência responde às sugestões.');
-    await bloqueia('Membro não responde sugestão', ANA, `select responder_sugestao($1,'feita')`, [sAna], 'Só a Presidência responde às sugestões.');
+    await bloqueia('Gerência não responde sugestão', DUDA, `select responder_sugestao($1,'planejada','ok')`, [sAna], 'Só a Presidência e o desenvolvimento do SGI respondem às sugestões.');
+    await bloqueia('Membro não responde sugestão', ANA, `select responder_sugestao($1,'feita')`, [sAna], 'Só a Presidência e o desenvolvimento do SGI respondem às sugestões.');
     await bloqueia('Situação inválida', MEL, `select responder_sugestao($1,'pronta')`, [sAna], 'Escolha a situação.');
     confere('Só a Presidência vê o botão de responder', [await valor(MEL, `select pode_responder from sugestoes_painel`), await valor(MAJU, `select pode_responder from sugestoes_painel`), await valor(ANA, `select pode_responder from sugestoes_painel`)], [true, true, false]);
     await permite('A Assessoria responde', MAJU, `select responder_sugestao($1,'planejada',' Entra no próximo ciclo. ')`, [sAna]);
@@ -1129,6 +1130,25 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     ], [true, true, true, true]);
     confere('Enviar e responder sugestões ficam na auditoria', (await db.query(`select acao, count(*)::int as n from auditoria where acao in ('Enviou sugestão','Respondeu sugestão') group by acao order by acao`)).rows,
       [{ acao: 'Enviou sugestão', n: 2 }, { acao: 'Respondeu sugestão', n: 2 }]);
+
+    // desenvolvimento do SGI responde às sugestões (24)
+    const msgDev = 'Só a Presidente define quem desenvolve o SGI.';
+    await bloqueia('Diretoria não se marca como desenvolvimento do SGI', JOAO, `select definir_desenvolvimento_sgi($1, true)`, [iJoao], msgDev);
+    await bloqueia('Vice não marca desenvolvimento do SGI', LUIS, `select definir_desenvolvimento_sgi($1, true)`, [iJoao], msgDev);
+    await bloqueia('Sem a marca, a diretoria não encerra sugestão', JOAO, `select responder_sugestao($1,'feita')`, [sAna], 'Só a Presidência e o desenvolvimento do SGI respondem às sugestões.');
+    const demandasDoJoao = await valor(JOAO, `select count(*)::int from demandas_visiveis`);
+    await permite('A Presidente marca quem desenvolve o SGI', MEL, `select definir_desenvolvimento_sgi($1, true)`, [iJoao]);
+    confere('Com a marca, o botão de responder aparece para quem desenvolve', [await valor(JOAO, `select pode_responder from sugestoes_painel where id = $1`, [sAna]), await valor(DUDA, `select pode_responder from sugestoes_painel where id = $1`, [sAna])], [true, false]);
+    await permite('Quem desenvolve o SGI encerra o chamado', JOAO, `select responder_sugestao($1,'feita',' Entregue na versão de novembro. ')`, [sAna]);
+    confere('Encerrado: situação, resposta e autor gravados, e quem sugeriu é avisado', [
+      (await como(ANA, `select situacao, resposta, respondido_por_nome from sugestoes_painel where id = $1`, [sAna]))[0], await avisosDaAna(),
+    ], [{ situacao: 'feita', resposta: 'Entregue na versão de novembro.', respondido_por_nome: 'João' }, [{ tipo: 'sugestao', titulo: 'Filtro por prazo nas demandas', detalhe: 'Situação: Feita' }]]);
+    confere('A marca não dá outros acessos', await valor(JOAO, `select count(*)::int from demandas_visiveis`), demandasDoJoao);
+    await bloqueia('Ninguém liga a marca direto na tabela', JOAO, `update pessoas set desenvolve_sgi = true where id = $1`, [iAna], 'permission denied for table pessoas');
+    await permite('A Presidente desmarca', MEL, `select definir_desenvolvimento_sgi($1, false)`, [iJoao]);
+    await bloqueia('Desmarcado, não responde mais', JOAO, `select responder_sugestao($1,'aberta')`, [sAna], 'Só a Presidência e o desenvolvimento do SGI respondem às sugestões.');
+    confere('Marcar e desmarcar ficam na auditoria', (await db.query(`select acao from auditoria where acao like '%desenvolvimento do SGI' order by id`)).rows.map(l => l.acao),
+      ['Marcou desenvolvimento do SGI', 'Desmarcou desenvolvimento do SGI']);
 
     // matriz RACI (23)
     const iDudaR = await id('Duda'), iMajuR = await id('Maju');
