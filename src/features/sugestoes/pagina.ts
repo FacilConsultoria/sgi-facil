@@ -1,4 +1,4 @@
-// Sugestões: melhorias, bugs e ideias para o SGI. Todas as pessoas veem, apoiam e comentam; a Presidência responde
+// Sugestões: melhorias, bugs e ideias para o SGI. Todas as pessoas veem, apoiam e comentam; a Presidência e o desenvolvimento do SGI respondem
 // (indicador pode_responder da visão). Nada de permissão é decidido aqui.
 import type { ContextoDaSessao } from '../../app/sessao';
 import { dataEHora } from '../../lib/datas';
@@ -26,7 +26,7 @@ export function paginaSugestoes(destino: HTMLElement, contexto: ContextoDaSessao
     el('section', { class: 'cab' },
       el('div', {},
         el('h1', {}, 'Sugestões'),
-        el('p', { class: 'sub' }, 'Melhorias, bugs e ideias para o SGI. Todo mundo vê, apoia e comenta; a Presidência responde.')),
+        el('p', { class: 'sub' }, 'Melhorias, bugs e ideias para o SGI. Todo mundo vê, apoia e comenta; a Presidência e o desenvolvimento do SGI respondem e encerram.')),
       el('div', { class: 'linha' }, nova)),
     corpo);
 

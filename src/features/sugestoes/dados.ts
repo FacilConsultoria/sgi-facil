@@ -1,5 +1,5 @@
 // Acesso a dados das Sugestões: leituras pelas visões sugestoes_painel e sugestao_comentarios_painel
-// e gravações só pelas funções do banco (criar, apoiar, comentar e, para a Presidência, responder).
+// e gravações só pelas funções do banco (criar, apoiar, comentar e, para a Presidência e o desenvolvimento do SGI, responder).
 import { supabase } from '../../lib/supabase';
 import type { ComentarioDeSugestao, SituacaoDaSugestao, SugestaoDoPainel, TipoDeSugestao } from '../../types/database';
 
