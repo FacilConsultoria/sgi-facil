@@ -65,6 +65,8 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL22);
     await db.exec(window.SQL23);
     await db.exec(window.SQL24);
+    await db.exec(window.SQL25);
+    await db.exec(window.SQL26);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -600,7 +602,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       melPapeis: await lista(MEL, `select papel from papeis_cadastraveis`), ginaPapeis: await lista(GINA, `select papel from papeis_cadastraveis`), anaPapeis: await lista(ANA, `select papel from papeis_cadastraveis`),
       melAreas: await lista(MEL, `select id from areas_cadastraveis`), ginaAreas: await lista(GINA, `select id from areas_cadastraveis`), anaAreas: await lista(ANA, `select id from areas_cadastraveis`),
     }, {
-      melPapeis: ['assessor', 'diretor', 'gerente', 'membro', 'presidente', 'vice'], ginaPapeis: ['assessor', 'gerente', 'membro'], anaPapeis: [],
+      melPapeis: ['assessor', 'diretor', 'gerente', 'membro', 'presidente', 'trainee', 'vice'], ginaPapeis: ['assessor', 'gerente', 'membro', 'trainee'], anaPapeis: [],
       melAreas: ['adm', 'com', 'fin', 'pres', 'proj'], ginaAreas: ['adm', 'com', 'fin', 'proj'], anaAreas: [],
     });
     confere('Áreas da estrutura: todos veem, só a Presidência define', {
