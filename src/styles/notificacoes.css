@@ -48,7 +48,16 @@
 /* sol (modo claro) ou lua (modo escuro) ao lado do nome; troca o tema na hora */
 .nome-e-lapis { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
 /* sol/lua fora da caixa do nome, logo acima do sino (canto direito da marca) */
-.marca .tema-botao { margin: 0 4px 0 auto; align-self: flex-end; }
+/* encostado na caixa do nome: desce o espaço entre a marca e a caixa (padding da marca + gap do menu) */
+.marca .tema-botao { margin: 0 4px -22px auto; align-self: flex-end; }
+@media (max-height: 700px) and (min-width: 901px) {
+  .marca .tema-botao { margin-bottom: -16px; }
+}
+/* lápis e sino alinhados com a primeira linha do nome, mesmo quando ele quebra em duas */
+.quem-linha { align-items: flex-start; }
+.nome-e-lapis { align-items: flex-start; }
+.nome-e-lapis .lapis-nome { margin: 0; }
+.quem-linha .sino { margin: -1px -4px 0 0; }
 .lapis-nome {
   appearance: none; flex: none; display: inline-flex; align-items: center; padding: 2px; margin: -2px 0;
   background: none; border: 0; border-radius: 8px; color: var(--side-ink-2); cursor: pointer;
