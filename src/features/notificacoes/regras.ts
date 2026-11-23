@@ -31,6 +31,7 @@ export const NOME_DO_TIPO_DE_NOTIFICACAO: Readonly<Record<TipoDeNotificacao, str
   autorizacao: 'Autorizar',
   sugestao: 'Sugestão',
   raci: 'Entrega',
+  justificativa: 'Justificativa',
 };
 
 /** "Venceu ontem · 05/11" ou "Atrasada há 3 dias · 05/11". */
@@ -60,6 +61,8 @@ export function descreverNotificacao(notificacao: Notificacao, hoje: string): Te
       };
     case 'sugestao':
       return { titulo: notificacao.titulo, detalhe: notificacao.detalhe ?? 'Novidade na sua sugestão' };
+    case 'justificativa':
+      return { titulo: notificacao.titulo, detalhe: notificacao.autor_nome ? `Falta justificada por ${notificacao.autor_nome}, aguardando decisão` : 'Justificativa de falta aguardando decisão' };
     case 'raci':
       return { titulo: demanda, detalhe: notificacao.detalhe ?? 'A demanda mudou de etapa' };
   }

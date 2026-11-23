@@ -80,6 +80,8 @@ export function criarControleDoSino(moldura: () => HTMLElement): ControleDoSino 
       irPara('demandas');
     } else if (notificacao.sugestao_id) {
       irPara('sugestoes');
+    } else if (notificacao.tipo === 'justificativa') {
+      irPara('presencas');
     } else {
       irPara('dashboard');
     }
