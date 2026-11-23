@@ -1,5 +1,6 @@
 // Moldura da aplicação: menu lateral (marca, pessoa logada, navegação) e área de conteúdo.
 import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../features/dadospessoais/janela';
+import { abrirMeuNome } from '../features/nome/janela';
 import { criarControleDoSino } from '../features/notificacoes/sino';
 import { descreverCargo } from '../lib/perfil';
 import { criarBotaoDeTema } from '../lib/tema';
@@ -26,6 +27,16 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
   const nomeDaPessoa = el('strong', {}, perfil.nome);
   // o sino (amarelo, com o número de notificações) fica na linha do nome; no celular também aparece na barra de cima
   const sino = criarControleDoSino(() => app);
+  // lápis: a própria pessoa ajusta o nome completo e o apelido
+  const lapis = el('button', { type: 'button', class: 'lapis-nome', 'aria-label': 'Alterar seu nome ou apelido', title: 'Alterar nome ou apelido' });
+  lapis.append(desenharLapis());
+  lapis.addEventListener('click', () => {
+    alternarMenu(false);
+    void abrirMeuNome(app, perfil.id, (novo) => {
+      perfil.nome = novo;
+      nomeDaPessoa.textContent = novo;
+    });
+  });
   const meusDados = el('button', { type: 'button', class: 'meus-dados' }, perfil.dados_pendentes ? 'Preencher meus dados' : 'Meus dados');
 
   const lateral = el('aside', { class: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' },
@@ -36,7 +47,9 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
         el('span', { class: 'consultoria' }, 'CONSULTORIA'),
         el('small', {}, 'Sistema de Gestão Interna'))),
     el('div', { class: 'quem' },
-      el('div', { class: 'quem-linha' }, el('span', { class: 'nome-e-tema' }, nomeDaPessoa, criarBotaoDeTema()), sino.criarBotao()),
+      el('div', { class: 'quem-linha' },
+        el('span', { class: 'nome-e-lapis' }, nomeDaPessoa, lapis),
+        el('span', { class: 'icones-quem' }, criarBotaoDeTema(), sino.criarBotao())),
       el('span', {}, descreverCargo(perfil, tituloDaArea)),
       meusDados),
     el('nav', { class: 'nav' }, ...botoesDaNavegacao),
@@ -88,4 +101,16 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
       void sino.atualizar();
     },
   };
+}
+
+/** Lápis de edição, do tamanho do sino. */
+function desenharLapis(): SVGSVGElement {
+  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', 'lapis-desenho');
+  const caminho = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+  caminho.setAttribute('d', 'M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17v3zM14.5 7.5l3 3');
+  svg.append(caminho);
+  return svg;
 }
