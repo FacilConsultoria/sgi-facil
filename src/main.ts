@@ -33,12 +33,14 @@ import type { DadosParaSalvar } from './features/dadospessoais/regras';
 import { paginaLogin, type AcoesDeLogin } from './features/auth/pagina';
 import { senhaJaDefinida } from './features/auth/regras';
 import { marcarAmbiente } from './lib/ambiente';
+import { aplicarTemaSalvo } from './lib/tema';
 import { mensagemParaUsuario, registrarErro } from './lib/erros';
 import { configuracaoValida } from './lib/supabase';
 import { mostrarAviso } from './ui/aviso';
 
 const raiz = document.getElementById('raiz');
 if (!raiz) throw new Error('Elemento #raiz não encontrado em index.html.');
+aplicarTemaSalvo();
 marcarAmbiente();
 
 const ACOES_DE_LOGIN: AcoesDeLogin = {
@@ -67,7 +69,7 @@ function encerrarSessao(): void {
 
 function mostrarRotaAtual(): void {
   if (!layoutAtual || !contextoAtual) return;
-  const rota = rotaDoHash(window.location.hash);
+  const rota = rotaDoHash(window.location.hash, contextoAtual.perfil.papel);
   layoutAtual.marcarRotaAtiva(rota);
   renderizarPagina(rota, layoutAtual.conteudo, contextoAtual);
 }
