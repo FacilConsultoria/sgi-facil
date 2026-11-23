@@ -2,7 +2,7 @@
 import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../features/dadospessoais/janela';
 import { criarControleDoSino } from '../features/notificacoes/sino';
 import { descreverCargo } from '../lib/perfil';
-import { alternarTema, rotuloDoBotaoDeTema, temaAtual } from '../lib/tema';
+import { criarBotaoDeTema } from '../lib/tema';
 import { el, substituir } from '../ui/dom';
 import { criarSimbolo } from '../ui/logo';
 import { rotasDoPapel, type Rota } from './rotas';
@@ -28,9 +28,6 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
   const sino = criarControleDoSino(() => app);
   const meusDados = el('button', { type: 'button', class: 'meus-dados' }, perfil.dados_pendentes ? 'Preencher meus dados' : 'Meus dados');
 
-  const botaoDeTema = el('button', { type: 'button', class: 'sair tema' }, rotuloDoBotaoDeTema(temaAtual()));
-  botaoDeTema.addEventListener('click', () => { botaoDeTema.textContent = rotuloDoBotaoDeTema(alternarTema()); });
-
   const lateral = el('aside', { class: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' },
     el('div', { class: 'marca' },
       criarSimbolo(),
@@ -39,11 +36,10 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
         el('span', { class: 'consultoria' }, 'CONSULTORIA'),
         el('small', {}, 'Sistema de Gestão Interna'))),
     el('div', { class: 'quem' },
-      el('div', { class: 'quem-linha' }, nomeDaPessoa, sino.criarBotao()),
+      el('div', { class: 'quem-linha' }, el('span', { class: 'nome-e-tema' }, nomeDaPessoa, criarBotaoDeTema()), sino.criarBotao()),
       el('span', {}, descreverCargo(perfil, tituloDaArea)),
       meusDados),
     el('nav', { class: 'nav' }, ...botoesDaNavegacao),
-    botaoDeTema,
     el('button', { type: 'button', class: 'sair' }, 'Sair'),
   );
 
@@ -62,7 +58,7 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
   lateral.addEventListener('click', (evento) => {
     if (evento.target instanceof Element && evento.target.closest('.nav-item')) alternarMenu(false);
   });
-  lateral.querySelector('.sair')?.addEventListener('click', aoSair);
+  lateral.querySelector('button.sair')?.addEventListener('click', aoSair);
   meusDados.addEventListener('click', () => {
     alternarMenu(false);
     void abrirMeusDados(app, perfil);
