@@ -30,7 +30,8 @@ export function abrirFormularioDePessoa(contexto: ContextoDoFormulario, pessoa?:
 
   abrirJanela(contexto.pagina, 'pessoa-titulo', novo ? 'Cadastrar pessoa' : `Alterar cadastro: ${pessoa.nome}`, (fechar) => {
     const email = el('input', { type: 'email', id: 'pe-email', autocomplete: 'off', placeholder: 'nome@exemplo.com' });
-    const nome = el('input', { type: 'text', id: 'pe-nome', maxlength: '120', value: pessoa?.nome ?? '' });
+    // depois do cadastro, só a própria pessoa altera o nome (lápis ao lado do nome); o banco ignora mudanças de terceiros
+    const nome = el('input', { type: 'text', id: 'pe-nome', maxlength: '120', value: pessoa?.nome ?? '', readonly: !novo, title: novo ? '' : 'Só a própria pessoa altera o nome' });
     // cadastro novo começa em "Membro" (o caso comum) e com a área por escolher
     const papelInicial = pessoa?.papel ?? (papeis.includes('membro') ? 'membro' : papeis[0]);
     const papel = el('select', { id: 'pe-papel' },
@@ -92,7 +93,7 @@ export function abrirFormularioDePessoa(contexto: ContextoDoFormulario, pessoa?:
         await contexto.recarregar();
       },
     });
-    queueMicrotask(() => (novo ? email : nome).focus());
+    queueMicrotask(() => (novo ? email : papel).focus());
     return formulario;
   });
 }
