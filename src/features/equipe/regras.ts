@@ -17,7 +17,7 @@ export function iniciais(nome: string): string {
 
 /** Cargos que não têm núcleo: Presidente, Vice-Presidente e diretoria. */
 export function precisaDeNucleo(papel: Papel): boolean {
-  return papel === 'gerente' || papel === 'assessor' || papel === 'membro';
+  return papel === 'gerente' || papel === 'assessor' || papel === 'membro' || papel === 'trainee';
 }
 
 export function nucleosDaArea(nucleos: readonly NucleoDaEstrutura[], areaId: string): NucleoDaEstrutura[] {
