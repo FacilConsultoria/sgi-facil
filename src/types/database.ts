@@ -1,7 +1,7 @@
 // Contratos das visões e tabelas do Supabase usadas pela interface.
 // Fonte: supabase/01_estrutura_e_regras.sql, 03_visoes_interface.sql e 04_modulo_demandas.sql.
 
-export type Papel = 'presidente' | 'vice' | 'diretor' | 'gerente' | 'assessor' | 'membro';
+export type Papel = 'presidente' | 'vice' | 'diretor' | 'gerente' | 'assessor' | 'membro' | 'trainee';
 export type StatusDemanda = 'afazer' | 'andamento' | 'revisao' | 'concluida';
 export type Prioridade = 'alta' | 'media' | 'baixa';
 export type MotivoAcesso = 'presidencia' | 'diretoria' | 'nucleo' | 'executor' | 'aprovador' | 'informado' | 'excecao';
@@ -490,7 +490,7 @@ export interface Perfil {
 }
 
 /** "autorizacao": recado para toda a equipe aguardando a autorização de quem consulta (supabase/19_recados_autorizacao_e_prazo.sql). */
-export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao' | 'sugestao' | 'raci';
+export type TipoDeNotificacao = 'atraso' | 'atribuicao' | 'recado' | 'autorizacao' | 'sugestao' | 'raci' | 'justificativa';
 
 /** Linha da visão public.minhas_notificacoes (supabase/18_recados_e_notificacoes.sql): o que o sino mostra. */
 export interface Notificacao {
@@ -615,4 +615,53 @@ export interface DadosPessoais {
   genero: GeneroInformado;
   criado_em: string;
   atualizado_em: string;
+}
+
+// ---------- justificativas de falta, documentos (supabase/26_justificativas_trainee_documentos.sql) ----------
+
+export type SituacaoDaJustificativa = 'pendente' | 'aceita' | 'recusada';
+
+/** Linha da visão public.minhas_presencas: cada reunião de quem consulta, com a presença e a última justificativa. */
+export interface MinhaPresenca {
+  reuniao_id: string;
+  titulo: string;
+  data: string;
+  hora: string;
+  encerrada: boolean;
+  /** Nulo enquanto quem organiza não registrou. */
+  presenca: Presenca | null;
+  justificativa: SituacaoDaJustificativa | null;
+  motivo: string | null;
+  nota_da_decisao: string | null;
+  pode_justificar: boolean;
+}
+
+/** Linha da visão public.justificativas_para_decidir. */
+export interface JustificativaParaDecidir {
+  id: string;
+  reuniao_id: string;
+  titulo: string;
+  data: string;
+  encerrada: boolean;
+  pessoa_id: string;
+  pessoa_nome: string;
+  motivo: string;
+  criado_em: string;
+}
+
+export type CategoriaDeDocumento = 'estatuto' | 'relatorio' | 'regimento' | 'ata' | 'modelo' | 'outro';
+
+/** Linha da visão public.documentos_painel. */
+export interface DocumentoDoPainel {
+  id: string;
+  titulo: string;
+  categoria: CategoriaDeDocumento;
+  descricao: string;
+  caminho: string;
+  nome_arquivo: string;
+  tipo: string;
+  tamanho: number;
+  enviado_em: string;
+  enviado_por_nome: string | null;
+  pode_excluir: boolean;
 }
