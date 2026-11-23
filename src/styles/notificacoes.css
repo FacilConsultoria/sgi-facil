@@ -44,3 +44,15 @@
 .selo-recado.recusado { background: var(--surface-2); color: var(--ink-2); }
 .aviso-autorizacao[hidden] { display: none; }
 .notificacoes .lado.tipo-autorizacao { color: var(--accent-text); }
+
+/* sol (modo claro) ou lua (modo escuro) ao lado do nome; troca o tema na hora */
+.nome-e-tema { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.tema-botao {
+  appearance: none; flex: none; display: inline-flex; align-items: center; padding: 2px; margin: -2px 0;
+  background: none; border: 0; border-radius: 8px; color: var(--side-ink-2); cursor: pointer;
+}
+.tema-botao:hover { background: var(--side-hover); color: var(--side-ink); }
+.tema-botao:focus-visible { outline: 2px solid var(--side-ink); outline-offset: 2px; }
+.tema-desenho { display: block; width: 16px; height: 16px; }
+.tema-desenho.claro path { fill: currentColor; stroke: currentColor; stroke-width: 2; stroke-linecap: round; }
+.tema-desenho.escuro path { fill: currentColor; }
