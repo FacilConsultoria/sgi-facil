@@ -131,3 +131,13 @@
 @media (max-width: 560px) {
   .cartoes-alcance { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* cores dos avatares: uma por pessoa, para diferenciar iniciais parecidas */
+.av.c0 { background: #1479e1; color: #fff; }
+.av.c1 { background: #18794a; color: #fff; }
+.av.c2 { background: #b04d16; color: #fff; }
+.av.c3 { background: #6e3b82; color: #fff; }
+.av.c4 { background: #8a5a00; color: #fff; }
+.av.c5 { background: #0e7c86; color: #fff; }
+.av.c6 { background: #b3263a; color: #fff; }
+.av.c7 { background: #4a5a8c; color: #fff; }

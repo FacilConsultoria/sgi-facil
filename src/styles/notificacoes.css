@@ -46,7 +46,17 @@
 .notificacoes .lado.tipo-autorizacao { color: var(--accent-text); }
 
 /* sol (modo claro) ou lua (modo escuro) ao lado do nome; troca o tema na hora */
-.nome-e-tema { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+.nome-e-lapis { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+/* sol/lua logo acima do sino */
+.icones-quem { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; flex: none; }
+.icones-quem .sino { margin: 0; }
+.lapis-nome {
+  appearance: none; flex: none; display: inline-flex; align-items: center; padding: 2px; margin: -2px 0;
+  background: none; border: 0; border-radius: 8px; color: var(--side-ink-2); cursor: pointer;
+}
+.lapis-nome:hover { background: var(--side-hover); color: var(--side-ink); }
+.lapis-nome:focus-visible { outline: 2px solid var(--side-ink); outline-offset: 2px; }
+.lapis-desenho { display: block; width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
 .tema-botao {
   appearance: none; flex: none; display: inline-flex; align-items: center; padding: 2px; margin: -2px 0;
   background: none; border: 0; border-radius: 8px; color: var(--side-ink-2); cursor: pointer;
