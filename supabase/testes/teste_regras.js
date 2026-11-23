@@ -68,6 +68,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL25);
     await db.exec(window.SQL26);
     await db.exec(window.SQL27);
+    await db.exec(window.SQL28);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -573,6 +574,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Gerência comum não altera cadastros', DUDA, `select atualizar_pessoa($1,'Lucas','membro','proj','proj-cli',null,true)`, [iLucas], 'Só a Presidência e a Gente e Gestão alteram cadastros.');
     await permite('Gente e Gestão altera o curso de um membro', GINA, `select atualizar_pessoa($1,'Lucas Prado','membro','proj','proj-cli','Engenharia',true)`, [iLucas]);
     confere('Quem cadastra não muda o nome de ninguém (27)', await valor(MEL, `select nome from pessoas where id = $1`, [iLucas]), 'Lucas');
+    confere('Qualquer cadastrado lê nome completo e apelido (28)', await valor(ANA, `select nome_completo || '/' || coalesce(apelido, '-') from pessoas where id = $1`, [iLucas]), 'Lucas/-');
     confere('Curso gravado e vazio vira nulo', [await valor(MEL, `select curso from pessoas where id = $1`, [iLucas]),
       await valor(GINA, `select atualizar_pessoa($1,'Lucas Prado','membro','proj','proj-cli','  ',true)`, [iLucas]).then(() => valor(MEL, `select curso from pessoas where id = $1`, [iLucas]))], ['Engenharia', null]);
     await bloqueia('Quem conduz uma área não é desativado', MEL, `select atualizar_pessoa($1,'João','diretor','com',null,null,false)`, [iJoao],
