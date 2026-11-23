@@ -38,7 +38,38 @@ export function alternarTema(): Tema {
   return novo;
 }
 
-/** Texto do botão: o que acontece ao clicar. */
+/** Nome do botão para leitores de tela: o que acontece ao clicar. */
 export function rotuloDoBotaoDeTema(atual: Tema): string {
-  return atual === 'escuro' ? 'Modo claro' : 'Modo escuro';
+  return atual === 'escuro' ? 'Modo escuro em uso. Mudar para o modo claro' : 'Modo claro em uso. Mudar para o modo escuro';
+}
+
+const SVG = 'http://www.w3.org/2000/svg';
+
+/** Sol (modo claro) ou lua (modo escuro), no tamanho do sino. */
+function desenharIcone(tema: Tema): SVGSVGElement {
+  const svg = document.createElementNS(SVG, 'svg');
+  svg.setAttribute('viewBox', '0 0 24 24');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('class', `tema-desenho ${tema}`);
+  const caminho = document.createElementNS(SVG, 'path');
+  caminho.setAttribute('d', tema === 'escuro'
+    ? 'M20.5 14.6A8.5 8.5 0 0 1 9.4 3.5a8.5 8.5 0 1 0 11.1 11.1z'
+    : 'M12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10zM12 1.5v2.6M12 19.9v2.6M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M1.5 12h2.6M19.9 12h2.6M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8');
+  svg.append(caminho);
+  return svg;
+}
+
+/** Botão com o sol ou a lua do tema em uso; o clique troca o tema na hora, sem recarregar. */
+export function criarBotaoDeTema(): HTMLButtonElement {
+  const botao = document.createElement('button');
+  botao.type = 'button';
+  botao.className = 'tema-botao';
+  const pintar = (tema: Tema): void => {
+    botao.replaceChildren(desenharIcone(tema));
+    botao.setAttribute('aria-label', rotuloDoBotaoDeTema(tema));
+    botao.title = tema === 'escuro' ? 'Mudar para o modo claro' : 'Mudar para o modo escuro';
+  };
+  pintar(temaAtual());
+  botao.addEventListener('click', () => pintar(alternarTema()));
+  return botao;
 }
