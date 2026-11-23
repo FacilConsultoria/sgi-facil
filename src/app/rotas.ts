@@ -17,6 +17,7 @@ export const ROTAS: readonly Rota[] = [
   { id: 'estrutura', titulo: 'Estrutura e equipe', disponivel: true },
   { id: 'autorizacoes', titulo: 'Autorizações', disponivel: true },
   { id: 'historico', titulo: 'Histórico completo', disponivel: true },
+  { id: 'documentos', titulo: 'Documentos', disponivel: true },
   { id: 'regras', titulo: 'Regras', disponivel: true },
   { id: 'sugestoes', titulo: 'Sugestões', disponivel: true },
 ];
@@ -28,9 +29,21 @@ const ENDERECOS_ANTIGOS: Readonly<Record<string, string>> = {
   acessos: 'autorizacoes', avais: 'autorizacoes', pontuacoes: 'pontuacao', ranking: 'pontuacao',
 };
 
-/** Converte "#demandas" ou "#/demandas" na rota; hash vazio ou desconhecido leva à Tela Inicial. */
-export function rotaDoHash(hash: string): Rota {
+/** Abas do trainee: só as dele (os dados de cada uma o banco já limita). */
+const ABAS_DO_TRAINEE: readonly string[] = ['demandas', 'reunioes', 'presencas', 'disponibilidade'];
+
+/** As abas do menu conforme o cargo. */
+export function rotasDoPapel(papel: string): readonly Rota[] {
+  return papel === 'trainee' ? ROTAS.filter((rota) => ABAS_DO_TRAINEE.includes(rota.id)) : ROTAS;
+}
+
+/**
+ * Converte "#demandas" ou "#/demandas" na rota; hash vazio ou desconhecido leva à Tela Inicial
+ * (ou, para quem não tem essa aba, à primeira aba do cargo).
+ */
+export function rotaDoHash(hash: string, papel = ''): Rota {
   const texto = hash.replace(/^#\/?/, '').trim();
   const id = ENDERECOS_ANTIGOS[texto] ?? texto;
-  return ROTAS.find((rota) => rota.id === id) ?? ROTA_INICIAL;
+  const rotas = rotasDoPapel(papel);
+  return rotas.find((rota) => rota.id === id) ?? (rotas.includes(ROTAS[0] as Rota) ? ROTA_INICIAL : (rotas[0] ?? ROTA_INICIAL));
 }

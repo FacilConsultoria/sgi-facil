@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ROTAS, rotaDoHash } from './rotas';
+import { ROTAS, rotaDoHash, rotasDoPapel } from './rotas';
 
 describe('rotaDoHash', () => {
   it('aceita hash com e sem barra', () => {
@@ -26,6 +26,13 @@ describe('rotaDoHash', () => {
 
   it('chama a primeira tela de Tela Inicial', () => {
     expect(rotaDoHash('').titulo).toBe('Tela Inicial');
+  });
+
+  it('trainee só tem Demandas, Reuniões, Presenças e Disponibilidade; o resto leva a Demandas', () => {
+    expect(rotasDoPapel('trainee').map((rota) => rota.id)).toEqual(['demandas', 'reunioes', 'presencas', 'disponibilidade']);
+    expect(rotaDoHash('#pontuacao', 'trainee').id).toBe('demandas');
+    expect(rotaDoHash('#presencas', 'trainee').id).toBe('presencas');
+    expect(rotaDoHash('#documentos', 'membro').id).toBe('documentos');
   });
 
   it('não tem rotas repetidas', () => {

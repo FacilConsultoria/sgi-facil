@@ -2,9 +2,10 @@
 import { abrirMeusDados, EVENTO_DADOS_SALVOS } from '../features/dadospessoais/janela';
 import { criarControleDoSino } from '../features/notificacoes/sino';
 import { descreverCargo } from '../lib/perfil';
+import { alternarTema, rotuloDoBotaoDeTema, temaAtual } from '../lib/tema';
 import { el, substituir } from '../ui/dom';
 import { criarSimbolo } from '../ui/logo';
-import { ROTAS, type Rota } from './rotas';
+import { rotasDoPapel, type Rota } from './rotas';
 import type { ContextoDaSessao } from './sessao';
 
 export interface Layout {
@@ -15,7 +16,7 @@ export interface Layout {
 export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSair: () => void): Layout {
   const { perfil, tituloDaArea } = contexto;
 
-  const botoesDaNavegacao = ROTAS.map((rota) =>
+  const botoesDaNavegacao = rotasDoPapel(perfil.papel).map((rota) =>
     el('a', { href: `#${rota.id}`, class: 'nav-item', 'data-rota': rota.id },
       el('span', {}, rota.titulo),
       rota.disponivel ? null : el('span', { class: 'nav-selo' }, 'em breve')),
@@ -26,6 +27,9 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
   // o sino (amarelo, com o número de notificações) fica na linha do nome; no celular também aparece na barra de cima
   const sino = criarControleDoSino(() => app);
   const meusDados = el('button', { type: 'button', class: 'meus-dados' }, perfil.dados_pendentes ? 'Preencher meus dados' : 'Meus dados');
+
+  const botaoDeTema = el('button', { type: 'button', class: 'sair tema' }, rotuloDoBotaoDeTema(temaAtual()));
+  botaoDeTema.addEventListener('click', () => { botaoDeTema.textContent = rotuloDoBotaoDeTema(alternarTema()); });
 
   const lateral = el('aside', { class: 'lateral', id: 'lateral', 'aria-label': 'Menu principal' },
     el('div', { class: 'marca' },
@@ -39,6 +43,7 @@ export function montarLayout(raiz: HTMLElement, contexto: ContextoDaSessao, aoSa
       el('span', {}, descreverCargo(perfil, tituloDaArea)),
       meusDados),
     el('nav', { class: 'nav' }, ...botoesDaNavegacao),
+    botaoDeTema,
     el('button', { type: 'button', class: 'sair' }, 'Sair'),
   );
 
