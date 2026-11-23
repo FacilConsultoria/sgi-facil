@@ -117,3 +117,21 @@ legend { font-size: 0.78rem; font-weight: 600; color: var(--ink-2); padding: 0 4
   .dl dd { margin-bottom: 8px; }
   .hist li { flex-direction: column; gap: 0; }
 }
+
+/* Presenças: suas reuniões e justificativas (26) */
+.minhas-presencas td.ok { color: var(--ok); font-weight: 600; }
+.minhas-presencas td.alerta { color: var(--danger); font-weight: 600; }
+.lista-justificativas { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.lista-justificativas .justificativa { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; }
+.lista-justificativas .justificativa p { margin: 6px 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.lista-justificativas .linha { flex-wrap: wrap; gap: 8px; }
+.lista-justificativas input[type='text'] { flex: 1 1 200px; min-width: 0; }
+
+/* Documentos gerais (26) */
+.bloco.documentos { max-width: none; margin-bottom: 14px; }
+.lista-documentos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.lista-documentos .documento { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); flex-wrap: wrap; }
+.lista-documentos .documento:first-child { border-top: 0; }
+.documento-info { min-width: 0; flex: 1 1 260px; display: flex; flex-direction: column; gap: 2px; }
+.documento-info strong, .documento-info .meta { overflow-wrap: anywhere; }
+.documento-info p { margin: 2px 0; color: var(--ink-2); }

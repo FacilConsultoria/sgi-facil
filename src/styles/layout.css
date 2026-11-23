@@ -54,6 +54,8 @@
   cursor: pointer;
 }
 .sair:hover { background: var(--side-hover); }
+/* botão de tema fica logo acima do Sair, os dois no pé do menu */
+.sair.tema + .sair { margin-top: 8px; }
 
 .coluna-conteudo { min-width: 0; display: flex; flex-direction: column; }
 .barra-movel { display: none; }
