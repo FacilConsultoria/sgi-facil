@@ -67,6 +67,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await db.exec(window.SQL24);
     await db.exec(window.SQL25);
     await db.exec(window.SQL26);
+    await db.exec(window.SQL27);
 
     let erro02 = null;
     try { await db.exec(window.SQL02); } catch (e) { erro02 = e.message; }
@@ -571,6 +572,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     await bloqueia('Ninguém altera o próprio cadastro', MEL, `select atualizar_pessoa($1,'Mel','presidente','pres',null,null,true)`, [iMel], 'Ninguém altera o próprio cadastro.');
     await bloqueia('Gerência comum não altera cadastros', DUDA, `select atualizar_pessoa($1,'Lucas','membro','proj','proj-cli',null,true)`, [iLucas], 'Só a Presidência e a Gente e Gestão alteram cadastros.');
     await permite('Gente e Gestão altera o curso de um membro', GINA, `select atualizar_pessoa($1,'Lucas Prado','membro','proj','proj-cli','Engenharia',true)`, [iLucas]);
+    confere('Quem cadastra não muda o nome de ninguém (27)', await valor(MEL, `select nome from pessoas where id = $1`, [iLucas]), 'Lucas');
     confere('Curso gravado e vazio vira nulo', [await valor(MEL, `select curso from pessoas where id = $1`, [iLucas]),
       await valor(GINA, `select atualizar_pessoa($1,'Lucas Prado','membro','proj','proj-cli','  ',true)`, [iLucas]).then(() => valor(MEL, `select curso from pessoas where id = $1`, [iLucas]))], ['Engenharia', null]);
     await bloqueia('Quem conduz uma área não é desativado', MEL, `select atualizar_pessoa($1,'João','diretor','com',null,null,false)`, [iJoao],
@@ -592,7 +594,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
     const edita = (email, nome) => como(email, `select pode_editar from equipe_pessoas where nome = $1`, [nome]);
     confere('Quem pode editar quem', {
       melAna: await edita(MEL, 'Ana'), melMel: await edita(MEL, 'Mel'), melJoao: await edita(MEL, 'João'), majuAna: await edita(MAJU, 'Ana'),
-      ginaLucas: await edita(GINA, 'Lucas Prado'), ginaJoao: await edita(GINA, 'João'), ginaMaju: await edita(GINA, 'Maju'), anaLucas: await edita(ANA, 'Lucas Prado'),
+      ginaLucas: await edita(GINA, 'Lucas'), ginaJoao: await edita(GINA, 'João'), ginaMaju: await edita(GINA, 'Maju'), anaLucas: await edita(ANA, 'Lucas'),
     }, {
       melAna: [{ pode_editar: true }], melMel: [{ pode_editar: false }], melJoao: [{ pode_editar: true }], majuAna: [{ pode_editar: true }],
       ginaLucas: [{ pode_editar: true }], ginaJoao: [{ pode_editar: false }], ginaMaju: [{ pode_editar: false }], anaLucas: [{ pode_editar: false }],
@@ -780,7 +782,7 @@ const EMAILS = { mel: 'Mel@facil.test', luis: 'luis@facil.test', joao: 'joao@fac
       camilaVeAna: await valor(CAMILA, `select dados_preenchidos from equipe_pessoas where id = $1`, [iAna]),
       maju: await valor(MAJU, `select count(*)::int from equipe_pessoas where pode_ver_dados and ativo`),
     }, {
-      joao: ['Ana:true', 'Camila:false', 'Duda:false', 'Emilli:false', 'Lucas Prado:false', 'Novo Dois:false', 'Victor:false'],
+      joao: ['Ana:true', 'Camila:false', 'Duda:false', 'Emilli:false', 'Lucas:false', 'Novo Dois:false', 'Victor:false'],
       camilaVeAna: null,
       maju: await valor(MEL, `select count(*)::int from pessoas where ativo`),
     });

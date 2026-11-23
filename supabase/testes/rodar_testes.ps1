@@ -43,6 +43,7 @@ try {
   $sql24 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '24_desenvolvimento_sgi.sql'))
   $sql25 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '25_cargo_trainee.sql'))
   $sql26 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '26_justificativas_trainee_documentos.sql'))
+  $sql27 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase '27_nome_e_apelido.sql'))
   $sqlDev = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase 'dev\02_dados_dev.sql'))
   $sqlDev3 = [string](Get-Content -Raw -Encoding utf8 (Join-Path $pastaSupabase 'dev\03_trocar_cargo_dev.sql'))
   $teste = [string](Get-Content -Raw -Encoding utf8 (Join-Path $aqui $Teste))
@@ -72,6 +73,7 @@ try {
             ";window.SQL24=" + (ConvertTo-Json -InputObject $sql24 -Compress) +
             ";window.SQL25=" + (ConvertTo-Json -InputObject $sql25 -Compress) +
             ";window.SQL26=" + (ConvertTo-Json -InputObject $sql26 -Compress) +
+            ";window.SQL27=" + (ConvertTo-Json -InputObject $sql27 -Compress) +
             ";window.SQLDEV=" + (ConvertTo-Json -InputObject $sqlDev -Compress) +
             ";window.SQLDEV3=" + (ConvertTo-Json -InputObject $sqlDev3 -Compress) + ";</script><script type=`"module`">`n" + $teste + "`n</script>"
   [IO.File]::WriteAllText((Join-Path $temp 'teste.html'), $pagina, (New-Object System.Text.UTF8Encoding $false))
