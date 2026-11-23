@@ -9,6 +9,7 @@ const TITULO_DO_PAPEL: Record<Perfil['papel'], string> = {
   gerente: 'Gerência',
   assessor: 'Assessoria',
   membro: 'Membro',
+  trainee: 'Trainee',
 };
 
 /** "Gerência", "Diretoria", "Membro"…: o papel por extenso, para listas de pessoas. */
@@ -45,6 +46,8 @@ export function descreverEscopo(perfil: Perfil, tituloDaArea: (id: string) => st
       return `Vê as demandas e as pessoas de ${perfil.nucleo_nome ?? perfil.area_titulo}.`;
     case 'membro':
       return 'Vê as demandas em que consta como executor.';
+    case 'trainee':
+      return 'Vê as demandas atribuídas a você, suas reuniões, sua presença e sua disponibilidade.';
   }
 }
 
