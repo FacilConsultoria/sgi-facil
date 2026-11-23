@@ -87,7 +87,7 @@ export function paginaDemandas(destino: HTMLElement, sessao: ContextoDaSessao): 
         return el('section', { class: 'coluna', 'aria-label': etapa.nome },
           el('div', { class: 'coluna-cab' }, el('span', {}, etapa.nome), el('span', {}, String(cartoes.length))),
           ...(cartoes.length
-            ? cartoes.map((d) => cartaoDaDemanda(d, dados.nomeDe, contexto.hoje, (escolhida) => abrirPainelDaDemanda(contexto, escolhida)))
+            ? cartoes.map((d) => cartaoDaDemanda(d, dados.nomeDe, contexto.hoje, (escolhida) => abrirPainelDaDemanda(contexto, escolhida), dados.nomeCompletoDe))
             : [el('p', { class: 'vazio-col' }, 'Nenhuma demanda nesta etapa.')]));
       }));
     };

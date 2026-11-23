@@ -34,9 +34,17 @@ export function seloDeRestricao(): HTMLElement {
   return el('span', { class: 'chip restrito' }, 'Restrito à Presidência');
 }
 
-function avatares(ids: readonly string[], nomeDe: (id: string) => string): HTMLElement {
+/** Cor fixa de cada pessoa (a mesma em todos os cartões), para diferenciar quem tem iniciais parecidas. */
+function corDoAvatar(id: string): number {
+  let soma = 0;
+  for (const letra of id) soma = (soma * 31 + letra.charCodeAt(0)) % 9973;
+  return soma % 8;
+}
+
+/** Iniciais do nome completo (primeira e última), com a cor da pessoa; o nome mostrado vai na dica. */
+function avatares(ids: readonly string[], nomeDe: (id: string) => string, nomeCompletoDe: (id: string) => string): HTMLElement {
   return el('span', { class: 'avatares' },
-    ...ids.map((id) => el('span', { class: 'av', title: nomeDe(id) }, iniciais(nomeDe(id)))));
+    ...ids.map((id) => el('span', { class: `av c${corDoAvatar(id)}`, title: nomeDe(id) }, iniciais(nomeCompletoDe(id)))));
 }
 
 export function cartaoDaDemanda(
@@ -44,6 +52,7 @@ export function cartaoDaDemanda(
   nomeDe: (id: string) => string,
   hoje: string,
   aoAbrir: (demanda: DemandaVisivel) => void,
+  nomeCompletoDe: (id: string) => string = nomeDe,
 ): HTMLButtonElement {
   const atrasada = estaAtrasada(demanda, hoje);
   const estado = estadoDoPrazo(demanda, hoje);
@@ -68,7 +77,7 @@ export function cartaoDaDemanda(
     el('span', { class: 'card-pe' },
       el('span', { class: atrasada ? 'prazo atrasada' : 'prazo' }, `${atrasada ? 'Atrasada · ' : ''}${dataCurta(demanda.prazo)}`),
       demanda.motivo_acesso === 'executor' || demanda.motivo_acesso === 'excecao' ? seloDeAcesso(demanda) : null,
-      avatares(demanda.executores, nomeDe)));
+      avatares(demanda.executores, nomeDe, nomeCompletoDe)));
   cartao.addEventListener('click', () => aoAbrir(demanda));
   return cartao;
 }

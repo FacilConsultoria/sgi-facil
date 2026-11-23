@@ -15,7 +15,10 @@ export interface DadosDoQuadro {
   aprovadores: AprovadorPossivel[];
   /** Quem pode ser informado numa entrega de alcance geral (vazio para membros). */
   informaveis: PessoaInformavel[];
+  /** Nome mostrado (apelido, se houver). */
   nomeDe: (id: string) => string;
+  /** Nome completo, usado nas iniciais. */
+  nomeCompletoDe: (id: string) => string;
 }
 
 export async function carregarQuadro(): Promise<DadosDoQuadro> {
@@ -24,7 +27,7 @@ export async function carregarQuadro(): Promise<DadosDoQuadro> {
     supabase.from('projetos_visiveis').select('*').order('nome'),
     supabase.from('nucleos_visiveis').select('*').order('nome'),
     supabase.from('pessoas_atribuiveis').select('*').order('nome'),
-    supabase.from('pessoas').select('id, nome'),
+    supabase.from('pessoas').select('id, nome, nome_completo'),
     supabase.from('aprovadores_possiveis').select('*').order('nome'),
     supabase.from('pessoas_informaveis').select('*').order('nome'),
   ]);
@@ -32,7 +35,11 @@ export async function carregarQuadro(): Promise<DadosDoQuadro> {
     if (resposta.error) throw resposta.error;
   }
   const nomes = new Map<string, string>();
-  for (const pessoa of (pessoas.data ?? []) as PessoaResumo[]) nomes.set(pessoa.id, pessoa.nome);
+  const completos = new Map<string, string>();
+  for (const pessoa of (pessoas.data ?? []) as (PessoaResumo & { nome_completo?: string })[]) {
+    nomes.set(pessoa.id, pessoa.nome);
+    completos.set(pessoa.id, pessoa.nome_completo || pessoa.nome);
+  }
   return {
     demandas: (demandas.data ?? []) as DemandaVisivel[],
     projetos: (projetos.data ?? []) as ProjetoVisivel[],
@@ -41,6 +48,7 @@ export async function carregarQuadro(): Promise<DadosDoQuadro> {
     aprovadores: (aprovadores.data ?? []) as AprovadorPossivel[],
     informaveis: (informaveis.data ?? []) as PessoaInformavel[],
     nomeDe: (id) => nomes.get(id) ?? 'Pessoa sem cadastro',
+    nomeCompletoDe: (id) => completos.get(id) ?? nomes.get(id) ?? 'Pessoa sem cadastro',
   };
 }
 
