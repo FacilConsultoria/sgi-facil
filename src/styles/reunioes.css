@@ -66,3 +66,11 @@ details[open] > summary { margin-bottom: 8px; }
   .presenca { grid-template-columns: minmax(0, 1fr); }
   .presenca .chip { justify-self: start; }
 }
+
+/* rascunho de ata com IA (copiar pedido, colar resposta) */
+.rascunho-ia { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+.rascunho-ia > summary { cursor: pointer; font-weight: 600; }
+.rascunho-ia textarea { width: 100%; }
+.passos-ia { margin: 6px 0; padding-left: 20px; }
+.encaminhamentos { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.encaminhamentos li { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; border-top: 1px solid var(--line); padding-top: 6px; }
