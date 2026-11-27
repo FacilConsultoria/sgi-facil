@@ -11,7 +11,9 @@ import { pedirPainelDaDemanda } from '../demandas/pagina';
 import { estaAtrasada } from '../demandas/regras';
 import { comSinal, descreverLancamento, NOME_DO_TIPO_DE_LANCAMENTO } from '../pontuacao/regras';
 import { nomeDoPublico } from '../reunioes/regras';
-import { carregarInicio, type DadosDoInicio } from './dados';
+import { mostrarAviso } from '../../ui/aviso';
+import { carregarInicio, carregarNomes, type DadosDoInicio } from './dados';
+import { montarPedidoDoResumo } from './ia';
 import { blocoDeRecados } from './recados';
 import {
   aguardandoValidacao, descreverPrazo, descreverQuando, descreverValidadeDoPedido, indicadoresDoInicio, LIMITE_DE_ENTREGAS,
@@ -21,18 +23,32 @@ import {
 export function paginaDashboard(destino: HTMLElement, contexto: ContextoDaSessao): void {
   const { perfil, tituloDaArea } = contexto;
   const corpo = el('div', {});
+  // resumo semanal com IA (copiar e colar, sem custo): para a liderança, com as demandas que ela já vê
+  let demandasCarregadas: DemandaVisivel[] = [];
+  const lideranca = perfil.papel !== 'membro' && perfil.papel !== 'trainee';
+  const resumo = el('button', { type: 'button', class: 'btn', title: 'Copia um pedido com as demandas abertas para colar no Claude ou no Gemini' }, 'Resumo da semana com IA');
+  resumo.addEventListener('click', () => {
+    void carregarNomes()
+      .then((nomeDe) => navigator.clipboard.writeText(montarPedidoDoResumo(demandasCarregadas, nomeDe, hojeEmSaoPaulo())))
+      .then(() => mostrarAviso('Pedido copiado. Cole no Claude ou no Gemini.'))
+      .catch(() => mostrarAviso('Não foi possível copiar. Tente de novo.', 'erro'));
+  });
   substituir(destino,
     el('section', { class: 'cab' },
       el('div', {},
         el('h1', {}, `Olá, ${primeiroNome(perfil.nome)}`),
-        el('p', { class: 'sub' }, descreverEscopo(perfil, tituloDaArea)))),
+        el('p', { class: 'sub' }, descreverEscopo(perfil, tituloDaArea))),
+      lideranca ? resumo : null),
     corpo);
 
   montarRecarregavel<DadosDoInicio>(corpo, {
     carregar: () => carregarInicio(perfil.id),
     operacao: 'Carregar a Tela Inicial',
     textoDeCarregando: 'Carregando seu painel…',
-    desenhar: (dados, recarregar) => desenharInicio(dados, contexto, hojeEmSaoPaulo(), destino, recarregar),
+    desenhar: (dados, recarregar) => {
+      demandasCarregadas = dados.demandas;
+      return desenharInicio(dados, contexto, hojeEmSaoPaulo(), destino, recarregar);
+    },
   });
 }
 

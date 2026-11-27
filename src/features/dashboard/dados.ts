@@ -67,3 +67,11 @@ export async function retirarRecado(recadoId: string): Promise<void> {
   const { error } = await supabase.rpc('retirar_recado', { p_id: recadoId });
   if (error) throw error;
 }
+
+/** Nome mostrado de cada pessoa, para o resumo com IA. */
+export async function carregarNomes(): Promise<(id: string) => string> {
+  const { data, error } = await supabase.from('pessoas').select('id, nome');
+  if (error) throw error;
+  const nomes = new Map(((data ?? []) as { id: string; nome: string }[]).map((p) => [p.id, p.nome]));
+  return (id) => nomes.get(id) ?? 'Pessoa sem cadastro';
+}
