@@ -233,7 +233,7 @@ Decisão: Supabase (Postgres + login + storage + Row-Level Security) e site est�
 ome_completo e pelido (a leitura de pessoas é coluna a coluna; sem ela, o lápis e a tela de Demandas falhavam). Sol/lua fica fora da caixa do nome, no canto da marca, acima do sino.
   - **IA sem custo (26/11/2026):** o usuário não quer pagar API; os planos pagos de Claude/Gemini são de uso pessoal (sem API e automatizar o chat viola os termos). Solução "copiar e colar": o SGI monta o pedido e a pessoa cola no chat que já usa. Transcrições vêm do Fathom (plano gratuito, colagem manual na reunião).
     - Ata da reunião: "Rascunho com IA (Claude ou Gemini, sem custo)" → copia o pedido com a transcrição (`src/features/reunioes/ia.ts`); a resposta colada (ou o resumo do Fathom) vira rascunho no campo da ata e os encaminhamentos ("- tarefa | responsável | AAAA-MM-DD") aparecem com "Criar demanda", que abre a Nova demanda preenchida (executor marcado quando o nome bate com uma pessoa só).
-    - Tela Inicial (liderança): "Resumo da semana com IA" copia um pedido com as demandas abertas visíveis (sem dados pessoais).
+    - "Resumo da semana com IA" na Tela Inicial: feito e retirado a pedido do usuário (beta: consolidar a base, sem extras).
     - "Pergunte aos documentos": por ora, baixar o documento na aba Documentos e anexar no chat. Automação possível depois com o nível gratuito da API do Gemini (confirmar termos: o Google pode usar o conteúdo no nível gratuito).
   - Decisões minhas, a confirmar: prazo de 7 dias para justificar falta de reunião encerrada; quem envia documentos (Presidência e diretorias); trainee aparece no organograma e no ranking como membro.
 
