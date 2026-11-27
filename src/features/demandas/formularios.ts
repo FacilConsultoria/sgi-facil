@@ -10,6 +10,7 @@ import { seletorDeExecutores, type SeletorDeExecutores } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { criarDemanda, criarProjeto } from './dados';
 import { abrirPainelDaDemanda } from './painel';
+import { acharPessoaPeloNome } from '../reunioes/ia';
 import { validarRaci } from './raci';
 import { agruparExecutores, PRIORIDADES, validarDemanda } from './regras';
 
@@ -25,7 +26,15 @@ function janela(
 
 const rodape = rodapeDaJanela;
 
-export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: string): void {
+/** Campos já preenchidos (ex.: encaminhamento de uma ata); a pessoa confere e completa. */
+export interface DemandaSugerida {
+  titulo: string;
+  descricao: string;
+  prazo: string | null;
+  executorNome: string | null;
+}
+
+export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: string, sugerida?: DemandaSugerida): void {
   const { dados, perfil, hoje } = contexto;
   const projetos = dados.projetos.filter((p) => p.pode_criar_demanda);
   const inicial = projetos.find((p) => p.id === projetoInicial) ?? projetos[0];
@@ -38,9 +47,10 @@ export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: 
     const projeto = el('select', { id: 'nd-projeto' },
       ...projetos.map((p) => el('option', { value: p.id, selected: p.id === inicial.id },
         [p.nome, p.cliente].filter(Boolean).join(' · '))));
-    const titulo = el('input', { type: 'text', id: 'nd-titulo', maxlength: '120', placeholder: 'Ex.: Levantar notas fiscais de outubro' });
-    const descricao = el('textarea', { id: 'nd-descricao', placeholder: 'Entregável, critério de pronto, referências' });
-    const prazo = el('input', { type: 'date', id: 'nd-prazo', value: somarDias(hoje, 7), min: hoje });
+    const titulo = el('input', { type: 'text', id: 'nd-titulo', maxlength: '120', placeholder: 'Ex.: Levantar notas fiscais de outubro', value: sugerida?.titulo.slice(0, 120) ?? '' });
+    const descricao = el('textarea', { id: 'nd-descricao', placeholder: 'Entregável, critério de pronto, referências' }, sugerida?.descricao ?? '');
+    const prazoSugerido = sugerida?.prazo && sugerida.prazo >= hoje ? sugerida.prazo : somarDias(hoje, 7);
+    const prazo = el('input', { type: 'date', id: 'nd-prazo', value: prazoSugerido, min: hoje });
     const prioridade = seletor<Prioridade>('nd-prioridade', PRIORIDADES, 'media');
     const restrita = el('input', { type: 'checkbox', id: 'nd-restrita' });
     const linhaRestrita = el('label', { class: 'check', for: 'nd-restrita' }, restrita, ' Restringir à Presidência (oculta das diretorias e núcleos)');
@@ -50,6 +60,11 @@ export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: 
 
     // a lista de executores depende do núcleo do projeto escolhido; marcações já feitas são mantidas
     let executores: SeletorDeExecutores = seletorDeExecutores('nd', [], []);
+    // executor citado no encaminhamento, quando dá para saber quem é (só vale na primeira montagem)
+    let marcadosIniciais: string[] = (() => {
+      const pessoa = acharPessoaPeloNome(dados.atribuiveis, sugerida?.executorNome ?? null);
+      return pessoa ? [pessoa.id] : [];
+    })();
     const projetoEscolhido = (): typeof inicial => projetos.find((p) => p.id === projeto.value) ?? inicial;
     const raci = camposDeRaci({
       prefixo: 'nd',
@@ -60,7 +75,8 @@ export function abrirNovaDemanda(contexto: ContextoDeDemandas, projetoInicial?: 
     });
     const montarExecutores = (): void => {
       const escolhido = projetoEscolhido();
-      const marcados = executores.marcados();
+      const marcados = marcadosIniciais.length ? marcadosIniciais : executores.marcados();
+      marcadosIniciais = [];
       executores = seletorDeExecutores('nd', agruparExecutores(dados.atribuiveis, escolhido.nucleo_id, [], dados.nomeDe), marcados);
       executores.elemento.addEventListener('change', raci.atualizar);
       substituir(areaExecutores, executores.elemento);

@@ -7,7 +7,7 @@ import { el, substituir } from '../../ui/dom';
 import { cartaoDaDemanda } from './componentes';
 import type { ContextoDeDemandas } from './contexto';
 import { carregarQuadro, type DadosDoQuadro } from './dados';
-import { abrirNovaDemanda, abrirNovoProjeto } from './formularios';
+import { abrirNovaDemanda, abrirNovoProjeto, type DemandaSugerida } from './formularios';
 import { abrirPainelDaDemanda } from './painel';
 import {
   demandasDaEtapa, filtrarDemandas, FILTROS_VAZIOS, resumir, STATUS, type Filtros,
@@ -27,7 +27,19 @@ export function pedirPainelDaDemanda(demandaId: string): void {
   demandaPedida = demandaId;
 }
 
+// nova demanda pedida por um encaminhamento de ata; o formulário abre já preenchido assim que o quadro carrega
+let novaDemandaPedida: DemandaSugerida | null = null;
+
+export function pedirNovaDemanda(sugerida: DemandaSugerida): void {
+  novaDemandaPedida = sugerida;
+}
+
 function abrirDemandaPedida(contexto: ContextoDeDemandas): void {
+  if (novaDemandaPedida) {
+    const sugerida = novaDemandaPedida;
+    novaDemandaPedida = null;
+    abrirNovaDemanda(contexto, undefined, sugerida);
+  }
   const demanda = contexto.dados.demandas.find((d) => d.id === demandaPedida);
   demandaPedida = '';
   if (demanda) abrirPainelDaDemanda(contexto, demanda);
